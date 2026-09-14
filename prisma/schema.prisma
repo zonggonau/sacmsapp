@@ -1,0 +1,555 @@
+// SaCMS — sumber kebenaran: docs/06-DATABASE-SCHEMA.md
+// Perubahan skema WAJIB lewat `pnpm db:migrate` dan ikut di-commit.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7: URL koneksi TIDAK lagi boleh ada di sini.
+// URL untuk migrate/introspect ada di prisma.config.ts;
+// URL runtime diberikan lewat driver adapter di src/lib/db.ts.
+// Lihat docs/adr/ADR-007-prisma-driver-adapter.md
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+//  ENUM
+// ============================================================
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum ProjectStatus {
+  DRAFT
+  BUILDING
+  READY
+  LIVE
+  FAILED
+  ARCHIVED
+}
+
+enum WebsiteType {
+  GOVERNMENT
+  COMPANY
+  ECOMMERCE
+  SCHOOL
+  HOSPITAL
+  HOTEL
+  RESTAURANT
+  PORTFOLIO
+  SAAS
+  LANDING
+  BLOG
+  CUSTOM
+}
+
+enum BuildJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum BuildJobKind {
+  INITIAL_GENERATE
+  EDIT_GENERATE
+  DEPLOY
+}
+
+enum BuildStepStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+  SKIPPED
+}
+
+enum DeploymentStatus {
+  QUEUED
+  BUILDING
+  READY
+  ERROR
+  CANCELLED
+}
+
+enum DeploymentTarget {
+  PREVIEW
+  PRODUCTION
+}
+
+enum DomainStatus {
+  PENDING_DNS
+  VERIFYING
+  ACTIVE
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum UsageKind {
+  AI_GENERATE
+  AI_EDIT
+  DEPLOY
+  PROJECT_CREATE
+}
+
+enum UsageState {
+  RESERVED
+  COMMITTED
+  REFUNDED
+}
+
+// ============================================================
+//  AUTENTIKASI (bentuk mengikuti Better Auth)
+// ============================================================
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  emailVerified Boolean    @default(false)
+  image         String?
+
+  // --- kolom SaCMS ---
+  role   UserRole   @default(USER)
+  status UserStatus @default(ACTIVE)
+
+  planId        String
+  plan          Plan      @relation(fields: [planId], references: [id])
+  planExpiresAt DateTime?
+
+  // Override per orang — Super Admin bisa menaikkan tanpa mengubah plan.
+  // null = pakai nilai dari Plan.
+  creditsOverride     Int?
+  maxProjectsOverride Int?
+
+  creditsUsed     Int      @default(0)
+  periodStartedAt DateTime @default(now())
+
+  // --- plugin admin Better Auth ---
+  banned     Boolean?
+  banReason  String?
+  banExpires DateTime?
+
+  lastLoginAt DateTime?
+  deletedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  projects      Project[]
+  usageEvents   UsageEvent[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
+  notifications Notification[]
+
+  @@index([role])
+  @@index([status])
+  @@index([planId])
+  @@index([createdAt])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // jejak impersonasi Super Admin — wajib untuk audit
+  impersonatedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+model Account {
+  id         String @id @default(cuid())
+  accountId  String
+  providerId String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ============================================================
+//  PAKET & KUOTA
+// ============================================================
+
+model Plan {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+
+  priceMonthly Int     @default(0)
+  isPublic     Boolean @default(true)
+  sortOrder    Int     @default(0)
+
+  // Batas — diubah Super Admin lewat UI, tanpa deploy ulang
+  maxProjects      Int      @default(1)
+  monthlyCredits   Int      @default(30)
+  maxCustomDomains Int      @default(0)
+  maxDeploysPerDay Int      @default(3)
+  allowedModels    String[] @default(["v0-1.5-sm"])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("plan")
+}
+
+// ============================================================
+//  PROJECT
+// ============================================================
+
+model Project {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+
+  websiteType WebsiteType   @default(CUSTOM)
+  status      ProjectStatus @default(DRAFT)
+
+  initialPrompt String @db.Text
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // --- pengenal pihak ketiga ---
+  v0ProjectId     String?
+  v0ChatId        String? @unique
+  vercelProjectId String?
+
+  previewUrl    String?
+  productionUrl String?
+
+  currentVersionId String?         @unique
+  currentVersion   ProjectVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+
+  lastBuildAt  DateTime?
+  lastDeployAt DateTime?
+  deletedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions    ProjectVersion[] @relation("ProjectVersions")
+  messages    AiMessage[]
+  buildJobs   BuildJob[]
+  deployments Deployment[]
+  domains     Domain[]
+
+  @@unique([userId, slug])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("project")
+}
+
+model ProjectVersion {
+  id     String @id @default(cuid())
+  number Int
+
+  projectId String
+  project   Project @relation("ProjectVersions", fields: [projectId], references: [id], onDelete: Cascade)
+
+  v0VersionId String?
+  demoUrl     String?
+  summary     String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  currentOf   Project?     @relation("CurrentVersion")
+  deployments Deployment[]
+
+  @@unique([projectId, number])
+  @@index([projectId, createdAt])
+  @@map("project_version")
+}
+
+model AiMessage {
+  id   String      @id @default(cuid())
+  role MessageRole
+
+  content String @db.Text
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  buildJobId String?
+  buildJob   BuildJob? @relation(fields: [buildJobId], references: [id])
+
+  tokensIn  Int?
+  tokensOut Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@map("ai_message")
+}
+
+// ============================================================
+//  PIPELINE BUILD
+// ============================================================
+
+model BuildJob {
+  id     String         @id @default(cuid())
+  kind   BuildJobKind
+  status BuildJobStatus @default(QUEUED)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  prompt String @db.Text
+
+  progress Int @default(0)
+
+  attempt     Int @default(0)
+  maxAttempts Int @default(3)
+
+  // Dilaporkan ke user — sudah diterjemahkan
+  errorCode    String?
+  errorMessage String?
+  // Untuk Super Admin — boleh mentah
+  rawError String? @db.Text
+
+  correlationId String @unique
+
+  creditsCost Int @default(1)
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+  timeoutAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  steps       BuildStep[]
+  messages    AiMessage[]
+  deployments Deployment[]
+  usageEvents UsageEvent[]
+
+  @@index([projectId, createdAt])
+  @@index([status, createdAt])
+  @@index([status, timeoutAt])
+  @@map("build_job")
+}
+
+model BuildStep {
+  id    String @id @default(cuid())
+  key   String
+  label String
+  order Int
+
+  status BuildStepStatus @default(PENDING)
+
+  buildJobId String
+  buildJob   BuildJob @relation(fields: [buildJobId], references: [id], onDelete: Cascade)
+
+  detail     String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  durationMs Int?
+
+  @@unique([buildJobId, key])
+  @@index([buildJobId, order])
+  @@map("build_step")
+}
+
+// ============================================================
+//  DEPLOYMENT & DOMAIN
+// ============================================================
+
+model Deployment {
+  id     String           @id @default(cuid())
+  status DeploymentStatus @default(QUEUED)
+  target DeploymentTarget @default(PREVIEW)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  versionId String?
+  version   ProjectVersion? @relation(fields: [versionId], references: [id])
+
+  buildJobId String?
+  buildJob   BuildJob? @relation(fields: [buildJobId], references: [id])
+
+  vercelDeploymentId String? @unique
+  url                String?
+
+  errorMessage String?
+  logUrl       String?
+
+  triggeredById String?
+
+  readyAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([projectId, createdAt])
+  @@index([status])
+  @@map("deployment")
+}
+
+model Domain {
+  id     String       @id @default(cuid())
+  name   String       @unique
+  status DomainStatus @default(PENDING_DNS)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  verificationToken String?
+  dnsRecords        Json?
+  lastCheckedAt     DateTime?
+  errorMessage      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@map("domain")
+}
+
+// ============================================================
+//  USAGE, AUDIT, SISTEM
+// ============================================================
+
+model UsageEvent {
+  id    String     @id @default(cuid())
+  kind  UsageKind
+  state UsageState @default(RESERVED)
+
+  credits Int
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  projectId  String?
+  buildJobId String?
+  buildJob   BuildJob? @relation(fields: [buildJobId], references: [id])
+
+  // Biaya nyata dari vendor, diisi saat rekonsiliasi. Rupiah utuh.
+  vendorCostIdr Int?
+  model         String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([kind, createdAt])
+  @@index([state])
+  @@map("usage_event")
+}
+
+model AuditLog {
+  id     String @id @default(cuid())
+  action String
+
+  actorId   String?
+  actor     User?     @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole UserRole?
+
+  targetType String?
+  targetId   String?
+
+  before Json?
+  after  Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       Json
+  description String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_setting")
+}
+
+model Notification {
+  id    String  @id @default(cuid())
+  type  String
+  title String
+  body  String?
+  href  String?
+  read  Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+  @@map("notification")
+}

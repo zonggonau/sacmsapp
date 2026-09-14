@@ -1,0 +1,53 @@
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: {
+    default: "SaCMS — Buat Website dengan AI",
+    template: "%s | SaCMS",
+  },
+  description:
+    "Ketik satu kalimat, dapatkan website siap pakai. Tanpa koding, tanpa ribet.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    // suppressHydrationWarning WAJIB — tanpa ini next-themes memicu error hidrasi.
+    <html lang="id" suppressHydrationWarning>
+      <body className={cn(geistSans.variable, geistMono.variable, "font-sans")}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
