@@ -56,8 +56,10 @@ V0_DEFAULT_MODEL=v0-mini
 V0_MOCK=false
 
 # --- Deployment ---
-VERCEL_TOKEN=
+VERCEL_TOKEN=                        # akun yang SAMA dengan V0_API_KEY (ADR-008)
 VERCEL_TEAM_ID=
+VERCEL_WEBHOOK_SECRET=               # kosong = semua webhook ditolak
+VERCEL_MOCK=false                    # otomatis tiruan bila V0_MOCK=true
 
 # --- Infrastruktur ---
 UPSTASH_REDIS_REST_URL=
@@ -161,12 +163,16 @@ skema. Ini alasan sesungguhnya aturan tiga langkah di [06 §6.6](./06-DATABASE-S
 | -------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `*/5 * * * *`  | `/api/cron/sweep-stuck-jobs` | Job `RUNNING` melewati `timeoutAt` **dan** job `QUEUED` yang tak pernah dimulai (>15 menit) → `FAILED` + refund |
 | `* * * * *`    | `/api/cron/run-queued`       | Menjalankan job `QUEUED`: antrean ulang karena rate limit, atau yang `after()`-nya tidak berjalan               |
-| `*/10 * * * *` | `/api/cron/verify-domains`   | Periksa DNS domain `PENDING_DNS`                                                                                |
-| `*/15 * * * *` | `/api/cron/sync-deployments` | Samakan status deployment dengan Vercel                                                                         |
+| `*/10 * * * *` | `/api/cron/verify-domains`   | Periksa domain `PENDING_DNS` / `VERIFYING` yang ditambahkan dalam 24 jam terakhir                               |
+| `*/5 * * * *`  | `/api/cron/sync-deployments` | Mulai deployment `QUEUED` yang tertinggal; samakan `BUILDING` dengan Vercel (timeout 20 menit)                  |
 | `0 * * * *`    | `/api/cron/refund-stale`     | Refund `UsageEvent` `RESERVED` > 30 menit                                                                       |
 | `0 2 * * *`    | `/api/cron/reconcile-costs`  | Isi `vendorCostIdr` dari laporan v0                                                                             |
 | `0 3 * * *`    | `/api/cron/reset-periods`    | Reset kuota pengguna yang periodenya habis                                                                      |
 | `0 4 * * *`    | `/api/cron/cleanup`          | Hapus sesi kedaluwarsa, log lama                                                                                |
+
+Webhook Vercel didaftarkan di dashboard tim Vercel: URL `/api/webhooks/vercel`, event
+`deployment.*`, secret yang sama dengan `VERCEL_WEBHOOK_SECRET`. Webhook mempercepat
+pembaruan status; tanpa webhook, cron `sync-deployments` tetap menyelesaikannya.
 
 Setiap endpoint cron **wajib**:
 

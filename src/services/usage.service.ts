@@ -80,6 +80,37 @@ export async function reserve(input: ReserveInput): Promise<string> {
   });
 }
 
+/**
+ * Mencatat pemakaian yang langsung final, tanpa reservasi.
+ *
+ * Dipakai deploy (docs/11: 0 kredit, dibatasi `maxDeploysPerDay`). Deploy dicatat
+ * saat BERHASIL saja: tidak ada kredit yang perlu ditahan, dan menghitung
+ * percobaan gagal ke batas harian akan menghukum pengguna atas kegagalan vendor.
+ */
+export async function record(input: Omit<ReserveInput, "buildJobId">): Promise<void> {
+  await db.$transaction(async (tx) => {
+    if (input.credits > 0) {
+      await tx.user.update({
+        where: { id: input.userId },
+        data: { creditsUsed: { increment: input.credits } },
+      });
+    }
+
+    await tx.usageEvent.create({
+      data: {
+        kind: input.kind,
+        state: "COMMITTED",
+        credits: input.credits,
+        userId: input.userId,
+        projectId: input.projectId ?? null,
+        model: input.model ?? null,
+      },
+    });
+  });
+
+  logger.info("usage.recorded", { kind: input.kind, credits: input.credits });
+}
+
 /** Kerja berhasil: reservasi menjadi final, penghitung tetap. */
 export async function commit(usageEventId: string): Promise<void> {
   const result = await db.usageEvent.updateMany({

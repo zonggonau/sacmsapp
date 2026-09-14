@@ -2,20 +2,20 @@
 
 ## 12.1 Ancaman Utama & Mitigasi
 
-| #   | Ancaman                                                        | Dampak bila terjadi                              | Mitigasi                                                                                   |
-| --- | -------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| A1  | Pengguna membaca/mengubah project milik orang lain             | Kebocoran data pelanggan                         | `userId` ada di setiap klausa `where` ([06 §6.7](./06-DATABASE-SCHEMA.md)); uji E2E khusus |
-| A2  | Naik peran jadi `SUPER_ADMIN` lewat pendaftaran                | Sistem diambil alih                              | `input: false` pada `role`/`status`/`planId` ([07 §7.2](./07-AUTH-DAN-RBAC.md))            |
-| A3  | Prompt injection lewat prompt pengguna                         | AI mengabaikan aturan, membocorkan system prompt | Pembatas + label data + sanitasi ([09 §9.5](./09-AI-BUILDER-PIPELINE.md))                  |
-| A4  | Penyalahgunaan kredit / serangan biaya                         | Tagihan AI membengkak                            | Rate limit + kuota reservasi + ambang biaya + kill switch otomatis                         |
-| A5  | Kunci API bocor ke klien                                       | Siapa pun bisa memakai akun v0 kita              | Rahasia hanya di server; lint melarang `NEXT_PUBLIC_` pada nama berpola rahasia            |
-| A6  | XSS lewat keluaran AI atau nama project                        | Pengambilalihan sesi                             | Tidak ada `dangerouslySetInnerHTML`; Markdown disanitasi; pratinjau di iframe `sandbox`    |
-| A7  | Webhook palsu dari "Vercel"                                    | Status deployment dipalsukan                     | Verifikasi signature; tolak bila tidak cocok                                               |
-| A8  | Pengambilalihan subdomain (domain dilepas tapi DNS tertinggal) | Situs pengguna dibajak                           | Verifikasi kepemilikan sebelum aktivasi; lepas pendaftaran saat dihapus                    |
-| A9  | Enumerasi email di halaman masuk                               | Daftar pelanggan bocor                           | Pesan gagal seragam ([07 §7.5](./07-AUTH-DAN-RBAC.md))                                     |
-| A10 | Penyalahgunaan impersonasi                                     | Perubahan data atas nama pengguna                | Aksi destruktif diblokir; banner permanen; audit mulai & selesai; kedaluwarsa 60 menit     |
-| A11 | SSRF lewat URL yang diberikan pengguna                         | Akses ke jaringan internal                       | Tidak ada fitur yang mengambil URL sembarang di MVP; bila ditambahkan, wajib allowlist     |
-| A12 | Kondisi balapan pada kuota                                     | Batas terlampaui                                 | Penguncian baris di dalam transaksi ([11 §11.4](./11-QUOTA-DAN-BILLING.md))                |
+| #   | Ancaman                                                        | Dampak bila terjadi                              | Mitigasi                                                                                                      |
+| --- | -------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| A1  | Pengguna membaca/mengubah project milik orang lain             | Kebocoran data pelanggan                         | `userId` ada di setiap klausa `where` ([06 §6.7](./06-DATABASE-SCHEMA.md)); uji E2E khusus                    |
+| A2  | Naik peran jadi `SUPER_ADMIN` lewat pendaftaran                | Sistem diambil alih                              | `input: false` pada `role`/`status`/`planId` ([07 §7.2](./07-AUTH-DAN-RBAC.md))                               |
+| A3  | Prompt injection lewat prompt pengguna                         | AI mengabaikan aturan, membocorkan system prompt | Pembatas + label data + sanitasi ([09 §9.5](./09-AI-BUILDER-PIPELINE.md))                                     |
+| A4  | Penyalahgunaan kredit / serangan biaya                         | Tagihan AI membengkak                            | Rate limit + kuota reservasi + ambang biaya + kill switch otomatis                                            |
+| A5  | Kunci API bocor ke klien                                       | Siapa pun bisa memakai akun v0 kita              | Rahasia hanya di server; lint melarang `NEXT_PUBLIC_` pada nama berpola rahasia                               |
+| A6  | XSS lewat keluaran AI atau nama project                        | Pengambilalihan sesi                             | Tidak ada `dangerouslySetInnerHTML`; Markdown disanitasi; pratinjau di iframe `sandbox`                       |
+| A7  | Webhook palsu dari "Vercel"                                    | Status deployment dipalsukan                     | Verifikasi signature, gagal tertutup tanpa secret; payload hanya pemicu — status dibaca ulang dari API Vercel |
+| A8  | Pengambilalihan subdomain (domain dilepas tapi DNS tertinggal) | Situs pengguna dibajak                           | Verifikasi kepemilikan (TXT) sebelum aktivasi; lepas dari Vercel dulu, catatan baru dihapus bila berhasil     |
+| A9  | Enumerasi email di halaman masuk                               | Daftar pelanggan bocor                           | Pesan gagal seragam ([07 §7.5](./07-AUTH-DAN-RBAC.md))                                                        |
+| A10 | Penyalahgunaan impersonasi                                     | Perubahan data atas nama pengguna                | Aksi destruktif diblokir; banner permanen; audit mulai & selesai; kedaluwarsa 60 menit                        |
+| A11 | SSRF lewat URL yang diberikan pengguna                         | Akses ke jaringan internal                       | Tidak ada fitur yang mengambil URL sembarang di MVP; bila ditambahkan, wajib allowlist                        |
+| A12 | Kondisi balapan pada kuota                                     | Batas terlampaui                                 | Penguncian baris di dalam transaksi ([11 §11.4](./11-QUOTA-DAN-BILLING.md))                                   |
 
 ## 12.2 Pengelolaan Rahasia
 
@@ -90,15 +90,15 @@ Pratinjau memuat domain `*.vercel.app` milik pengguna, bukan halaman SaCMS.
 
 ## 12.4 Aturan Penanganan Input
 
-| Input            | Perlakuan                                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| Semua input form | Divalidasi Zod di server, **bukan hanya** di klien                                                      |
-| Prompt pengguna  | Batas 4.000 karakter, karakter kontrol dibuang, disimpan apa adanya, diapit pembatas saat dikirim ke AI |
-| Nama project     | Batas 100 karakter, slug dibuat dari nama (`a-z0-9-`), tidak pernah dipakai sebagai jalur berkas        |
-| Domain           | Regex format, tolak `*.vercel.app`, tolak yang sudah terdaftar                                          |
-| Unggahan berkas  | Hanya gambar, maks 5 MB, tipe MIME diperiksa dari **isi berkas** bukan ekstensi                         |
-| Parameter URL    | Divalidasi lewat parser `nuqs`, tidak pernah masuk query mentah                                         |
-| Keluaran AI      | Diperlakukan sebagai konten tidak dipercaya; Markdown disanitasi                                        |
+| Input            | Perlakuan                                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Semua input form | Divalidasi Zod di server, **bukan hanya** di klien                                                                    |
+| Prompt pengguna  | Batas 4.000 karakter, karakter kontrol dibuang, disimpan apa adanya, diapit pembatas saat dikirim ke AI               |
+| Nama project     | Batas 100 karakter, slug dibuat dari nama (`a-z0-9-`), tidak pernah dipakai sebagai jalur berkas                      |
+| Domain           | Dirapikan (skema/jalur dibuang), wajib nama host sah, tolak `*.vercel.app` & domain SaCMS, tolak yang sudah terdaftar |
+| Unggahan berkas  | Hanya gambar, maks 5 MB, tipe MIME diperiksa dari **isi berkas** bukan ekstensi                                       |
+| Parameter URL    | Divalidasi lewat parser `nuqs`, tidak pernah masuk query mentah                                                       |
+| Keluaran AI      | Diperlakukan sebagai konten tidak dipercaya; Markdown disanitasi                                                      |
 
 ## 12.5 Keamanan Pratinjau
 

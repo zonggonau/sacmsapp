@@ -23,9 +23,7 @@ interface HeaderProject {
 /**
  * Header + tab navigasi project.
  *
- * Hanya memuat tab yang fasenya sudah selesai. Deployment dan Domain masuk
- * bersama Fase 4 — menampilkannya sebelum fase itu lulus DoD berarti membuka
- * fitur yang belum terverifikasi ke pengguna. docs/13-ROADMAP-DAN-FASE.md
+ * Hanya memuat tab yang fasenya sudah selesai. docs/13-ROADMAP-DAN-FASE.md
  */
 export function ProjectHeader({ project }: { project: HeaderProject }) {
   const pathname = usePathname();
@@ -34,6 +32,8 @@ export function ProjectHeader({ project }: { project: HeaderProject }) {
   const tabs = [
     { label: "Ringkasan", href: base, exact: true },
     { label: "Builder", href: `${base}/builder`, exact: false },
+    { label: "Deployment", href: `${base}/deployment`, exact: false },
+    { label: "Domain", href: `${base}/domain`, exact: false },
     { label: "Pengaturan", href: `${base}/pengaturan`, exact: false },
   ];
 
@@ -81,7 +81,7 @@ export function ProjectHeader({ project }: { project: HeaderProject }) {
         ) : null}
       </div>
 
-      <nav className="-mb-px flex gap-1" aria-label="Navigasi project">
+      <nav className="-mb-px flex gap-1 overflow-x-auto" aria-label="Navigasi project">
         {tabs.map((tab) => {
           const active = tab.exact
             ? pathname === tab.href
@@ -92,7 +92,7 @@ export function ProjectHeader({ project }: { project: HeaderProject }) {
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                "shrink-0 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "border-primary text-primary-text"
                   : "text-muted-foreground hover:text-foreground border-transparent",

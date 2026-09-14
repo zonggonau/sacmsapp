@@ -362,34 +362,75 @@ Kalimat terakhir penting: ia mengubah menunggu dari kecemasan menjadi kepastian.
 
 ## 9.10 Deploy & Domain
 
+Jalur terbit: **v0 menerbitkan, SaCMS membaca status dari Vercel**
+([ADR-008](./adr/ADR-008-terbit-lewat-v0-deployments.md)). Implementasi:
+`services/deploy.service.ts`.
+
 ```
-Terbit ke production
+Terbitkan (action deploy.create)
+  |- request(): kunci baris project (FOR UPDATE), tolak bila
+  |             build QUEUED/RUNNING atau deployment QUEUED/BUILDING sudah ada
+  |- Deployment(status=QUEUED, target=PRODUCTION, versionId)
   |
-  |- pastikan ada vercelProjectId (buat bila belum)
-  |- buat Deployment(status=QUEUED, target=PRODUCTION)
-  |- minta Vercel membangun & menerbitkan versi terpilih
-  |- polling status (atau webhook) -> READY | ERROR
-  |- READY  : Project.productionUrl, status=LIVE, lastDeployAt
-  |- ERROR  : Deployment.status=ERROR, production LAMA tetap hidup
-  +- catat UsageEvent(DEPLOY)
+  |- start() via after()        klaim atomik QUEUED -> BUILDING
+  |    |- vercelProjectId: dari v0 projects.getById bila belum tersimpan
+  |    |- v0 deployments.create({projectId, chatId, versionId})
+  |    +- cocokkan ke id deployment Vercel (id / inspectorUrl / daftar deployment)
+  |
+  |- refresh()   dipicu polling UI (maks tiap 4 dtk), cron, atau webhook
+  |    |- baca GET /v13/deployments/:id — payload webhook TIDAK dipercaya
+  |    |- READY    : url = alias production <nama>.vercel.app,
+  |    |             Project.productionUrl, status=LIVE, lastDeployAt,
+  |    |             UsageEvent(DEPLOY, COMMITTED, 0 kredit)
+  |    |- ERROR    : Deployment ERROR + pesan jelas; production LAMA tetap hidup
+  |    +- > 20 mnt : ERROR (timeout) · tak terlihat di Vercel > 10 mnt : ERROR
+  |
+  +- QUEUED > 15 dtk tanpa dimulai -> dimulai ulang oleh polling / cron
 ```
 
-Custom domain:
+Keputusan yang perlu diketahui:
+
+| Keputusan                                   | Alasan                                                                                                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy **tidak** memakai `BuildJob`         | Deploy tidak memakai kredit dan tidak punya 10 langkah; tabel `deployment` sudah punya mesin status sendiri. `BuildJobKind.DEPLOY` belum dipakai. |
+| URL publik = alias production               | URL per-deployment pada project buatan v0 dilindungi login Vercel (302 ke SSO); aliasnya terbuka (200). Diverifikasi 2026-09-15.                  |
+| Rollback = terbitkan ulang versi lama       | Satu jalur untuk semua penerbitan; semua penjaga ikut berlaku.                                                                                    |
+| `currentVersionId` tidak diubah oleh deploy | Itu versi aktif di builder. Versi yang tayang = deployment `READY` dengan `readyAt` terbaru.                                                      |
+| Deploy dihitung saat berhasil               | Kegagalan vendor tidak boleh memakan jatah `maxDeploysPerDay` (penegakan di Fase 6).                                                              |
+
+Custom domain (`services/domain.service.ts`):
 
 ```
-User memasukkan "dinaskominfo.go.id"
-  |- validasi format, tolak subdomain vercel.app, cek belum dipakai project lain
-  |- daftarkan ke Vercel -> dapat rekaman DNS
-  |- simpan Domain(status=PENDING_DNS, dnsRecords)
-  |- UI menampilkan tabel rekaman + tombol salin per baris
-  |- user memasang di penyedia domainnya
-  |- verifyDomain (manual) + cron tiap 10 menit (otomatis, 24 jam)
-  +- ACTIVE -> HTTPS otomatis oleh Vercel
+User memasukkan "dinaskominfo.intanjayakab.go.id"
+  |- validasi format (nama host sah), tolak *.vercel.app & domain SaCMS
+  |- syarat: website sudah tayang (productionUrl + vercelProjectId)
+  |- cek belum dipakai project mana pun
+  |- POST /v10/projects/:id/domains  -> apexName, verified, verification[] (TXT)
+  |    409 -> "sedang terpasang di akun Vercel lain"
+  |- simpan Domain(PENDING_DNS, dnsRecords)
+  |- periksa:
+  |    |- belum verified      -> POST .../verify; tetap PENDING_DNS bila TXT belum ada
+  |    |- GET /v6/domains/:d/config -> misconfigured? PENDING_DNS
+  |    |- HTTPS belum menjawab -> VERIFYING
+  |    +- semuanya beres      -> ACTIVE
+  |- pemeriksaan: tombol "Periksa DNS" + cron tiap 10 menit selama 24 jam
+  +- lepas: hapus dari Vercel DULU; bila gagal, catatan tidak dihapus
 ```
 
-UI domain wajib memuat panduan bergambar untuk penyedia yang umum di Indonesia
-(Niagahoster, Rumahweb, Domainesia, Cloudflare). Tanpa itu, langkah ini menjadi tempat
-pengguna paling banyak menyerah.
+Rekaman DNS dihitung `lib/dns-records.ts`:
+
+- **Apex** → `A @ <IPv4 anjuran Vercel>`; **subdomain** → `CNAME <label> <CNAME anjuran>`.
+  Subdomain tidak pernah diberi `A @` — di zona `intanjayakab.go.id` itu akan membelokkan
+  situs induk.
+- Domain utama memakai `apexName` dari Vercel (Public Suffix List lengkap), dengan daftar
+  akhiran bertingkat Indonesia (`go.id`, `sch.id`, `co.id`, …) sebagai cadangan.
+- Nilai IPv4/CNAME diambil dari `recommendedIPv4` / `recommendedCNAME` peringkat 1, karena
+  anjuran Vercel berubah (per 2026-09-15: `216.198.79.1`, `76.76.21.21` peringkat 2).
+- Tantangan TXT dari Vercel ditampilkan dengan nama relatif terhadap zona.
+
+UI domain memuat panduan untuk penyedia yang umum di Indonesia (Niagahoster, Rumahweb,
+Domainesia, Cloudflare). Panduan tidak menanam nilai rekaman — pengguna selalu diarahkan
+ke tabel. Tangkapan layar per penyedia masih di [BACKLOG](./BACKLOG.md).
 
 ## 9.11 Kebijakan Biaya
 

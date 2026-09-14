@@ -5,6 +5,8 @@ import { mockEngine } from "@/lib/v0/mock";
 import {
   V0Error,
   type CreateWorkspaceInput,
+  type DeployInput,
+  type DeployResult,
   type GenerateInput,
   type GenerateResult,
   type V0Engine,
@@ -128,7 +130,25 @@ function asChatDetail(value: unknown): {
       "Respons v0 tidak berisi detail chat. Mode respons mungkin bukan 'sync'.",
     );
   }
-  return value as ReturnType<typeof asChatDetail>;
+
+  const chat = value as ReturnType<typeof asChatDetail> & { messages?: unknown };
+
+  // Kredit akun v0 habis TIDAK dikembalikan sebagai error HTTP. Terverifikasi
+  // 2026-09-15: respons 200 berisi chat tanpa versi, dengan pesan asisten
+  // bertipe `task-stopped-v1` / `out-of-credits`. Tanpa pemeriksaan ini
+  // kegagalannya tercatat sebagai "AI tidak menghasilkan website" — seolah
+  // salah pengguna, padahal saldo pemilik yang harus diisi.
+  if (
+    !chat.latestVersion &&
+    JSON.stringify(chat.messages ?? []).includes('"out-of-credits"')
+  ) {
+    throw new V0Error(
+      "CONFIG",
+      "Kredit akun v0 habis. Isi ulang saldo v0 agar pembuatan website dapat berjalan.",
+    );
+  }
+
+  return chat;
 }
 
 const realEngine: V0Engine = {
@@ -176,6 +196,31 @@ const realEngine: V0Engine = {
         demoUrl: version?.demoUrl ?? null,
         assistantText: chat.text ?? "",
         versionStatus: version?.status ?? "pending",
+      };
+    } catch (error) {
+      throw toV0Error(error);
+    }
+  },
+
+  async getVercelProjectId(v0ProjectId: string): Promise<string | null> {
+    try {
+      const project = await getClient().projects.getById({ projectId: v0ProjectId });
+      return project.vercelProjectId ?? null;
+    } catch (error) {
+      throw toV0Error(error);
+    }
+  },
+
+  async deploy(input: DeployInput): Promise<DeployResult> {
+    try {
+      const deployment = await getClient().deployments.create({
+        projectId: input.v0ProjectId,
+        chatId: input.chatId,
+        versionId: input.versionId,
+      });
+      return {
+        deploymentId: deployment.id,
+        inspectorUrl: deployment.inspectorUrl || null,
       };
     } catch (error) {
       throw toV0Error(error);

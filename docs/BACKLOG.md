@@ -21,7 +21,31 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 
 ## Belum Ditinjau
 
-_(kosong — isi saat ide muncul)_
+### Hapus project harus menurunkan website yang sudah tayang
+
+- **Ditemukan saat:** Fase 4, 2026-09-15
+- **Masalah nyata yang diselesaikan:** sejak Fase 4 penerbitan sungguhan, menghapus project
+  di SaCMS **tidak** menghapus project Vercel buatan v0 — website dan custom domain-nya tetap
+  bisa diakses. Dialog hapus project (Fase 2) menjanjikan sebaliknya.
+- **Perkiraan usaha:** 0,5–1 hari (putuskan: hapus project v0/Vercel saat purge, atau
+  lepas domain + nonaktifkan saat soft delete; perlu uji nyata)
+- **Target versi usulan:** **wajib sebelum go-live** (Fase 7) — atau lebih awal bila pemilik memutuskan
+
+### Tangkapan layar panduan DNS per penyedia
+
+- **Ditemukan saat:** Fase 4, 2026-09-15
+- **Masalah nyata yang diselesaikan:** docs/09 §9.10 meminta panduan bergambar; yang ada
+  baru langkah tertulis. Pengguna awam paling sering menyerah di langkah DNS.
+- **Perkiraan usaha:** 0,5 hari (butuh akun di tiap penyedia)
+- **Target versi usulan:** v1.1
+
+### Pengalihan otomatis www ↔ domain utama
+
+- **Ditemukan saat:** Fase 4, 2026-09-15
+- **Masalah nyata yang diselesaikan:** pengguna harus menambahkan `www.domain` dan `domain`
+  satu per satu; pengunjung yang mengetik varian lain tidak sampai.
+- **Perkiraan usaha:** 0,5 hari (Vercel mendukung `redirect` pada domain project)
+- **Target versi usulan:** v1.1
 
 ---
 

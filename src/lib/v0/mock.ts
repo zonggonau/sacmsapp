@@ -2,6 +2,8 @@ import { logger } from "@/lib/logger";
 import {
   V0Error,
   type CreateWorkspaceInput,
+  type DeployInput,
+  type DeployResult,
   type GenerateInput,
   type GenerateResult,
   type V0Engine,
@@ -116,6 +118,32 @@ export const mockEngine: V0Engine = {
       assistantText,
       versionStatus: "completed",
     };
+  },
+
+  async getVercelProjectId(v0ProjectId: string): Promise<string | null> {
+    return `prj_mock_${v0ProjectId
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(-12)
+      .toLowerCase()}`;
+  },
+
+  /**
+   * Deployment tiruan.
+   *
+   * Id-nya berbentuk id deployment Vercel tiruan yang MEMBAWA KEADAANNYA sendiri
+   * (waktu dibuat + hasil akhir), sehingga mesin Vercel tiruan dapat menjawab
+   * status secara konsisten dari proses mana pun — server Next, cron, atau skrip
+   * uji — tanpa penyimpanan bersama.
+   *
+   * Versi yang v0VersionId-nya memuat SIMULASI_DEPLOY_GAGAL berakhir ERROR, supaya
+   * jalur "deploy gagal, production lama tetap hidup" benar-benar teruji.
+   */
+  async deploy(input: DeployInput): Promise<DeployResult> {
+    await delay(STEP_DELAY_MS / 2);
+    const outcome = input.versionId.includes("SIMULASI_DEPLOY_GAGAL") ? "fail" : "ok";
+    const id = `dpl_mock_${Date.now()}_${outcome}_${Math.random().toString(36).slice(2, 8)}`;
+    logger.info("v0.mock.deploy", { deploymentId: id, outcome });
+    return { deploymentId: id, inspectorUrl: null };
   },
 };
 

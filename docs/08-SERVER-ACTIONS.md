@@ -345,18 +345,25 @@ Aturan form:
 
 ### `deploy.actions.ts`
 
-| Action               | Input                       | Efek                                      | Kuota    |
-| -------------------- | --------------------------- | ----------------------------------------- | -------- |
-| `deployProject`      | `{projectId, target}`       | Terbitkan ke preview / production         | 1 deploy |
-| `rollbackDeployment` | `{projectId, deploymentId}` | Kembalikan production ke versi sebelumnya | 1 deploy |
+| Action                | Input                       | Efek                                                           | Kuota    |
+| --------------------- | --------------------------- | -------------------------------------------------------------- | -------- |
+| `deployProject`       | `{projectId, versionId?}`   | Terbitkan versi aktif (atau versi terpilih) ke production      | 1 deploy |
+| `rollbackDeployment`  | `{projectId, deploymentId}` | Terbitkan ulang versi dari deployment yang pernah berhasil     | 1 deploy |
+| `getDeploymentStatus` | `{deploymentId}`            | Status untuk polling; tanpa rate limit & audit (seperti build) | –        |
+
+Tidak ada pilihan `target`: MVP hanya menerbitkan ke production, pratinjau disediakan
+builder lewat demo URL v0 ([ADR-008](./adr/ADR-008-terbit-lewat-v0-deployments.md)). Deploy
+dihitung saat **berhasil** saja.
 
 ### `domain.actions.ts`
 
-| Action         | Input                 | Efek                                 |
-| -------------- | --------------------- | ------------------------------------ |
-| `addDomain`    | `{projectId, domain}` | Daftarkan + kembalikan instruksi DNS |
-| `verifyDomain` | `{domainId}`          | Periksa DNS, aktifkan bila siap      |
-| `removeDomain` | `{domainId}`          | Lepas dari project                   |
+| Action         | actionName      | Input                 | Efek                                            |
+| -------------- | --------------- | --------------------- | ----------------------------------------------- |
+| `addDomain`    | `domain.add`    | `{projectId, domain}` | Pasang di Vercel + simpan rekaman DNS           |
+| `verifyDomain` | `domain.verify` | `{domainId}`          | Periksa TXT, DNS, dan HTTPS; aktifkan bila siap |
+| `removeDomain` | `domain.delete` | `{domainId}`          | Lepas dari Vercel, lalu hapus catatan           |
+
+`domain.delete` sengaja memakai akhiran `.delete` agar diblokir saat Super Admin menyamar.
 
 ### `account.actions.ts`
 

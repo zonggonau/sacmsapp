@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, Globe, Sparkles } from "lucide-react";
 
 import { ProjectQuickActions } from "@/components/features/project/project-quick-actions";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { getWebsiteType } from "@/config/website-types";
 import { requireUser } from "@/lib/auth-guard";
-import { tanggalWaktu } from "@/lib/format";
+import { tanggalWaktu, urlRingkas } from "@/lib/format";
 import { loadProject } from "@/lib/project-loader";
 
 export const metadata: Metadata = {
@@ -85,6 +85,38 @@ export default async function ProjectOverviewPage({
       </div>
 
       <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Globe className="text-muted-foreground size-4" />
+              Publikasi
+            </CardTitle>
+            <CardDescription>
+              {project.productionUrl
+                ? "Website Anda sedang tayang."
+                : "Website Anda belum diterbitkan."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {project.productionUrl ? (
+              <a
+                href={project.productionUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-primary-text inline-flex max-w-full items-center gap-1.5 font-mono text-xs underline-offset-4 hover:underline"
+              >
+                <span className="truncate">{urlRingkas(project.productionUrl)}</span>
+                <ExternalLink className="size-3 shrink-0" />
+              </a>
+            ) : null}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/projects/${project.id}/deployment`}>
+                {project.productionUrl ? "Kelola Deployment" : "Terbitkan Website"}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Detail</CardTitle>

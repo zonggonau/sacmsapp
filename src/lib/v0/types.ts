@@ -35,6 +35,20 @@ export interface CreateWorkspaceInput {
   instructions: string;
 }
 
+/** Menerbitkan satu versi — ADR-008. */
+export interface DeployInput {
+  v0ProjectId: string;
+  chatId: string;
+  versionId: string;
+}
+
+export interface DeployResult {
+  /** Pengenal deployment di sisi v0. Belum tentu sama dengan id deployment Vercel. */
+  deploymentId: string;
+  /** Tautan inspeksi Vercel (hanya bisa dibuka pemilik akun). */
+  inspectorUrl: string | null;
+}
+
 /**
  * Kelas kegagalan — docs/09 §9.8.
  *
@@ -87,4 +101,11 @@ export class V0Error extends Error {
 export interface V0Engine {
   createWorkspace(input: CreateWorkspaceInput): Promise<string>;
   generate(input: GenerateInput): Promise<GenerateResult>;
+  /**
+   * Project Vercel yang dibuat v0 untuk ruang kerja ini. v0 membuatnya saat
+   * ruang kerja dibuat (terverifikasi), jadi nilainya tersedia sebelum deploy.
+   */
+  getVercelProjectId(v0ProjectId: string): Promise<string | null>;
+  /** Menerbitkan versi ke production — ADR-008. Status build dibaca dari Vercel. */
+  deploy(input: DeployInput): Promise<DeployResult>;
 }
