@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, ShieldCheck, User } from "lucide-react";
+import { FolderKanban, LayoutDashboard, ShieldCheck, User } from "lucide-react";
 
 export interface NavItem {
   label: string;
@@ -12,12 +12,13 @@ export interface NavItem {
 /**
  * Navigasi utama.
  *
- * Hanya memuat rute yang BENAR-BENAR sudah ada. "Project" masuk di Fase 2 dan
- * "Admin" di Fase 5 — menampilkannya sekarang hanya menghasilkan tautan mati.
+ * Hanya memuat rute yang BENAR-BENAR sudah ada. "Admin" masuk di Fase 5 —
+ * menampilkannya sekarang hanya menghasilkan tautan mati.
  * docs/13-ROADMAP-DAN-FASE.md
  */
 export const MAIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
+  { label: "Project", href: "/projects", icon: FolderKanban },
 ];
 
 export const ACCOUNT_NAV: NavItem[] = [

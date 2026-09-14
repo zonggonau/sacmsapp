@@ -64,6 +64,18 @@ Aturan bentuk:
 
 ## 8.3 Klien Action & Rantai Middleware
 
+> **Kode di bawah adalah rancangan sasaran.** Implementasi nyata di
+> `src/lib/safe-action.ts` sudah memuat langkah 1–4, 6, dan 7. Tiga selisih yang
+> disengaja:
+>
+> 1. **Kuota (langkah 5) belum ada** — masuk di Fase 6, pada titik yang sudah ditandai
+>    komentar di berkas tersebut ([11 §11.4](./11-QUOTA-DAN-BILLING.md)).
+> 2. Field metadata memakai `.optional()`, **bukan** `.default()`. next-safe-action
+>    mengetik argumen `.metadata()` dengan tipe _keluaran_ skema, sehingga `.default()`
+>    justru mewajibkan field itu diisi di setiap pemanggilan.
+> 3. Ada **`publicActionClient`** terpisah untuk aksi tanpa sesi (masuk, daftar, lupa
+>    sandi) — rate limit dan audit tetap berlaku, tetapi pemeriksaan sesi dilewati.
+
 ```ts
 // src/lib/safe-action.ts
 import { createSafeActionClient, DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action";
@@ -304,13 +316,22 @@ Aturan form:
 
 ### `project.actions.ts`
 
-| Action             | Input                         | Efek                                            | Kuota                |
-| ------------------ | ----------------------------- | ----------------------------------------------- | -------------------- |
-| `createProject`    | `{name, websiteType, prompt}` | Project + BuildJob + 10 step, jalankan pipeline | 1 project + 1 kredit |
-| `renameProject`    | `{projectId, name}`           | Ubah nama & slug                                | –                    |
-| `archiveProject`   | `{projectId}`                 | `status=ARCHIVED`                               | –                    |
-| `deleteProject`    | `{projectId, confirmName}`    | Soft delete (ketik nama untuk konfirmasi)       | –                    |
-| `duplicateProject` | `{projectId}`                 | Salin sebagai draf baru                         | 1 project            |
+| Action             | Input                          | Efek                                            | Kuota                |
+| ------------------ | ------------------------------ | ----------------------------------------------- | -------------------- |
+| `createProject`    | `{name?, websiteType, prompt}` | Project + BuildJob + 10 step, jalankan pipeline | 1 project + 1 kredit |
+| `renameProject`    | `{projectId, name}`            | Ubah nama & slug                                | –                    |
+| `archiveProject`   | `{projectId}`                  | `status=ARCHIVED`                               | –                    |
+| `deleteProject`    | `{projectId, confirmName}`     | Soft delete (ketik nama untuk konfirmasi)       | –                    |
+| `duplicateProject` | `{projectId}`                  | Salin sebagai draf baru                         | 1 project            |
+
+> **`name` opsional.** Prinsip produk [01 §1.7](./01-VISI-DAN-SCOPE.md) berbunyi "kalau
+> sebuah kebutuhan bisa diselesaikan dengan prompt, jangan buat form". Nama diturunkan
+> dari jenis website dan tanggal bila kosong (mis. "Website Pemerintahan — 14 Sep 2026"),
+> dan bisa diganti kapan saja di pengaturan project. Satu field lebih sedikit di layar
+> pertama berarti lebih banyak pengguna menyelesaikannya.
+>
+> Selama Fase 2 `createProject` **belum** membuat BuildJob — AI masuk di Fase 3. Action
+> mengarahkan ke halaman ringkasan project, bukan ke builder.
 
 ### `builder.actions.ts`
 

@@ -1,0 +1,145 @@
+"use client";
+
+import { useState } from "react";
+import { useAction } from "next-safe-action/hooks";
+import { Loader2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+
+import { createProject } from "@/actions/project.actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { WEBSITE_TYPES, getWebsiteType } from "@/config/website-types";
+import { formAction } from "@/lib/form-action";
+import { cn } from "@/lib/utils";
+import type { WebsiteType } from "@/types/db";
+
+/**
+ * SATU komponen form, dipakai oleh halaman penuh `/projects/baru` DAN dialog
+ * `@modal/(.)baru`. Menduplikasi form ke dua tempat adalah cara pasti membuat
+ * keduanya berbeda perlahan-lahan (docs/05 §5.4).
+ */
+export function CreateProjectForm({ compact = false }: { compact?: boolean }) {
+  const [selected, setSelected] = useState<WebsiteType>("GOVERNMENT");
+
+  const { execute, result, isPending } = useAction(createProject, {
+    onError: ({ error }) => {
+      if (error.serverError) toast.error(error.serverError);
+    },
+  });
+
+  const errors = result.validationErrors;
+  const active = getWebsiteType(selected);
+
+  return (
+    <form action={formAction(execute)} className="space-y-6">
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">Jenis website</legend>
+
+        <div
+          className={cn(
+            "grid gap-2",
+            compact ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-4",
+          )}
+        >
+          {WEBSITE_TYPES.map((type) => {
+            const Icon = type.icon;
+            return (
+              <label
+                key={type.value}
+                className={cn(
+                  "group relative flex cursor-pointer flex-col gap-1.5 rounded-md border p-3",
+                  "border-border hover:border-border-strong hover:bg-accent transition-colors",
+                  "has-checked:border-primary has-checked:bg-primary-subtle",
+                  "focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="websiteType"
+                  value={type.value}
+                  checked={selected === type.value}
+                  onChange={() => setSelected(type.value)}
+                  className="sr-only"
+                />
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0",
+                    selected === type.value
+                      ? "text-primary-text"
+                      : "text-muted-foreground",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-xs font-medium",
+                    selected === type.value && "text-primary-text",
+                  )}
+                >
+                  {type.label}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+
+        <p className="text-muted-foreground text-xs">{active.description}</p>
+      </fieldset>
+
+      <div className="space-y-2">
+        <Label htmlFor="prompt">Ceritakan website yang Anda inginkan</Label>
+        <Textarea
+          id="prompt"
+          name="prompt"
+          rows={compact ? 5 : 7}
+          placeholder={active.placeholder}
+          required
+          aria-invalid={Boolean(errors?.prompt)}
+          aria-describedby="prompt-error prompt-hint"
+        />
+        {errors?.prompt?._errors?.[0] ? (
+          <p id="prompt-error" className="text-destructive text-sm">
+            {errors.prompt._errors[0]}
+          </p>
+        ) : null}
+        <p id="prompt-hint" className="text-muted-foreground text-xs">
+          Semakin jelas halaman dan isi yang Anda sebut, semakin tepat hasilnya.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="name">
+          Nama project{" "}
+          <span className="text-muted-foreground font-normal">(opsional)</span>
+        </Label>
+        <Input
+          id="name"
+          name="name"
+          placeholder={`Kosongkan untuk "Website ${active.label} — hari ini"`}
+          aria-invalid={Boolean(errors?.name)}
+          aria-describedby="name-error"
+        />
+        {errors?.name?._errors?.[0] ? (
+          <p id="name-error" className="text-destructive text-sm">
+            {errors.name._errors[0]}
+          </p>
+        ) : null}
+      </div>
+
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Membuat…
+          </>
+        ) : (
+          <>
+            <Sparkles className="size-4" />
+            Buat Project
+          </>
+        )}
+      </Button>
+    </form>
+  );
+}

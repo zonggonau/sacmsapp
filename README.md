@@ -10,10 +10,13 @@ Prompt → Generate → Preview → Edit → Deploy → Live
 
 ## Status
 
-**Tahap: Fase 1 kode lengkap.** Autentikasi berjalan terhadap database sungguhan —
-pendaftaran, penolakan naik peran, blokir login sebelum konfirmasi email, dan rate limit
-semuanya sudah diuji dan lulus. Tiga butir Definition of Done masih menunggu konfigurasi
-(domain pengirim Resend, kredensial Google OAuth, pemeriksaan visual).
+**Tahap: Fase 2 selesai.** Autentikasi dan siklus hidup project berjalan terhadap
+database sungguhan. Yang sudah diuji dan lulus: penolakan naik peran saat mendaftar,
+blokir login sebelum konfirmasi email, rate limit, isolasi data antar-pengguna,
+konfirmasi hapus yang dicocokkan di server, filter dan pencarian, duplikasi project.
+
+Tiga butir Definition of Done Fase 1 masih menunggu konfigurasi (domain pengirim Resend,
+kredensial Google OAuth, pemeriksaan visual). AI belum masuk — itu Fase 3.
 
 Rincian apa yang sudah terbukti dan apa yang belum:
 [`docs/00-INDEX.md`](./docs/00-INDEX.md).
@@ -21,8 +24,8 @@ Rincian apa yang sudah terbukti dan apa yang belum:
 ```
 v  FASE 0 - Fondasi & Setup        [ SELESAI ]
 v  FASE 1 - Auth & App Shell       [ KODE LENGKAP ]
->  FASE 2 - Project CRUD           [ SIAP DIMULAI ]
-   FASE 3 - AI Builder Core        [ terkunci ]
+v  FASE 2 - Project CRUD           [ SELESAI ]
+>  FASE 3 - AI Builder Core        [ SIAP DIMULAI ]
    FASE 4 - Deploy & Domain        [ terkunci ]
    FASE 5 - Super Admin            [ terkunci ]
    FASE 6 - Kuota & Paket          [ terkunci ]

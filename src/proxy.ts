@@ -47,7 +47,9 @@ export function proxy(req: NextRequest) {
   // Halaman terlindungi tanpa cookie -> ke halaman masuk, ingat tujuannya
   if (!hasSessionCookie) {
     const url = new URL("/masuk", req.url);
-    url.searchParams.set("lanjut", pathname);
+    // Sertakan query string: tanpa ini pengguna yang membuka tautan berfilter
+    // (mis. /projects?q=intan&status=LIVE) kehilangan filternya setelah masuk.
+    url.searchParams.set("lanjut", pathname + req.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

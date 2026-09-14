@@ -31,7 +31,13 @@ import * as auditService from "@/services/audit.service";
 /** Hanya untuk aman dari tautan terbuka (open redirect). */
 function safeRedirectPath(value: string | undefined): string {
   if (!value) return "/dashboard";
-  if (!value.startsWith("/") || value.startsWith("//")) return "/dashboard";
+
+  // Harus jalur relatif terhadap situs ini. Yang ditolak:
+  // - "//jahat.com" dan "/\jahat.com" -> sebagian peramban memperlakukannya
+  //   sebagai protocol-relative dan keluar dari domain kita (open redirect)
+  // - "https://..." -> jelas tujuan luar
+  if (!/^\/(?![/\\])/.test(value)) return "/dashboard";
+
   return value;
 }
 

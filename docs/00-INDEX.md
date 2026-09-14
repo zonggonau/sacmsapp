@@ -65,8 +65,8 @@
 
 ```
 ✓ FASE 0 — Fondasi & Setup        [ SELESAI — database aktif, seed terisi ]
-▶ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
-  FASE 2 — Project CRUD           [ terkunci ]
+✓ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
+▶ FASE 2 — Project CRUD           [ SELESAI — 22 asertasi lulus ]
   FASE 3 — AI Builder Core        [ terkunci ]
   FASE 4 — Deploy & Domain        [ terkunci ]
   FASE 5 — Super Admin            [ terkunci ]

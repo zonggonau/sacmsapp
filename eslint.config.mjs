@@ -64,8 +64,12 @@ const eslintConfig = [
     files: ["src/lib/logger.ts"],
     rules: { "no-console": "off" },
   },
+  /**
+   * db.ts mengimpor client hasil generate; types/db.ts me-re-export tipe dan
+   * enum-nya. Keduanya adalah satu-satunya pintu ke folder generated.
+   */
   {
-    files: ["src/lib/db.ts"],
+    files: ["src/lib/db.ts", "src/types/db.ts"],
     rules: { "no-restricted-imports": "off" },
   },
 ];

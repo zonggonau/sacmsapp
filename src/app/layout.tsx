@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          {/* NuqsAdapter wajib: state filter/pencarian hidup di URL, bukan
+              useState — docs/05 §5.7 */}
+          <NuqsAdapter>{children}</NuqsAdapter>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
