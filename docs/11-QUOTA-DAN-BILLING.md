@@ -75,6 +75,11 @@ Aturan wajib:
 4. Reservasi terjadi di middleware Server Action ([08 §8.3](./08-SERVER-ACTIONS.md)),
    bukan tersebar di masing-masing service.
 
+5. **Refund tidak pernah membuat `creditsUsed` negatif.** Penghitung bisa sudah direset sejak
+   reservasi dibuat; mengurangi begitu saja memberi pengguna kuota melebihi paketnya.
+6. **Reservasi yatim** (job-nya terhapus) ikut dikembalikan cron penyapu setelah 30 menit,
+   karena refund per-job tidak akan pernah menemukannya.
+
 ## 11.5 Periode & Reset
 
 - Periode bersifat **bergulir per pengguna**, dihitung dari `User.periodStartedAt`.

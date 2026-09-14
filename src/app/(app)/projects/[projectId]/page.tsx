@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 import { ProjectQuickActions } from "@/components/features/project/project-quick-actions";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,18 +58,28 @@ export default async function ProjectOverviewPage({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="text-primary-text size-4" />
-              Bangun website
+              AI Builder
             </CardTitle>
             <CardDescription>
-              Pembuatan website oleh AI masuk di tahap pengembangan berikutnya.
+              {project.status === "BUILDING"
+                ? "Website sedang dibangun di ruang kerja builder."
+                : project.previewUrl
+                  ? "Website Anda sudah dibuat. Lanjutkan penyempurnaan atau tinjau tampilan di builder."
+                  : "Mulai pembuatan website otomatis dari permintaan Anda."}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-3">
-            <Button disabled>
-              <Sparkles className="size-4" />
-              Bangun Sekarang
+            <Button asChild>
+              <Link href={`/projects/${project.id}/builder`}>
+                <Sparkles className="size-4" />
+                {project.status === "BUILDING"
+                  ? "Lihat Kemajuan"
+                  : project.previewUrl
+                    ? "Buka Builder"
+                    : "Mulai Bangun Website"}
+                <ArrowRight className="size-3.5" />
+              </Link>
             </Button>
-            <Badge variant="neutral">Tersedia di Fase 3</Badge>
           </CardContent>
         </Card>
       </div>

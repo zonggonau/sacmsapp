@@ -12,14 +12,23 @@ import { logger } from "@/lib/logger";
  */
 
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM ?? "SaCMS <noreply@sacms.id>";
+const from =
+  process.env.EMAIL_FROM ??
+  process.env.RESEND_FROM ??
+  (process.env.NODE_ENV === "development"
+    ? "SaCMS <onboarding@resend.dev>"
+    : "SaCMS <noreply@sacms.id>");
 const resend = apiKey ? new Resend(apiKey) : null;
+
+const isSandboxSender = from.includes("onboarding@resend.dev");
+const devOwnerEmail =
+  process.env.SEED_SUPERADMIN_EMAIL ?? "cristoperzonggonau@gmail.com";
 
 interface SendArgs {
   to: string;
   subject: string;
   html: string;
-  /** Ditampilkan di log saat mode tiruan, supaya tautan bisa disalin manual. */
+  /** Ditampilkan di log saat mode tiruan atau saat gagal, supaya tautan bisa disalin manual. */
   devHint?: string;
 }
 
@@ -33,18 +42,56 @@ async function send({ to, subject, html, devHint }: SendArgs) {
     return;
   }
 
+  // Di mode development dengan Resend Sandbox (onboarding@resend.dev), Resend hanya
+  // mengizinkan pengiriman ke email pemilik akun. Jika dikirim ke email lain, teruskan
+  // ke email pemilik pengembang agar tidak terkena error 403 dan email tetap terkirim.
+  let actualRecipient = to;
+  let actualSubject = subject;
+  if (
+    process.env.NODE_ENV === "development" &&
+    isSandboxSender &&
+    to.toLowerCase() !== devOwnerEmail.toLowerCase()
+  ) {
+    actualRecipient = devOwnerEmail;
+    actualSubject = `[DEV untuk: ${to}] ${subject}`;
+    logger.info("mail.dev_sandbox_forward", {
+      originalRecipient: to,
+      forwardedTo: devOwnerEmail,
+      note: "Sandbox Resend hanya mengizinkan pengiriman ke email akun terdaftar. Email diteruskan ke email pengembang.",
+    });
+  }
+
   try {
-    const { error } = await resend.emails.send({ from, to, subject, html });
+    const { error } = await resend.emails.send({
+      from,
+      to: actualRecipient,
+      subject: actualSubject,
+      html,
+    });
     if (error) {
       logger.error("mail.send_failed", { subject, reason: error.message });
+      if (devHint) {
+        logger.info("mail.dev_link", {
+          to,
+          hint: "Salin tautan ini untuk verifikasi atau reset sandi:",
+          url: devHint,
+        });
+      }
       return;
     }
-    logger.info("mail.sent", { subject });
+    logger.info("mail.sent", { subject: actualSubject, to: actualRecipient });
   } catch (error) {
     logger.error("mail.send_threw", {
       subject,
       reason: error instanceof Error ? error.message : "tidak diketahui",
     });
+    if (devHint) {
+      logger.info("mail.dev_link", {
+        to,
+        hint: "Salin tautan ini untuk verifikasi atau reset sandi:",
+        url: devHint,
+      });
+    }
   }
 }
 
@@ -52,6 +99,15 @@ async function send({ to, subject, html, devHint }: SendArgs) {
  *  Template — hitam bold + oranye, sesuai docs/04-DESIGN-SYSTEM.md
  *  Email memakai gaya inline karena klien email mengabaikan <style>.
  * ============================================================ */
+
+/** Nama project berasal dari input pengguna dan masuk ke badan HTML email. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function layout(opts: {
   heading: string;
@@ -116,6 +172,35 @@ export async function sendVerificationEmail(args: {
       ctaUrl: args.url,
       footer:
         "Tautan ini berlaku 1 jam. Kalau Anda tidak mendaftar di SaCMS, abaikan saja email ini.",
+    }),
+  });
+}
+
+/**
+ * Dikirim setelah build berhasil — docs/09-AI-BUILDER-PIPELINE.md §9.9.
+ *
+ * Inilah yang membuat kalimat "Anda boleh menutup halaman ini" di layar progres
+ * menjadi janji yang ditepati, bukan sekadar penenang.
+ */
+export async function sendWebsiteReadyEmail(args: {
+  to: string;
+  name: string;
+  projectName: string;
+  url: string;
+}) {
+  const firstName = args.name.split(" ")[0] ?? args.name;
+
+  await send({
+    to: args.to,
+    subject: `"${args.projectName}" sudah siap — SaCMS`,
+    devHint: args.url,
+    html: layout({
+      heading: `${firstName}, website Anda sudah siap`,
+      body: `"${escapeHtml(args.projectName)}" selesai dibangun. Buka pratinjaunya, lanjutkan menyempurnakannya lewat prompt, atau terbitkan ke internet.`,
+      ctaLabel: "Lihat Website Saya",
+      ctaUrl: args.url,
+      footer:
+        "Anda menerima email ini karena membuat website di SaCMS. Pengaturan notifikasi ada di halaman akun Anda.",
     }),
   });
 }

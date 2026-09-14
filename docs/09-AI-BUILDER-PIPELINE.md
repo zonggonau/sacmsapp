@@ -139,13 +139,9 @@ export async function run(jobId: string): Promise<void> {
     const version = await step(job, "PERSIST", () => persistVersion(job, gen));
     await step(job, "PREVIEW", () => waitForPreview(version.demoUrl));
 
-    if (job.kind === "DEPLOY" || job.project.status === "LIVE") {
-      await step(job, "DEPLOY", () =>
-        deployService.toProduction(job.projectId, version.id),
-      );
-    } else {
-      await skip(job, "DEPLOY");
-    }
+    // Generate TIDAK PERNAH menerbitkan ke production, termasuk untuk website
+    // yang sudah LIVE. Penerbitan adalah tindakan sadar lewat tombol Terbitkan (Fase 4).
+    await skip(job, "DEPLOY");
 
     await step(job, "FINALIZE", () => finalize(job, version));
     await succeed(job);
@@ -299,15 +295,17 @@ Aturan ACL:
 
 ## 9.8 Klasifikasi Kegagalan & Percobaan Ulang
 
-| Gejala vendor                    | Kelas       | Tindakan                                                              |
-| -------------------------------- | ----------- | --------------------------------------------------------------------- |
-| Timeout, 502, 503, 504           | Sementara   | Retry (2s, 8s, 20s + jitter). Habis → `FAILED` + refund               |
-| 429 rate limit                   | Sementara   | Kembali ke `QUEUED`, jadwalkan ulang, **tidak** memakai jatah attempt |
-| 401, 403                         | Konfigurasi | Langsung `FAILED`. **Peringatkan Super Admin** — kunci API bermasalah |
-| 400 prompt ditolak               | Permanen    | `FAILED` + refund. Saran ke user: "coba tulis ulang lebih spesifik"   |
-| Sukses tapi tanpa versi/demo URL | Permanen    | `FAILED` + refund. Log lengkap untuk admin                            |
-| Build Vercel gagal               | Permanen    | `FAILED` + refund. **Production tidak berubah**                       |
-| Job melewati `timeoutAt`         | Sementara   | Cron penyapu → `FAILED` + refund + audit                              |
+| Gejala vendor                                                   | Kelas       | Tindakan                                                                                                                                                 |
+| --------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Timeout, 502, 503, 504                                          | Sementara   | Retry 3x di dalam proses (2s, 8s, 20s + jitter). Habis → **langsung** `FAILED` + refund (tidak diantre ulang — antrean tanpa penjalan membuat job macet) |
+| 429 rate limit                                                  | Sementara   | Kembali ke `QUEUED`, dijalankan ulang cron `run-queued`. Dibatasi `maxAttempts` (3 kali jalan) lalu `FAILED` + refund, supaya tidak berputar selamanya   |
+| 401, 403                                                        | Konfigurasi | Langsung `FAILED`. **Peringatkan Super Admin** — kunci API bermasalah                                                                                    |
+| 400 prompt ditolak                                              | Permanen    | `FAILED` + refund. Saran ke user: "coba tulis ulang lebih spesifik"                                                                                      |
+| Sukses tapi tanpa versi/demo URL                                | Permanen    | `FAILED` + refund. Log lengkap untuk admin                                                                                                               |
+| Build Vercel gagal                                              | Permanen    | `FAILED` + refund. **Production tidak berubah**                                                                                                          |
+| Job melewati `timeoutAt`, atau `QUEUED` >15 menit tanpa dimulai | Sementara   | Cron penyapu → `FAILED` + refund                                                                                                                         |
+| Dua jalur menjalankan job yang sama (after, polling, cron)      | —           | Klaim atomik `QUEUED→RUNNING`; hanya satu yang jalan                                                                                                     |
+| Pengguna membatalkan saat job berjalan                          | —           | Orkestrator berhenti di langkah berikutnya, hasilnya dibuang, tidak ditandai `SUCCEEDED`                                                                 |
 
 Backoff wajib memakai _jitter_ (acak ±20%). Tanpa jitter, sepuluh job yang gagal
 bersamaan akan mencoba ulang bersamaan dan menabrak rate limit lagi.

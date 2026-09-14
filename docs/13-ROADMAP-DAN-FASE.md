@@ -146,7 +146,7 @@ Pekerjaan:
 12. `PreviewFrame` — iframe sandbox + tombol desktop/tablet/ponsel
 13. Riwayat versi + `restoreVersion`
 14. Email "website Anda sudah siap"
-15. Cron penyapu job nyangkut
+15. Cron penyapu job nyangkut (RUNNING lewat batas waktu **dan** QUEUED yang tak pernah dimulai) + cron `run-queued` + klaim job atomik
 
 **Definition of Done:**
 

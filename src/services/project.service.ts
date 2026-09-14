@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import type { CreateProjectInput } from "@/schemas/project.schema";
 import type { ProjectStatus, WebsiteType } from "@/types/db";
+import * as buildService from "@/services/build.service";
 
 /**
  * Logika bisnis project — docs/02 §2.2 lapisan 4.
@@ -31,6 +32,7 @@ export interface ProjectListItem {
 export interface ProjectDetail extends ProjectListItem {
   description: string | null;
   initialPrompt: string;
+  v0ChatId: string | null;
   updatedAt: Date;
   lastBuildAt: Date | null;
   versionCount: number;
@@ -104,6 +106,7 @@ export async function getForUser(
       ...LIST_SELECT,
       description: true,
       initialPrompt: true,
+      v0ChatId: true,
       updatedAt: true,
       lastBuildAt: true,
       _count: { select: { versions: true } },
@@ -124,6 +127,42 @@ export async function getStats(userId: string) {
   ]);
 
   return { total, live, building };
+}
+
+/**
+ * Riwayat pesan AI sebuah project.
+ *
+ * Kepemilikan ditegakkan lewat relasi `project: { userId }` di dalam where —
+ * bukan dengan mengambil dulu lalu membandingkan.
+ */
+export async function listMessages(projectId: string, userId: string) {
+  return db.aiMessage.findMany({
+    where: { projectId, project: { userId, deletedAt: null } },
+    select: { id: true, role: true, content: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+    take: 200,
+  });
+}
+
+export async function listVersions(projectId: string, userId: string) {
+  const project = await db.project.findFirst({
+    where: { id: projectId, userId, deletedAt: null },
+    select: { currentVersionId: true },
+  });
+
+  if (!project) return [];
+
+  const versions = await db.projectVersion.findMany({
+    where: { projectId },
+    select: { id: true, number: true, summary: true, demoUrl: true, createdAt: true },
+    orderBy: { number: "desc" },
+    take: 50,
+  });
+
+  return versions.map((v) => ({
+    ...v,
+    isCurrent: v.id === project.currentVersionId,
+  }));
 }
 
 export async function listRecent(userId: string, limit = 3) {
@@ -210,6 +249,31 @@ export async function create({
     },
     select: LIST_SELECT,
   });
+}
+
+/**
+ * Membuat project baru sekaligus mendaftarkan job pembuatan awal (Fase 3).
+ *
+ * Mengembalikan objek project dan id job sehingga pemanggil dapat
+ * menjadwalkan eksekusi pipeline di background via after().
+ */
+export async function createWithInitialBuild({
+  userId,
+  input,
+}: {
+  userId: string;
+  input: CreateProjectInput;
+}): Promise<{ project: ProjectListItem; job: { id: string } }> {
+  const project = await create({ userId, input });
+
+  const { jobId } = await buildService.createJob({
+    projectId: project.id,
+    userId,
+    kind: "INITIAL_GENERATE",
+    prompt: input.prompt,
+  });
+
+  return { project, job: { id: jobId } };
 }
 
 export async function rename({

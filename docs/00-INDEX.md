@@ -66,9 +66,9 @@
 ```
 ✓ FASE 0 — Fondasi & Setup        [ SELESAI — database aktif, seed terisi ]
 ✓ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
-▶ FASE 2 — Project CRUD           [ SELESAI — 22 asertasi lulus ]
-  FASE 3 — AI Builder Core        [ terkunci ]
-  FASE 4 — Deploy & Domain        [ terkunci ]
+✓ FASE 2 — Project CRUD           [ SELESAI — 22 asertasi lulus ]
+✓ FASE 3 — AI Builder Core        [ SELESAI — 62 asertasi DoD + uji after() di server nyata ]
+▶ FASE 4 — Deploy & Domain        [ SEBAGIAN — kode ada, BELUM di-commit & BELUM diverifikasi ]
   FASE 5 — Super Admin            [ terkunci ]
   FASE 6 — Quota & Billing        [ terkunci ]
   FASE 7 — Hardening & Go-Live    [ terkunci ]
@@ -81,15 +81,30 @@
 
 Diuji langsung terhadap database, bukan hanya lolos kompilasi:
 
-| Uji                                       | Hasil                                                        |
-| ----------------------------------------- | ------------------------------------------------------------ |
-| Migrasi + seed                            | 15 tabel dibuat; 3 paket, 5 pengaturan sistem, 1 super admin |
-| `/dashboard` tanpa sesi                   | 307 ke `/masuk?lanjut=%2Fdashboard`                          |
-| Daftar menyuntikkan `role: "SUPER_ADMIN"` | **Ditolak** — `FIELD_NOT_ALLOWED` (proteksi `input: false`)  |
-| Daftar normal                             | Peran `USER`, paket `free` otomatis, tanpa sesi              |
-| Masuk sebelum email dikonfirmasi          | Ditolak `EMAIL_NOT_VERIFIED`                                 |
-| Rate limit masuk                          | Percobaan 1–5 lolos, ke-6 diblokir `429`                     |
-| Audit service                             | Menulis baris ke `audit_log`                                 |
+| Uji                                       | Hasil                                                                             |
+| ----------------------------------------- | --------------------------------------------------------------------------------- |
+| Migrasi + seed                            | 15 tabel dibuat; 3 paket, 5 pengaturan sistem, 1 super admin                      |
+| `/dashboard` tanpa sesi                   | 307 ke `/masuk?lanjut=%2Fdashboard`                                               |
+| Daftar menyuntikkan `role: "SUPER_ADMIN"` | **Ditolak** — `FIELD_NOT_ALLOWED` (proteksi `input: false`)                       |
+| Daftar normal                             | Peran `USER`, paket `free` otomatis, tanpa sesi                                   |
+| Masuk sebelum email dikonfirmasi          | Ditolak `EMAIL_NOT_VERIFIED`                                                      |
+| Rate limit masuk                          | Percobaan 1–5 lolos, ke-6 diblokir `429`                                          |
+| Audit service                             | Menulis baris ke `audit_log`                                                      |
+| Pipeline AI Builder (`V0_MOCK=true`)      | 10 langkah tercatat, bobot progres akurat, status `READY`, pratinjau data URI     |
+| Chat lanjutan & versi baru                | Chat v0 sama digunakan ulang, versi 2 terbentuk, riwayat pesan tersimpan          |
+| Pulihkan versi (`restoreVersion`)         | Versi lama dijadikan aktif tanpa deploy otomatis                                  |
+| Pembatalan build (`cancelBuild`)          | Status `CANCELLED`, sisa langkah dilewati, kredit otomatis di-refund              |
+| Simulasi kegagalan v0 & retry             | Ditolak -> `FAILED` + pesan Indonesia + refund; retry membuat job baru            |
+| Cron penyapu job nyangkut                 | Job lewat `timeoutAt` disapu -> `FAILED` (`AI_TIMEOUT`) + refund                  |
+| Proteksi injeksi prompt                   | Pembatas pengguna & karakter tak terlihat dibuang, pola berbahaya ditandai        |
+| Isolasi SDK vendor                        | `v0-sdk` hanya diimpor di `src/lib/v0/client.ts`, diverifikasi linter             |
+| Klaim job atomik                          | Tiga run() bersamaan pada satu job: hanya satu versi, attempt=1                   |
+| Batal saat job berjalan                   | Tetap CANCELLED, hasil dibuang, kredit kembali                                    |
+| Kegagalan sementara                       | Retry 3x dengan backoff, lalu FAILED + refund (tidak macet QUEUED)                |
+| Rate limit vendor                         | Antre ulang, dibatasi 3 kali jalan, lalu FAILED + refund                          |
+| Edit, batal, gagal pada situs LIVE        | Status LIVE dipertahankan, tidak ada deploy otomatis                              |
+| Job QUEUED tak pernah dimulai             | Dipicu polling di server Next sungguhan (SUCCEEDED); disapu cron setelah 15 menit |
+| Id model per paket                        | Semua id valid (v0-mini sampai v0-max-fast), migrasi data diterapkan              |
 
 ### Yang belum terverifikasi
 
@@ -98,6 +113,8 @@ Diuji langsung terhadap database, bukan hanya lolos kompilasi:
 | Email konfirmasi benar-benar sampai            | Domain pengirim `sacms.id` belum diverifikasi di Resend (403). Untuk development, set `EMAIL_FROM="SaCMS <onboarding@resend.dev>"` |
 | Login Google                                   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi                                                                            |
 | Tampilan visual (nav aktif oranye, dark/light) | Belum diperiksa dengan mata di peramban                                                                                            |
+| Generate dengan v0 sungguhan                   | Semua uji memakai mesin tiruan (V0_MOCK=true) agar tidak memakai kredit AI                                                         |
+| Fase 4 (deploy, domain, webhook)               | Kode di working tree belum di-commit; deployment sukses sebelumnya berasal dari Vercel client mode tiruan                          |
 
 ### Menunggu kredensial pemilik
 

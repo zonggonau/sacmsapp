@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 import { authActionClient } from "@/lib/safe-action";
 import {
@@ -10,6 +11,7 @@ import {
   projectIdSchema,
   renameProjectSchema,
 } from "@/schemas/project.schema";
+import * as buildService from "@/services/build.service";
 import * as projectService from "@/services/project.service";
 
 /**
@@ -32,16 +34,16 @@ export const createProject = authActionClient
   })
   .inputSchema(createProjectSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const project = await projectService.create({
+    const { project, job } = await projectService.createWithInitialBuild({
       userId: ctx.user.id,
       input: parsedInput,
     });
 
-    revalidateLists();
+    // Pipeline berjalan di background setelah respons terkirim (docs/08 §8.2)
+    after(() => buildService.run(job.id));
 
-    // Fase 3 akan mengarahkan ke /builder setelah pipeline dijalankan.
-    // Selama Fase 2 belum ada AI, jadi tujuannya halaman ringkasan.
-    redirect(`/projects/${project.id}`);
+    revalidateLists();
+    redirect(`/projects/${project.id}/builder`);
   });
 
 export const renameProject = authActionClient

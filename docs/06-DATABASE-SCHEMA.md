@@ -260,7 +260,7 @@ model Plan {
   monthlyCredits    Int  @default(30)
   maxCustomDomains  Int  @default(0)
   maxDeploysPerDay  Int  @default(3)
-  allowedModels     String[] @default(["v0-1.5-sm"])
+  allowedModels     String[] @default(["v0-mini"])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

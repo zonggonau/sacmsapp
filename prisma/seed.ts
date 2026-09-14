@@ -8,6 +8,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "better-auth/crypto";
 
+import { DEFAULT_V0_MODEL, PLAN_MODELS } from "../src/config/ai-models";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
@@ -34,7 +35,8 @@ const PLANS = [
     monthlyCredits: 30,
     maxCustomDomains: 0,
     maxDeploysPerDay: 3,
-    allowedModels: ["v0-1.5-sm"],
+    // Id model dari satu sumber: src/config/ai-models.ts (diverifikasi dari v0-sdk)
+    allowedModels: PLAN_MODELS.free ?? [DEFAULT_V0_MODEL],
   },
   {
     slug: "pro",
@@ -46,7 +48,7 @@ const PLANS = [
     monthlyCredits: 500,
     maxCustomDomains: 3,
     maxDeploysPerDay: 30,
-    allowedModels: ["v0-1.5-sm", "v0-1.5-md"],
+    allowedModels: PLAN_MODELS.pro ?? [DEFAULT_V0_MODEL],
   },
   {
     slug: "business",
@@ -58,7 +60,7 @@ const PLANS = [
     monthlyCredits: 3_000,
     maxCustomDomains: 25,
     maxDeploysPerDay: 200,
-    allowedModels: ["v0-1.5-sm", "v0-1.5-md", "v0-1.5-lg"],
+    allowedModels: PLAN_MODELS.business ?? [DEFAULT_V0_MODEL],
   },
 ] as const;
 
@@ -74,7 +76,7 @@ const SETTINGS = [
   },
   {
     key: "ai.defaultModel",
-    value: "v0-1.5-sm",
+    value: DEFAULT_V0_MODEL,
     description: "Model v0 yang dipakai untuk build baru.",
   },
   {

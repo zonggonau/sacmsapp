@@ -23,9 +23,9 @@ interface HeaderProject {
 /**
  * Header + tab navigasi project.
  *
- * Hanya memuat tab yang rutenya SUDAH ada. Builder masuk di Fase 3, Deployment
- * dan Domain di Fase 4 — menampilkannya sekarang hanya menghasilkan tab mati.
- * docs/13-ROADMAP-DAN-FASE.md
+ * Hanya memuat tab yang fasenya sudah selesai. Deployment dan Domain masuk
+ * bersama Fase 4 — menampilkannya sebelum fase itu lulus DoD berarti membuka
+ * fitur yang belum terverifikasi ke pengguna. docs/13-ROADMAP-DAN-FASE.md
  */
 export function ProjectHeader({ project }: { project: HeaderProject }) {
   const pathname = usePathname();
@@ -33,6 +33,7 @@ export function ProjectHeader({ project }: { project: HeaderProject }) {
 
   const tabs = [
     { label: "Ringkasan", href: base, exact: true },
+    { label: "Builder", href: `${base}/builder`, exact: false },
     { label: "Pengaturan", href: `${base}/pengaturan`, exact: false },
   ];
 

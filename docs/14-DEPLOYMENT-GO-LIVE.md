@@ -52,7 +52,7 @@ GOOGLE_CLIENT_SECRET=
 
 # --- AI ---
 V0_API_KEY=
-V0_DEFAULT_MODEL=v0-1.5-sm
+V0_DEFAULT_MODEL=v0-mini
 V0_MOCK=false
 
 # --- Deployment ---
@@ -157,15 +157,16 @@ skema. Ini alasan sesungguhnya aturan tiga langkah di [06 §6.6](./06-DATABASE-S
 
 ## 14.8 Cron
 
-| Jadwal         | Endpoint                     | Tugas                                        |
-| -------------- | ---------------------------- | -------------------------------------------- |
-| `*/5 * * * *`  | `/api/cron/sweep-stuck-jobs` | Job melewati `timeoutAt` → `FAILED` + refund |
-| `*/10 * * * *` | `/api/cron/verify-domains`   | Periksa DNS domain `PENDING_DNS`             |
-| `*/15 * * * *` | `/api/cron/sync-deployments` | Samakan status deployment dengan Vercel      |
-| `0 * * * *`    | `/api/cron/refund-stale`     | Refund `UsageEvent` `RESERVED` > 30 menit    |
-| `0 2 * * *`    | `/api/cron/reconcile-costs`  | Isi `vendorCostIdr` dari laporan v0          |
-| `0 3 * * *`    | `/api/cron/reset-periods`    | Reset kuota pengguna yang periodenya habis   |
-| `0 4 * * *`    | `/api/cron/cleanup`          | Hapus sesi kedaluwarsa, log lama             |
+| Jadwal         | Endpoint                     | Tugas                                                                                                           |
+| -------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `*/5 * * * *`  | `/api/cron/sweep-stuck-jobs` | Job `RUNNING` melewati `timeoutAt` **dan** job `QUEUED` yang tak pernah dimulai (>15 menit) → `FAILED` + refund |
+| `* * * * *`    | `/api/cron/run-queued`       | Menjalankan job `QUEUED`: antrean ulang karena rate limit, atau yang `after()`-nya tidak berjalan               |
+| `*/10 * * * *` | `/api/cron/verify-domains`   | Periksa DNS domain `PENDING_DNS`                                                                                |
+| `*/15 * * * *` | `/api/cron/sync-deployments` | Samakan status deployment dengan Vercel                                                                         |
+| `0 * * * *`    | `/api/cron/refund-stale`     | Refund `UsageEvent` `RESERVED` > 30 menit                                                                       |
+| `0 2 * * *`    | `/api/cron/reconcile-costs`  | Isi `vendorCostIdr` dari laporan v0                                                                             |
+| `0 3 * * *`    | `/api/cron/reset-periods`    | Reset kuota pengguna yang periodenya habis                                                                      |
+| `0 4 * * *`    | `/api/cron/cleanup`          | Hapus sesi kedaluwarsa, log lama                                                                                |
 
 Setiap endpoint cron **wajib**:
 
