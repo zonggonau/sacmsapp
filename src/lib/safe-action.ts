@@ -181,8 +181,9 @@ export const authActionClient = actionClient.use(async ({ next, metadata }) => {
     }
   }
 
-  // --- KUOTA --- (Fase 6: quotaService.reserve() dipasang di sini,
-  // dengan commit saat sukses dan refund saat gagal. docs/11 §11.4)
+  // --- KUOTA --- sengaja TIDAK di middleware: reservasi kredit harus satu
+  // transaksi dengan pembuatan job, jadi penegakan ada di services/quota.service.ts
+  // dan dipanggil service pembuat (build, project, domain, deploy). docs/11 §11.4
 
   // --- 6. JALANKAN + 7. AUDIT ---
   const result = await next({ ctx });

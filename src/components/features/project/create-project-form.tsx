@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { Loader2, Sparkles } from "lucide-react";
-import { toast } from "sonner";
 
 import { createProject } from "@/actions/project.actions";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { WEBSITE_TYPES, getWebsiteType } from "@/config/website-types";
 import { formAction } from "@/lib/form-action";
+import { toastActionError } from "@/lib/notify";
 import { cn } from "@/lib/utils";
 import type { WebsiteType } from "@/types/db";
 
@@ -25,7 +25,8 @@ export function CreateProjectForm({ compact = false }: { compact?: boolean }) {
 
   const { execute, result, isPending } = useAction(createProject, {
     onError: ({ error }) => {
-      if (error.serverError) toast.error(error.serverError);
+      if (error.serverError)
+        toastActionError(error.serverError, "Gagal membuat project.");
     },
   });
 

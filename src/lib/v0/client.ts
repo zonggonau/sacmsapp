@@ -236,6 +236,62 @@ export const v0Engine: V0Engine = USE_MOCK ? mockEngine : realEngine;
 
 export const isMockEngine = USE_MOCK;
 
+/* ============================================================
+ *  Laporan pemakaian — rekonsiliasi biaya (docs/11 §11.8)
+ * ============================================================ */
+
+export interface V0UsageRecord {
+  id: string;
+  chatId: string | null;
+  /** Nilai `totalCost` laporan v0, dianggap USD. Kurs diatur di SystemSetting. */
+  costUsd: number;
+  createdAt: Date;
+}
+
+/**
+ * Semua kejadian berbiaya dalam rentang waktu. Mesin tiruan tidak punya biaya,
+ * jadi mengembalikan daftar kosong.
+ */
+export async function getUsageReport(range: {
+  start: Date;
+  end: Date;
+}): Promise<V0UsageRecord[]> {
+  if (USE_MOCK) return [];
+
+  const records: V0UsageRecord[] = [];
+  let cursor: string | undefined;
+
+  try {
+    // Batas halaman sebagai pengaman bila API tidak pernah berhenti memberi kursor.
+    for (let page = 0; page < 50; page += 1) {
+      const res = await getClient().reports.getUsage({
+        startDate: range.start.toISOString(),
+        endDate: range.end.toISOString(),
+        limit: 100,
+        ...(cursor ? { cursor } : {}),
+      });
+
+      for (const item of res.data) {
+        const cost = Number.parseFloat(item.totalCost);
+        if (!Number.isFinite(cost) || cost === 0) continue;
+        records.push({
+          id: item.id,
+          chatId: item.chatId ?? null,
+          costUsd: cost,
+          createdAt: new Date(item.createdAt),
+        });
+      }
+
+      if (!res.pagination.hasMore || !res.pagination.nextCursor) break;
+      cursor = res.pagination.nextCursor;
+    }
+  } catch (error) {
+    throw toV0Error(error);
+  }
+
+  return records;
+}
+
 if (USE_MOCK) {
   logger.warn("v0.mock_mode", {
     hint: "V0_MOCK aktif — tidak ada panggilan ke v0 dan tidak ada kredit terpakai.",

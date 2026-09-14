@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, TriangleAlert } from "lucide-react";
 
-import { PageHeader, StatCard } from "@/components/features/admin/admin-ui";
+import {
+  DataTable,
+  EmptyRow,
+  PageHeader,
+  StatCard,
+  Td,
+  Th,
+} from "@/components/features/admin/admin-ui";
 import { SettingSwitch } from "@/components/features/admin/setting-switch";
 import {
   Card,
@@ -12,13 +19,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SETTING_KEYS } from "@/config/settings";
-import { angka, tanggal } from "@/lib/format";
+import { angka, rupiah, tanggal } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import * as overviewService from "@/services/admin-overview.service";
+import * as costService from "@/services/cost.service";
 
 export const metadata: Metadata = { title: "Ringkasan Sistem" };
 
 export default async function AdminOverviewPage() {
-  const o = await overviewService.getOverview();
+  const [o, cost] = await Promise.all([
+    overviewService.getOverview(),
+    costService.getCostMetrics(30),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -50,7 +62,7 @@ export default async function AdminOverviewPage() {
         <StatCard
           label="Kredit terpakai bulan ini"
           value={angka(o.creditsThisMonth)}
-          hint="Estimasi biaya vendor tersedia setelah Fase 6"
+          hint={`Biaya vendor 30 hari: ${rupiah(cost.totalCostIdr)}`}
         />
       </div>
 
@@ -82,6 +94,122 @@ export default async function AdminOverviewPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Biaya vendor · 30 hari</CardTitle>
+          <CardDescription>
+            Dari rekonsiliasi harian laporan v0 (docs/11 §11.8).
+            {cost.unreconciledEvents > 0
+              ? ` ${angka(cost.unreconciledEvents)} generate belum punya data biaya — angka bisa lebih rendah dari sebenarnya.`
+              : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard
+              label="Biaya rata-rata per website jadi"
+              value={
+                cost.avgCostPerWebsiteIdr === null
+                  ? "—"
+                  : rupiah(cost.avgCostPerWebsiteIdr)
+              }
+              hint={`${angka(cost.newLiveWebsites)} website tayang pertama kali`}
+            />
+            <StatCard
+              label="Biaya per pengguna aktif"
+              value={
+                cost.costPerActiveUserIdr === null
+                  ? "—"
+                  : rupiah(cost.costPerActiveUserIdr)
+              }
+              hint={`${angka(cost.activeUsers)} pengguna aktif`}
+            />
+            <StatCard
+              label="Total biaya vendor"
+              value={rupiah(cost.totalCostIdr)}
+              hint="Semua generate & edit"
+            />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold">Margin per paket</h2>
+              <DataTable minWidth="26rem">
+                <thead>
+                  <tr>
+                    <Th>Paket</Th>
+                    <Th className="text-right">Pengguna</Th>
+                    <Th className="text-right">Pendapatan</Th>
+                    <Th className="text-right">Biaya</Th>
+                    <Th className="text-right">Margin</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cost.plans.map((p) => (
+                    <tr key={p.name}>
+                      <Td>{p.name}</Td>
+                      <Td className="text-right font-mono tabular-nums">
+                        {angka(p.users)}
+                      </Td>
+                      <Td className="text-right tabular-nums">
+                        {rupiah(p.revenueIdr)}
+                      </Td>
+                      <Td className="text-right tabular-nums">{rupiah(p.costIdr)}</Td>
+                      <Td
+                        className={cn(
+                          "text-right tabular-nums",
+                          p.marginIdr < 0 && "text-destructive",
+                        )}
+                      >
+                        {rupiah(p.marginIdr)}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </DataTable>
+              <p className="text-muted-foreground text-xs">
+                Pendapatan = harga paket × pengguna saat ini (pembayaran MVP manual).
+              </p>
+            </section>
+
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold">10 pemakai kredit tertinggi</h2>
+              <DataTable minWidth="22rem">
+                <thead>
+                  <tr>
+                    <Th>Pengguna</Th>
+                    <Th>Paket</Th>
+                    <Th className="text-right">Kredit</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cost.topUsers.length === 0 ? (
+                    <EmptyRow colSpan={3}>Belum ada pemakaian kredit.</EmptyRow>
+                  ) : (
+                    cost.topUsers.map((u) => (
+                      <tr key={u.id}>
+                        <Td>
+                          <Link
+                            href={`/admin/pengguna/${u.id}`}
+                            className="text-xs break-all hover:underline"
+                          >
+                            {u.email}
+                          </Link>
+                        </Td>
+                        <Td className="text-xs">{u.planName}</Td>
+                        <Td className="text-right font-mono tabular-nums">
+                          {angka(u.creditsUsed)}
+                        </Td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </DataTable>
+            </section>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Kendali cepat</CardTitle>
           <CardDescription>
             Berlaku seketika untuk seluruh sistem, tanpa deploy.
@@ -92,7 +220,7 @@ export default async function AdminOverviewPage() {
             settingKey={SETTING_KEYS.aiKillSwitch}
             checked={o.settings.killSwitch}
             label="Kill switch AI"
-            description="Menolak semua pembuatan website baru. Build yang sedang berjalan dihentikan di langkah berikutnya."
+            description="Menolak semua pembuatan website baru. Build yang sedang berjalan dihentikan di langkah berikutnya. Menyala otomatis bila biaya harian melewati ambang."
             confirm={{
               when: true,
               title: "Nyalakan kill switch AI?",

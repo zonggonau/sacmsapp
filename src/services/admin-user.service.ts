@@ -3,7 +3,7 @@ import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { sendAccountSuspendedEmail } from "@/lib/mail";
 import type { AuditTrail } from "@/services/audit.service";
-import * as usageService from "@/services/usage.service";
+import * as quotaService from "@/services/quota.service";
 import type { UserRole, UserStatus } from "@/types/db";
 
 /**
@@ -124,7 +124,7 @@ export async function getDetail(userId: string) {
   if (!user) return null;
 
   const [quota, projects, builds, audit, plans] = await Promise.all([
-    usageService.getQuota(userId),
+    quotaService.getQuota(userId),
     db.project.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },

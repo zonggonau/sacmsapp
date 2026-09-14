@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { startBuild } from "@/actions/builder.actions";
 import { Button } from "@/components/ui/button";
+import { toastActionError } from "@/lib/notify";
 
 export function StartBuildButton({
   projectId,
@@ -17,7 +18,7 @@ export function StartBuildButton({
   const { execute, isPending } = useAction(startBuild, {
     onSuccess: () => toast.success("Pembuatan dimulai."),
     onError: ({ error }) =>
-      toast.error(error.serverError ?? "Gagal memulai pembuatan."),
+      toastActionError(error.serverError, "Gagal memulai pembuatan."),
   });
 
   return (

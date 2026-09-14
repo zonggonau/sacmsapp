@@ -23,6 +23,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
+    "env:vercel": "tsx scripts/vercel-env.ts",
     "postinstall": "prisma generate",
     "prepare": "husky"
   },

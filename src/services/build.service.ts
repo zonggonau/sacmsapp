@@ -7,6 +7,7 @@ import { v0Engine } from "@/lib/v0/client";
 import { buildSystemPrompt, buildUserMessage } from "@/lib/v0/system-prompt";
 import { V0Error, type GenerateResult } from "@/lib/v0/types";
 import * as planner from "@/services/planner.service";
+import * as quotaService from "@/services/quota.service";
 import * as systemService from "@/services/system.service";
 import * as usageService from "@/services/usage.service";
 import type { BuildJobKind, BuildJobStatus } from "@/types/db";
@@ -77,7 +78,15 @@ export async function createJob(input: CreateJobInput): Promise<{ jobId: string 
   const correlationId = crypto.randomUUID();
   const steps = stepsForKind(input.kind);
 
+  // Job, langkah, status project, dan reservasi kredit dibuat dalam SATU
+  // transaksi yang diawali kunci baris pengguna (urutan kunci: user dulu —
+  // lihat quota.service). Kuota habis = tidak ada apa pun yang tersimpan, dan
+  // dua permintaan bersamaan pada kredit terakhir hanya meloloskan satu.
   const job = await db.$transaction(async (tx) => {
+    if (input.kind !== "DEPLOY") {
+      await quotaService.lockUserInTx(tx, input.userId);
+    }
+
     const created = await tx.buildJob.create({
       data: {
         projectId: input.projectId,
@@ -98,6 +107,16 @@ export async function createJob(input: CreateJobInput): Promise<{ jobId: string 
       select: { id: true },
     });
 
+    if (input.kind !== "DEPLOY") {
+      await quotaService.reserveCreditsInTx(tx, {
+        userId: input.userId,
+        kind: input.kind === "INITIAL_GENERATE" ? "AI_GENERATE" : "AI_EDIT",
+        credits: 1,
+        projectId: input.projectId,
+        buildJobId: created.id,
+      });
+    }
+
     await tx.project.update({
       where: { id: input.projectId },
       data: { status: "BUILDING", lastBuildAt: new Date() },
@@ -105,28 +124,6 @@ export async function createJob(input: CreateJobInput): Promise<{ jobId: string 
 
     return created;
   });
-
-  if (input.kind !== "DEPLOY") {
-    try {
-      await usageService.reserve({
-        userId: input.userId,
-        kind: input.kind === "INITIAL_GENERATE" ? "AI_GENERATE" : "AI_EDIT",
-        credits: 1,
-        projectId: input.projectId,
-        buildJobId: job.id,
-      });
-    } catch (error) {
-      // Job sudah dibuat tetapi kreditnya gagal direservasi. Tanpa ini job
-      // tertinggal QUEUED tanpa reservasi dan project macet BUILDING.
-      await fail(
-        job.id,
-        "INTERNAL",
-        "Pembuatan website gagal disiapkan. Silakan coba lagi.",
-        error instanceof Error ? error.message : String(error),
-      );
-      throw error;
-    }
-  }
 
   logger.info("build.job_created", { jobId: job.id, correlationId, kind: input.kind });
   return { jobId: job.id };

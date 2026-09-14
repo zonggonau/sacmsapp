@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import type { UsageKind } from "@/types/db";
+import * as quotaService from "@/services/quota.service";
+import type { ReserveInput } from "@/services/quota.service";
 
 /**
  * Siklus kredit: reserve -> commit / refund. docs/11-QUOTA-DAN-BILLING.md §11.4
@@ -8,76 +9,20 @@ import type { UsageKind } from "@/types/db";
  * Pola ini mencegah dua bug yang selalu muncul di sistem berkuota:
  * kuota terpakai padahal kerja gagal, dan kerja berjalan padahal kuota habis.
  *
- * CATATAN FASE: yang diterapkan di sini adalah PENCATATAN dan pergerakan
- * penghitung. PENEGAKAN batas (menolak saat kuota habis) masuk di Fase 6 pada
- * titik yang ditandai di bawah — lihat docs/13. Tanpa penegakan, pembatalan
- * build tetap mengembalikan kredit dengan benar, yang dibutuhkan Fase 3.
+ * Penegakan batas (menolak saat kuota habis) dan penguncian baris ada di
+ * quota.service. Berkas ini mengurus pergerakan status reservasi.
  */
 
-export interface ReserveInput {
-  userId: string;
-  kind: UsageKind;
-  credits: number;
-  projectId?: string | undefined;
-  buildJobId?: string | undefined;
-  model?: string | undefined;
-}
+export type { ReserveInput };
 
 /**
- * Memotong kredit di muka dan mencatat UsageEvent(RESERVED).
- *
- * Seluruhnya dalam satu transaksi. Tanpa transaksi, dua permintaan bersamaan
- * bisa sama-sama lolos pemeriksaan lalu melewati batas — kondisi balapan klasik
- * (docs/12 ancaman A12).
+ * Memotong kredit di muka dan mencatat UsageEvent(RESERVED), MENOLAK bila
+ * kuota habis. Penguncian & penegakan ada di quota.service (docs/11 §11.4);
+ * fungsi ini membungkusnya dalam transaksi sendiri untuk pemanggil di luar
+ * transaksi. Pembuatan job memakai reserveCreditsInTx langsung.
  */
 export async function reserve(input: ReserveInput): Promise<string> {
-  return db.$transaction(async (tx) => {
-    const user = await tx.user.findUniqueOrThrow({
-      where: { id: input.userId },
-      select: {
-        creditsUsed: true,
-        creditsOverride: true,
-        plan: { select: { monthlyCredits: true } },
-      },
-    });
-
-    const limit = user.creditsOverride ?? user.plan.monthlyCredits;
-
-    // --- PENEGAKAN BATAS (Fase 6) ---
-    // if (user.creditsUsed + input.credits > limit) {
-    //   throw new AppError("QUOTA_EXCEEDED", ERROR_MESSAGES.QUOTA_EXCEEDED, {
-    //     action: { label: "Lihat Paket", href: "/akun/paket" },
-    //   });
-    // }
-
-    await tx.user.update({
-      where: { id: input.userId },
-      data: { creditsUsed: { increment: input.credits } },
-    });
-
-    const event = await tx.usageEvent.create({
-      data: {
-        kind: input.kind,
-        state: "RESERVED",
-        credits: input.credits,
-        userId: input.userId,
-        projectId: input.projectId ?? null,
-        buildJobId: input.buildJobId ?? null,
-        model: input.model ?? null,
-      },
-      select: { id: true },
-    });
-
-    logger.info("usage.reserved", {
-      usageEventId: event.id,
-      kind: input.kind,
-      credits: input.credits,
-      creditsUsedAfter: user.creditsUsed + input.credits,
-      limit,
-    });
-
-    return event.id;
-  });
+  return db.$transaction((tx) => quotaService.reserveCreditsInTx(tx, input));
 }
 
 /**
@@ -109,78 +54,6 @@ export async function record(input: Omit<ReserveInput, "buildJobId">): Promise<v
   });
 
   logger.info("usage.recorded", { kind: input.kind, credits: input.credits });
-}
-
-export interface QuotaSnapshot {
-  planName: string;
-  planSlug: string;
-  creditsUsed: number;
-  creditLimit: number;
-  creditsOverridden: boolean;
-  projectCount: number;
-  projectLimit: number;
-  projectsOverridden: boolean;
-  deploysToday: number;
-  deployLimit: number;
-  periodStartedAt: Date;
-}
-
-/**
- * Batas kuota yang BERLAKU saat ini, dihitung dari paket di database setiap
- * kali dibaca — tidak pernah disalin ke kolom pengguna. Karena itu mengubah
- * paket atau definisi paket berlaku seketika (docs/10 §10.6).
- *
- * Fase 6 memakai fungsi yang sama untuk menegakkan batas.
- */
-export async function getQuota(userId: string): Promise<QuotaSnapshot | null> {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      creditsUsed: true,
-      creditsOverride: true,
-      maxProjectsOverride: true,
-      periodStartedAt: true,
-      plan: {
-        select: {
-          name: true,
-          slug: true,
-          monthlyCredits: true,
-          maxProjects: true,
-          maxDeploysPerDay: true,
-        },
-      },
-    },
-  });
-  if (!user) return null;
-
-  const [projectCount, deploysToday] = await Promise.all([
-    db.project.count({ where: { userId, deletedAt: null } }),
-    db.usageEvent.count({
-      where: {
-        userId,
-        kind: "DEPLOY",
-        state: "COMMITTED",
-        createdAt: { gte: startOfDay },
-      },
-    }),
-  ]);
-
-  return {
-    planName: user.plan.name,
-    planSlug: user.plan.slug,
-    creditsUsed: user.creditsUsed,
-    creditLimit: user.creditsOverride ?? user.plan.monthlyCredits,
-    creditsOverridden: user.creditsOverride !== null,
-    projectCount,
-    projectLimit: user.maxProjectsOverride ?? user.plan.maxProjects,
-    projectsOverridden: user.maxProjectsOverride !== null,
-    deploysToday,
-    deployLimit: user.plan.maxDeploysPerDay,
-    periodStartedAt: user.periodStartedAt,
-  };
 }
 
 /** Kerja berhasil: reservasi menjadi final, penghitung tetap. */

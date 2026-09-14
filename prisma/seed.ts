@@ -94,6 +94,11 @@ const SETTINGS = [
     value: true,
     description: "Bila false, pendaftaran baru ditutup.",
   },
+  {
+    key: "billing.usdToIdr",
+    value: 16_500,
+    description: "Kurs USD ke Rupiah untuk rekonsiliasi biaya laporan v0.",
+  },
 ] as const;
 
 // ============================================================

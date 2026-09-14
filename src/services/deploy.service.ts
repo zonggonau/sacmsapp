@@ -8,6 +8,7 @@ import {
   VercelApiError,
   type VercelDeployment,
 } from "@/lib/vercel/client";
+import * as quotaService from "@/services/quota.service";
 import * as usageService from "@/services/usage.service";
 import type { DeploymentStatus } from "@/types/db";
 
@@ -162,6 +163,10 @@ export async function request(input: {
   const version = await findDeployableVersion(project, input.versionId);
 
   const deployment = await db.$transaction(async (tx) => {
+    // Batas deploy harian — mengunci baris PENGGUNA lebih dulu. Urutan kunci
+    // user -> project sama dengan pembuatan build; urutan terbalik bisa deadlock.
+    await quotaService.assertCanDeploy(tx, input.userId);
+
     // Kunci baris project: dua klik Terbitkan yang hampir bersamaan harus
     // antre di sini, sehingga pemeriksaan di bawah tidak bisa sama-sama lolos.
     await tx.$queryRaw`SELECT id FROM "project" WHERE id = ${project.id} FOR UPDATE`;

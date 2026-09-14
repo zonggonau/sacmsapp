@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { deployProject } from "@/actions/deploy.actions";
 import { Button } from "@/components/ui/button";
+import { toastActionError } from "@/lib/notify";
 
 export function DeployButton({
   projectId,
@@ -21,7 +22,10 @@ export function DeployButton({
     onSuccess: () =>
       toast.success("Penerbitan dimulai. Biasanya selesai dalam 1–3 menit."),
     onError: ({ error }) =>
-      toast.error(error.serverError ?? "Penerbitan gagal dimulai. Silakan coba lagi."),
+      toastActionError(
+        error.serverError,
+        "Penerbitan gagal dimulai. Silakan coba lagi.",
+      ),
   });
 
   return (

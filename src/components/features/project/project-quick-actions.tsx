@@ -10,6 +10,7 @@ import {
   unarchiveProject,
 } from "@/actions/project.actions";
 import { Button } from "@/components/ui/button";
+import { toastActionError } from "@/lib/notify";
 import type { ProjectStatus } from "@/types/db";
 
 export function ProjectQuickActions({
@@ -20,7 +21,7 @@ export function ProjectQuickActions({
   status: ProjectStatus;
 }) {
   const dup = useAction(duplicateProject, {
-    onError: ({ error }) => toast.error(error.serverError ?? "Gagal menduplikasi."),
+    onError: ({ error }) => toastActionError(error.serverError, "Gagal menduplikasi."),
   });
 
   const arc = useAction(archiveProject, {

@@ -82,6 +82,28 @@ SEED_SUPERADMIN_PASSWORD=            # minimal 16 karakter; hapus setelah dipaka
 pengembang baru langsung tahu apa yang perlu diisi, dan `lib/env.ts` akan menolak start
 bila ada yang terlewat.
 
+### Memasang env ke Vercel secara otomatis — `pnpm env:vercel`
+
+Tidak perlu mengetik satu per satu di dashboard:
+
+1. Salin `.env.example` menjadi **`.env.production.local`** (ter-`.gitignore`) dan isi nilai
+   **production** — bukan salinan `.env.local`.
+2. Tambahkan di berkas yang sama (tidak ikut dipasang):
+   `VERCEL_DEPLOY_TOKEN` (token akun/tim **pemilik project aplikasi SaCMS**),
+   `VERCEL_DEPLOY_PROJECT` (nama project), dan `VERCEL_DEPLOY_TEAM` bila milik tim.
+3. `pnpm env:vercel` — pratinjau: memvalidasi dan mencetak **nama** variabel saja.
+4. `pnpm env:vercel --terapkan` — upsert ke target production (`--preview` untuk preview juga).
+5. Redeploy di Vercel; env baru hanya berlaku di deployment berikutnya.
+
+Skrip menolak memasang bila: `DATABASE_URL` menunjuk localhost, `BETTER_AUTH_URL` /
+`NEXT_PUBLIC_APP_URL` bukan https publik, secret < 32 karakter, Upstash kosong, atau ada
+`SKIP_ENV_VALIDATION` / `SEED_SUPERADMIN_PASSWORD`. `NEXT_PUBLIC_*` dipasang `plain`, sisanya
+`encrypted`. Nilai tidak pernah dicetak.
+
+> **`VERCEL_TOKEN` untuk aplikasi ≠ token untuk skrip ini.** `VERCEL_TOKEN` dipakai SaCMS
+> mengelola website **pengguna** (akun yang sama dengan `V0_API_KEY`, ADR-008). Bila aplikasi
+> SaCMS sendiri di-hosting di akun Vercel lain, `VERCEL_DEPLOY_TOKEN` harus token akun itu.
+
 ## 14.4 Pipeline CI
 
 ```yaml
@@ -184,6 +206,17 @@ if (auth !== `Bearer ${env.CRON_SECRET}`) {
 ```
 
 Tanpa ini, siapa pun dapat memicu reset kuota seluruh pengguna.
+
+**Status implementasi (Fase 6):** `refund-stale`, `reset-periods`, dan `reconcile-costs` kini
+ada, bersama `sweep-stuck-jobs`, `run-queued`, `verify-domains`, `sync-deployments`.
+`cleanup` belum dibuat (Fase 7).
+
+**Penjadwalan belum dipasang (`vercel.json` sengaja tidak ada).** Paket Vercel Hobby hanya
+mengizinkan cron **sekali sehari**; mendaftarkan jadwal per menit/5 menit di atas membuat
+deploy **ditolak**. Keputusan penjadwal (Vercel Pro, atau penjadwal eksternal yang memanggil
+endpoint dengan `Authorization: Bearer $CRON_SECRET`) diambil di Fase 7. Sampai itu:
+polling UI + `after()` tetap menjalankan build dan deploy; yang tertunda hanya jaring
+pengaman latar (penyapu, reset periode, rekonsiliasi biaya).
 
 ## 14.9 Checklist Go-Live
 

@@ -10,6 +10,7 @@ export const SETTING_KEYS = {
   aiSystemPromptRules: "ai.systemPromptRules",
   maintenance: "system.maintenance",
   signupEnabled: "signup.enabled",
+  billingUsdToIdr: "billing.usdToIdr",
 } as const;
 
 /** Sakelar yang boleh diubah lewat satu aksi generik. */

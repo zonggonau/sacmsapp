@@ -32,6 +32,7 @@ export const MAIN_NAV: NavItem[] = [
 export const ACCOUNT_NAV: NavItem[] = [
   { label: "Profil", href: "/akun/profil", icon: User },
   { label: "Keamanan", href: "/akun/keamanan", icon: ShieldCheck },
+  { label: "Paket", href: "/akun/paket", icon: Package },
 ];
 
 /** Navigasi panel Super Admin — docs/10 §10.10. */

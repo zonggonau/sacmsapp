@@ -3,10 +3,10 @@
 import { useEffect, useOptimistic, useRef, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { ArrowUp, Bot, Loader2, User } from "lucide-react";
-import { toast } from "sonner";
 
 import { sendBuilderMessage } from "@/actions/builder.actions";
 import { Button } from "@/components/ui/button";
+import { toastActionError } from "@/lib/notify";
 import { Textarea } from "@/components/ui/textarea";
 import { tanggalWaktu } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -55,7 +55,8 @@ export function BuilderChat({
   );
 
   const { execute, isPending } = useAction(sendBuilderMessage, {
-    onError: ({ error }) => toast.error(error.serverError ?? "Gagal mengirim pesan."),
+    onError: ({ error }) =>
+      toastActionError(error.serverError, "Gagal mengirim pesan."),
   });
 
   // Auto-scroll ke pesan terbaru. Dijalankan setelah daftar berubah, bukan

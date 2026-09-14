@@ -71,8 +71,8 @@
 ✓ FASE 3 — AI Builder Core        [ SELESAI — 62 asertasi DoD + uji after() di server nyata ]
 ◐ FASE 4 — Deploy & Domain        [ KODE LENGKAP — 75 asertasi; 3 butir menunggu kredit v0 & domain uji (pengecualian) ]
 ✓ FASE 5 — Super Admin            [ SELESAI — 60 asertasi HTTP + 13 service ]
-▶ FASE 6 — Quota & Billing        [ BERJALAN ]
-  FASE 7 — Hardening & Go-Live    [ terkunci ]
+✓ FASE 6 — Quota & Billing        [ SELESAI — 38 asertasi service + uji HTTP ]
+▶ FASE 7 — Hardening & Go-Live    [ BERIKUTNYA — wajib tuntaskan pengecualian Fase 4 ]
 ```
 
 > Update blok ini setiap kali sebuah fase selesai. Fase berikutnya **tidak dibuka**

@@ -233,13 +233,18 @@ cron rekonsiliasi biaya, metrik biaya di `/admin`, notifikasi kuota menipis.
 
 **Definition of Done:**
 
-- [ ] Free habis kuota → generate ditolak dengan tawaran upgrade
-- [ ] Build gagal → kredit **kembali** (diverifikasi di database)
-- [ ] Dua permintaan bersamaan pada kredit terakhir → hanya satu lolos
-- [ ] Free mencoba project kedua → ditolak dengan pesan jelas
-- [ ] Reset periode bekerja; `periodStartedAt` maju 30 hari
-- [ ] Super Admin menaikkan kuota satu pengguna → berlaku tanpa deploy
-- [ ] `/admin` menampilkan biaya rata-rata per website jadi
+- [x] Free habis kuota → generate ditolak dengan tawaran upgrade
+- [x] Build gagal → kredit **kembali** (diverifikasi di database)
+- [x] Dua permintaan bersamaan pada kredit terakhir → hanya satu lolos
+- [x] Free mencoba project kedua → ditolak dengan pesan jelas
+- [x] Reset periode bekerja; `periodStartedAt` maju 30 hari
+- [x] Super Admin menaikkan kuota satu pengguna → berlaku tanpa deploy
+- [x] `/admin` menampilkan biaya rata-rata per website jadi — _perhitungan teruji dengan data; data biaya nyata menunggu laporan v0 (kredit akun v0 habis)_
+
+Status 2026-09-15: **SELESAI** — 38 asertasi tingkat service + uji HTTP singkat (topbar kredit,
+`/akun/paket`, pesan kuota habis dengan tawaran upgrade). Juga ditegakkan: batas custom domain,
+batas deploy harian (WIB), notifikasi kredit menipis sekali per periode, kill switch otomatis
+saat biaya harian melewati ambang.
 
 ---
 

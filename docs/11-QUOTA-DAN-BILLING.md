@@ -72,12 +72,18 @@ Aturan wajib:
    Dijaga oleh pemeriksaan `state === "RESERVED"`.
 3. Cron penyapu me-refund `UsageEvent` yang masih `RESERVED` lebih dari 30 menit. Ini
    jaring pengaman untuk proses yang mati mendadak.
-4. Reservasi terjadi di middleware Server Action ([08 §8.3](./08-SERVER-ACTIONS.md)),
-   bukan tersebar di masing-masing service.
+4. Penegakan terpusat di **`services/quota.service.ts`**, bukan tersebar. _(Revisi Fase 6:
+   rancangan awal menempatkannya di middleware Server Action. Itu tidak bisa dipakai karena
+   reservasi harus berada di **transaksi yang sama** dengan pembuatan `BuildJob` — tanpa itu
+   kuota habis meninggalkan job yatim, dan refund tidak punya `buildJobId` untuk ditemukan.
+   Pembuatan job memanggil `reserveCreditsInTx`.)_
+5. **Urutan kunci seragam: baris `user` lebih dulu**, baru baris lain. Build mengunci user →
+   project; deploy dulu mengunci project → user. Dua transaksi dengan urutan terbalik pada
+   project yang sama bisa deadlock, jadi deploy kini juga mengunci user lebih dulu.
 
-5. **Refund tidak pernah membuat `creditsUsed` negatif.** Penghitung bisa sudah direset sejak
+6. **Refund tidak pernah membuat `creditsUsed` negatif.** Penghitung bisa sudah direset sejak
    reservasi dibuat; mengurangi begitu saja memberi pengguna kuota melebihi paketnya.
-6. **Reservasi yatim** (job-nya terhapus) ikut dikembalikan cron penyapu setelah 30 menit,
+7. **Reservasi yatim** (job-nya terhapus) ikut dikembalikan cron penyapu setelah 30 menit,
    karena refund per-job tidak akan pernah menemukannya.
 
 ## 11.5 Periode & Reset
@@ -87,8 +93,27 @@ Aturan wajib:
 - Alasan: pengguna yang daftar tanggal 28 tidak mendapat "sisa dua hari" yang terasa
   seperti penipuan.
 - Cron harian mereset pengguna yang `periodStartedAt` sudah lewat 30 hari:
-  `creditsUsed = 0`, `periodStartedAt = now`.
+  `creditsUsed = 0`, `periodStartedAt` **maju per kelipatan 30 hari dari tanggal lama**
+  (bukan `now`), supaya tanggal reset tetap sama meski cron terlambat. Pembaruan bersyarat
+  pada nilai lama mencegah reset ganda saat cron bertabrakan.
 - **Kredit tidak menumpuk** (tidak carry-over). Dinyatakan jelas di halaman paket.
+- **"Hari ini" untuk batas deploy harian = hari kalender WIB** (UTC+7), dihitung di
+  `lib/period.ts`. Server Vercel berjalan di UTC; tanpa ini batas harian terputus pukul 07.00.
+
+### Aturan hitung per pemeriksaan (Fase 6)
+
+| Pemeriksaan   | Yang dihitung                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| Kredit        | `creditsUsed + biaya > creditsOverride ?? plan.monthlyCredits`                                        |
+| Project       | project `deletedAt = null` (**termasuk yang diarsipkan**) ≥ `maxProjectsOverride ?? plan.maxProjects` |
+| Custom domain | domain pada project yang belum dihapus ≥ `plan.maxCustomDomains` (0 = tidak termasuk paket)           |
+| Deploy harian | deploy **berhasil** hari ini (WIB) + deploy yang **sedang berjalan** ≥ `plan.maxDeploysPerDay`        |
+
+Deploy gagal tidak dihitung (kegagalan vendor tidak memakan jatah), tetapi yang sedang
+berjalan dihitung agar puluhan deploy bersamaan tidak bisa melewati batas.
+
+Pesan setiap batas diakhiri kalimat baku `UPGRADE_HINT` (`config/quota.ts`); klien
+mengenalinya dan menambahkan tombol **Lihat Paket** pada notifikasi.
 
 ## 11.6 Menampilkan Kuota ke Pengguna
 
@@ -101,6 +126,10 @@ Kuota harus terlihat **sebelum** dibutuhkan, bukan saat sudah habis.
 | Dialog buat project | Sisa kredit di bawah tombol                                      |
 | Batas tercapai      | Dialog dengan penjelasan + tombol "Lihat Paket"                  |
 | Kredit ≤ 20%        | Notifikasi dalam aplikasi (sekali per periode, jangan mengulang) |
+
+**Fase 6:** topbar, `/akun/paket`, dan notifikasi `quota.low` (sekali per periode, dibuat saat
+reservasi) sudah terpasang. Daftar notifikasi di UI dan sisa kredit di dialog buat project
+masih di BACKLOG — batas tercapai tetap dijelaskan lewat pesan + tombol Lihat Paket.
 
 Aturan: saat kuota habis, tombol **tetap terlihat** tetapi nonaktif dengan tooltip yang
 menjelaskan. Menyembunyikan tombol membuat pengguna mengira fiturnya hilang.
@@ -148,3 +177,21 @@ Metrik yang wajib tampil di `/admin`:
 
 Angka pertama (biaya per website jadi) adalah yang menentukan apakah harga Rp 149.000
 masuk akal atau merugi. Tampilkan sejak Fase 6.
+
+### Implementasi Fase 6 (`services/cost.service.ts`)
+
+- Sumber: `v0.reports.getUsage` (per kejadian: `id`, `chatId`, `totalCost`, `createdAt`).
+- `totalCost` **dianggap USD** dan dikonversi dengan `SystemSetting["billing.usdToIdr"]`
+  (default 16.500). _Satuan ini belum terverifikasi terhadap data nyata — kredit akun v0
+  habis saat Fase 6 dikerjakan. Periksa sekali saat laporan pertama tersedia._
+- Pencocokan: biaya dipasangkan ke `UsageEvent` generate/edit **terakhir di chat yang sama**
+  yang dibuat sebelum biaya tercatat (toleransi 1 menit). Biaya tanpa chat atau di chat
+  yang tidak dikenal dilaporkan sebagai tak tercocokkan, tidak ditebak.
+- **Idempoten:** biaya disimpan per id kejadian v0 di `UsageEvent.metadata.vendorCosts`, lalu
+  `vendorCostIdr` dihitung ulang dari sana.
+- "Website jadi" = project yang deployment `READY` **pertamanya** jatuh dalam rentang.
+- Pendapatan per paket = harga × pengguna saat ini (pembayaran MVP manual, §11.7).
+- **Kill switch otomatis:** bila total biaya hari kemarin (WIB) melewati
+  `ai.dailyCostThresholdIdr`, kill switch dinyalakan, dicatat di audit sebagai
+  `system.killswitch.auto` (tanpa pelaku), dan setiap Super Admin mendapat notifikasi.
+  Mematikannya kembali tetap keputusan manusia.

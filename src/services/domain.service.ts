@@ -3,6 +3,7 @@ import { parseDnsRecords, recordsFor, type DnsRecord } from "@/lib/dns-records";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { vercelClient, VercelApiError } from "@/lib/vercel/client";
+import * as quotaService from "@/services/quota.service";
 import type { DomainStatus } from "@/types/db";
 
 /**
@@ -115,6 +116,10 @@ export async function add(input: {
         : DUPLICATE,
     );
   }
+
+  // Batas custom domain paket — diperiksa SEBELUM memasang di Vercel, supaya
+  // domain yang ditolak tidak sempat terpasang di vendor (docs/11 §11.3).
+  await db.$transaction((tx) => quotaService.assertCanAddDomain(tx, input.userId));
 
   let remote;
   try {

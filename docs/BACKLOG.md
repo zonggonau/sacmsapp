@@ -73,6 +73,24 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
   pisahkan loading daftar project ke route group sendiri; uji ulang builder/deployment/domain)
 - **Target versi usulan:** Fase 7 (hardening)
 
+### Sisa tampilan kuota dari docs/11 §11.6
+
+- **Ditemukan saat:** Fase 6, 2026-09-15
+- **Masalah nyata yang diselesaikan:** notifikasi `quota.low` dan `cost.threshold` sudah
+  dibuat di database tetapi belum ada daftar notifikasi di UI; sisa kredit belum tampil di
+  dialog buat project; tombol yang kuotanya habis belum dinonaktifkan dengan tooltip (saat ini
+  ditolak saat diklik dengan pesan + tombol Lihat Paket).
+- **Perkiraan usaha:** 1 hari
+- **Target versi usulan:** Fase 7 atau v1.1
+
+### Penjadwal cron production
+
+- **Ditemukan saat:** Fase 6, 2026-09-15
+- **Masalah nyata yang diselesaikan:** tujuh endpoint cron ada tetapi belum terjadwal.
+  Vercel Hobby hanya mengizinkan cron harian; jadwal per menit membuat deploy ditolak.
+- **Perkiraan usaha:** 2 jam setelah keputusan (Vercel Pro vs penjadwal eksternal)
+- **Target versi usulan:** Fase 7 — wajib sebelum go-live
+
 ### Audit akhir impersonasi yang kedaluwarsa sendiri
 
 - **Ditemukan saat:** Fase 5, 2026-09-15

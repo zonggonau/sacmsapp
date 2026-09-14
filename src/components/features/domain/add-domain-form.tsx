@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formAction } from "@/lib/form-action";
+import { toastActionError } from "@/lib/notify";
 
 export function AddDomainForm({ projectId }: { projectId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -24,7 +25,8 @@ export function AddDomainForm({ projectId }: { projectId: string }) {
       );
     },
     onError: ({ error }) => {
-      if (error.serverError) toast.error(error.serverError);
+      if (error.serverError)
+        toastActionError(error.serverError, "Gagal menambahkan domain.");
     },
   });
 

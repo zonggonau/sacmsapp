@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
-import { LogOut, ShieldCheck, User as UserIcon } from "lucide-react";
+import { LogOut, Package, ShieldCheck, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -80,6 +80,12 @@ export function UserMenu({
           <Link href="/akun/keamanan">
             <ShieldCheck className="size-4" />
             Keamanan
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/akun/paket">
+            <Package className="size-4" />
+            Paket & Kuota
           </Link>
         </DropdownMenuItem>
 

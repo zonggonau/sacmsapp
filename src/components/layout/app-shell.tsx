@@ -7,6 +7,9 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { MAIN_NAV } from "@/config/navigation";
+import { CRITICAL_CREDIT_RATIO, LOW_CREDIT_RATIO, PLAN_PAGE } from "@/config/quota";
+import { angka } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 interface ShellUser {
   name: string;
@@ -22,6 +25,33 @@ interface Impersonation {
 }
 
 /**
+ * Sisa kredit selalu terlihat di topbar — docs/11 §11.6: kuota harus terlihat
+ * SEBELUM dibutuhkan. Oranye saat sisa ≤ 20%, merah saat ≤ 5%.
+ */
+function CreditMeter({ used, limit }: { used: number; limit: number }) {
+  const remainingRatio = limit > 0 ? Math.max(0, limit - used) / limit : 0;
+  const tone =
+    remainingRatio <= CRITICAL_CREDIT_RATIO
+      ? "text-destructive"
+      : remainingRatio <= LOW_CREDIT_RATIO
+        ? "text-primary-text"
+        : "text-muted-foreground";
+
+  return (
+    <Link
+      href={PLAN_PAGE}
+      title="Kredit terpakai bulan ini"
+      className={cn(
+        "hover:bg-accent hidden rounded-md px-2 py-1 font-mono text-xs tabular-nums sm:inline-flex",
+        tone,
+      )}
+    >
+      {angka(used)} / {angka(limit)} kredit
+    </Link>
+  );
+}
+
+/**
  * Kerangka area terautentikasi: sidebar + topbar.
  *
  * Server Component — hanya UserMenu, NavItem, ThemeToggle, dan banner yang
@@ -30,10 +60,12 @@ interface Impersonation {
 export function AppShell({
   user,
   impersonation,
+  credits,
   children,
 }: {
   user: ShellUser;
   impersonation: Impersonation | null;
+  credits: { used: number; limit: number } | null;
   children: React.ReactNode;
 }) {
   return (
@@ -99,6 +131,7 @@ export function AppShell({
 
             <div className="flex-1" />
 
+            {credits ? <CreditMeter used={credits.used} limit={credits.limit} /> : null}
             {user.role === "SUPER_ADMIN" && !impersonation ? (
               <Badge>SUPER ADMIN</Badge>
             ) : null}

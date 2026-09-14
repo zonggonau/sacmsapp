@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import type { CreateProjectInput } from "@/schemas/project.schema";
 import type { ProjectStatus, WebsiteType } from "@/types/db";
 import * as buildService from "@/services/build.service";
+import * as quotaService from "@/services/quota.service";
 
 /**
  * Logika bisnis project — docs/02 §2.2 lapisan 4.
@@ -235,19 +236,22 @@ export async function create({
   const name = input.name?.trim() ? input.name.trim() : deriveName(websiteType);
   const slug = await uniqueSlug(userId, name);
 
-  // --- KUOTA --- (Fase 6: batas plan.maxProjects ditegakkan di sini sebelum
-  // pembuatan. docs/11 §11.3)
+  // Batas jumlah website paket (docs/11 §11.3). Pemeriksaan & pembuatan dalam
+  // satu transaksi berkunci: dua klik bersamaan tidak bisa melewati batas.
+  return db.$transaction(async (tx) => {
+    await quotaService.assertCanCreateProject(tx, userId);
 
-  return db.project.create({
-    data: {
-      userId,
-      name,
-      slug,
-      websiteType,
-      initialPrompt: input.prompt,
-      status: "DRAFT",
-    },
-    select: LIST_SELECT,
+    return tx.project.create({
+      data: {
+        userId,
+        name,
+        slug,
+        websiteType,
+        initialPrompt: input.prompt,
+        status: "DRAFT",
+      },
+      select: LIST_SELECT,
+    });
   });
 }
 
@@ -264,6 +268,10 @@ export async function createWithInitialBuild({
   userId: string;
   input: CreateProjectInput;
 }): Promise<{ project: ProjectListItem; job: { id: string } }> {
+  // Tolak lebih dini bila kredit habis, supaya tidak tertinggal project kosong
+  // tanpa build. Keputusan final tetap di reservasi berkunci saat createJob.
+  await quotaService.assertCreditsAvailable(userId, 1);
+
   const project = await create({ userId, input });
 
   const { jobId } = await buildService.createJob({
@@ -383,16 +391,20 @@ export async function duplicate({
 
   // Salinan selalu DRAFT: pengenal v0/Vercel dan URL TIDAK diwarisi, karena
   // keduanya menunjuk ke sumber daya milik project asal.
-  return db.project.create({
-    data: {
-      userId,
-      name,
-      slug,
-      description: source.description,
-      websiteType: source.websiteType,
-      initialPrompt: source.initialPrompt,
-      status: "DRAFT",
-    },
-    select: LIST_SELECT,
+  return db.$transaction(async (tx) => {
+    await quotaService.assertCanCreateProject(tx, userId);
+
+    return tx.project.create({
+      data: {
+        userId,
+        name,
+        slug,
+        description: source.description,
+        websiteType: source.websiteType,
+        initialPrompt: source.initialPrompt,
+        status: "DRAFT",
+      },
+      select: LIST_SELECT,
+    });
   });
 }
