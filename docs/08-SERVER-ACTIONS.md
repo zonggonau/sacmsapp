@@ -36,7 +36,7 @@ export const createProject = authActionClient
     quota: { kind: "PROJECT_CREATE", credits: 1 },
     audit: true,
   })
-  .schema(createProjectSchema)
+  .inputSchema(createProjectSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { project, job } = await projectService.createWithInitialBuild({
       userId: ctx.user.id,
@@ -248,7 +248,7 @@ export function CreateProjectForm() {
   });
 
   return (
-    <form action={execute} className="space-y-6">
+    <form action={formAction(execute)} className="space-y-6">
       <WebsiteTypeSelect name="websiteType" />
 
       <div className="space-y-2">
@@ -286,6 +286,13 @@ export function CreateProjectForm() {
 
 Aturan form:
 
+- **`<form action>` selalu dibungkus `formAction()`** dari `@/lib/form-action`.
+  `useAction().execute` menerima objek input bertipe, sedangkan atribut `action`
+  menyerahkan `FormData`. Helper itu menjembatani keduanya dan merupakan satu-satunya
+  tempat di basis kode yang menegaskan tipe input formulir — validasi sebenarnya tetap
+  di server lewat `.inputSchema()`.
+- Metode builder adalah **`.inputSchema()`**, bukan `.schema()` (sudah deprecated di
+  next-safe-action 8).
 - Selalu ada keadaan _pending_ (`isPending` atau `useFormStatus`). Tombol tanpa umpan
   balik menyebabkan klik ganda.
 - Error validasi tampil **di bawah field**, bukan di toast.

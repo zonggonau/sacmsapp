@@ -64,8 +64,8 @@
 ## Status Fase Saat Ini
 
 ```
-✓ FASE 0 — Fondasi & Setup        [ SELESAI LOKAL — 3 item menunggu kredensial ]
-▶ FASE 1 — Auth & App Shell       [ SIAP DIMULAI ]
+✓ FASE 0 — Fondasi & Setup        [ SELESAI — database aktif, seed terisi ]
+▶ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
   FASE 2 — Project CRUD           [ terkunci ]
   FASE 3 — AI Builder Core        [ terkunci ]
   FASE 4 — Deploy & Domain        [ terkunci ]
@@ -77,16 +77,37 @@
 > Update blok ini setiap kali sebuah fase selesai. Fase berikutnya **tidak dibuka**
 > sebelum Definition of Done fase sekarang terpenuhi penuh (lihat dokumen 13).
 
-### Sisa Fase 0 — menunggu kredensial pemilik
+### Yang sudah terbukti berjalan
 
-Tiga item tidak bisa diselesaikan tanpa akun Anda. Semuanya sudah disiapkan sehingga
-masing-masing tinggal satu langkah:
+Diuji langsung terhadap database, bukan hanya lolos kompilasi:
 
-| Item                              | Yang dibutuhkan                                     | Yang sudah siap                                                                                   |
-| --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Database Neon (`dev` + `staging`) | Akun Neon, isi `DATABASE_URL` & `DIRECT_URL`        | Skema, `prisma.config.ts`, dan seed sudah lengkap — tinggal `pnpm db:migrate` lalu `pnpm db:seed` |
-| Repositori GitHub                 | Akun GitHub (`gh` CLI belum terpasang di mesin ini) | Git lokal aktif di branch `main`, `.github/workflows/ci.yml` siap                                 |
-| Deploy staging Vercel             | Akun Vercel + environment variable                  | `next build` sudah lulus lokal                                                                    |
+| Uji                                       | Hasil                                                        |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| Migrasi + seed                            | 15 tabel dibuat; 3 paket, 5 pengaturan sistem, 1 super admin |
+| `/dashboard` tanpa sesi                   | 307 ke `/masuk?lanjut=%2Fdashboard`                          |
+| Daftar menyuntikkan `role: "SUPER_ADMIN"` | **Ditolak** — `FIELD_NOT_ALLOWED` (proteksi `input: false`)  |
+| Daftar normal                             | Peran `USER`, paket `free` otomatis, tanpa sesi              |
+| Masuk sebelum email dikonfirmasi          | Ditolak `EMAIL_NOT_VERIFIED`                                 |
+| Rate limit masuk                          | Percobaan 1–5 lolos, ke-6 diblokir `429`                     |
+| Audit service                             | Menulis baris ke `audit_log`                                 |
 
-Sampai ketiganya beres, dua butir Definition of Done Fase 0 belum bisa dicentang:
-"`prisma studio` menampilkan seluruh tabel" dan "staging dapat dibuka publik".
+### Yang belum terverifikasi
+
+| Butir                                          | Penghalang                                                                                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Email konfirmasi benar-benar sampai            | Domain pengirim `sacms.id` belum diverifikasi di Resend (403). Untuk development, set `EMAIL_FROM="SaCMS <onboarding@resend.dev>"` |
+| Login Google                                   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi                                                                            |
+| Tampilan visual (nav aktif oranye, dark/light) | Belum diperiksa dengan mata di peramban                                                                                            |
+
+### Menunggu kredensial pemilik
+
+| Item                  | Yang dibutuhkan                                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repositori GitHub     | Akun GitHub (`gh` CLI belum terpasang di mesin ini). Git lokal aktif di `main` + `develop`, `.github/workflows/ci.yml` siap                                 |
+| Deploy staging Vercel | Akun Vercel + environment variable                                                                                                                          |
+| Upstash Redis         | Rate limit sekarang memakai penghitung dalam memori; **production menolak start tanpa Upstash** (disengaja — penghitung memori tidak berlaku di serverless) |
+
+> **Catatan penyimpangan:** database development memakai **PostgreSQL lokal**, bukan Neon
+> seperti tertulis di [ADR-003](./adr/ADR-003-postgres-prisma.md). Ini bekerja tanpa
+> perubahan kode justru karena [ADR-007](./adr/ADR-007-prisma-driver-adapter.md) memilih
+> `@prisma/adapter-pg` yang portabel. Neon tetap rencana untuk staging dan production.

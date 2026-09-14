@@ -81,7 +81,10 @@ export const auth = betterAuth({
   },
 
   plugins: [
-    admin({ defaultRole: "USER", adminRoles: ["ADMIN", "SUPER_ADMIN"] }),
+    // ac + roles WAJIB diisi: plugin admin hanya mengenal peran bawaan
+    // "admin"/"user". Tanpa ini Better Auth menolak start dengan
+    // "Invalid admin roles: SUPER_ADMIN". Lihat §7.3a.
+    admin({ ac, roles, defaultRole: "USER", adminRoles: ["ADMIN", "SUPER_ADMIN"] }),
     nextCookies(),
   ],
 });
@@ -92,6 +95,13 @@ export const auth = betterAuth({
 > menjadi pemilik sistem. Ini kelas kerentanan _mass assignment_.
 
 ## 7.3 Peran & Kewenangan
+
+> **§7.3a — Peran kustom wajib didefinisikan.** Plugin `admin` Better Auth hanya
+> mengenal `admin` dan `user`. Karena SaCMS memakai USER/ADMIN/SUPER_ADMIN, ketiganya
+> harus dibuat lewat `createAccessControl` (`better-auth/plugins/access`) dan
+> `defaultStatements` (`better-auth/plugins/admin/access`), lalu dioper sebagai `ac` dan
+> `roles`. Tabel di bawah adalah sumber kebenaran pemetaan izinnya —
+> implementasinya ada di `src/lib/auth.ts`.
 
 | Kewenangan                        | USER |   ADMIN    | SUPER_ADMIN |
 | --------------------------------- | :--: | :--------: | :---------: |
@@ -127,7 +137,7 @@ Aturan yang tidak bisa dilanggar:
 Empat lapis, masing-masing berdiri sendiri. Menembus satu tidak cukup.
 
 ```
-Lapis 1  middleware.ts        -> pemeriksaan cookie murah, redirect awal
+Lapis 1  proxy.ts             -> pemeriksaan cookie murah, redirect awal
 Lapis 2  layout grup          -> requireUser() / requireSuperAdmin() di server
 Lapis 3  middleware action    -> next-safe-action memverifikasi ulang tiap mutasi
 Lapis 4  klausa where query   -> data difilter pemilik di tingkat database
@@ -136,7 +146,7 @@ Lapis 4  klausa where query   -> data difilter pemilik di tingkat database
 > **Lapis 1 saja TIDAK PERNAH cukup.** Middleware hanya membaca cookie; ia bisa dilewati
 > oleh permintaan yang tidak melewatinya. Otorisasi sebenarnya terjadi di lapis 2–4.
 
-### Lapis 1 — `src/middleware.ts`
+### Lapis 1 — `src/proxy.ts`
 
 ```ts
 import { NextResponse, type NextRequest } from "next/server";
@@ -145,7 +155,7 @@ import { getSessionCookie } from "better-auth/cookies";
 const PUBLIC = ["/", "/harga", "/fitur", "/legal"];
 const AUTH_PAGES = ["/masuk", "/daftar", "/lupa-sandi", "/atur-sandi"];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   // Cek keberadaan cookie saja - TIDAK memvalidasi sesi (itu tugas lapis 2)
   const hasCookie = Boolean(getSessionCookie(req));

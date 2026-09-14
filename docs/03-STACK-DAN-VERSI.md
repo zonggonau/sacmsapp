@@ -18,6 +18,27 @@
 | `react` / `react-dom` | **19.3.0**      | UI        | `useActionState`, `useOptimistic`, `useFormStatus` — dipakai penuh di form |
 | `typescript`          | **5.x terbaru** | Tipe      | `strict: true`, **`noUncheckedIndexedAccess: true`**                       |
 
+### Perubahan Next.js 16 yang mengikat proyek ini
+
+Ditemukan saat implementasi Fase 0 dan 1, bukan dari dokumentasi. Semuanya sudah
+diterapkan di kode:
+
+| Perubahan                                                                     | Dampak                                                                      |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Konvensi `middleware.ts` diganti **`proxy.ts`** dengan fungsi bernama `proxy` | Berkas kita ada di `src/proxy.ts`                                           |
+| Opsi `eslint` dihapus dari `NextConfig`                                       | Lint bukan lagi bagian `next build`; ditegakkan sebagai langkah CI terpisah |
+| `params` dan `searchParams` adalah `Promise`                                  | Wajib `await` di setiap halaman                                             |
+| Aturan lint `react-hooks/set-state-in-effect` aktif                           | Pola `useEffect(() => setMounted(true))` ditolak — lihat docs/04 §4.9       |
+
+**Satu-satunya flag `experimental` yang dipakai proyek ini** adalah
+`authInterrupts: true`, yang mengaktifkan `forbidden()` / `unauthorized()` dan berkas
+`forbidden.tsx`. Tanpa itu penolakan akses hanya bisa dilaporkan sebagai error 500,
+padahal 403 adalah status yang benar dan penting untuk pemantauan. Menambah flag
+experimental lain memerlukan ADR.
+
+> Ketika ragu tentang perilaku Next.js 16, baca dokumentasi yang ikut terpasang di
+> `node_modules/next/dist/docs/` — itu sesuai dengan versi yang benar-benar dipakai.
+
 ## 3.3 Styling & UI
 
 | Paket                                                | Versi      | Peran                                                                                  |

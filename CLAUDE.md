@@ -108,7 +108,7 @@ if (!project) notFound();
 ```ts
 export const doSomething = authActionClient
   .metadata({ actionName: "domain.verb", audit: true })
-  .schema(someSchema)
+  .inputSchema(someSchema)
   .action(async ({ parsedInput, ctx }) => {
     /* panggil service */
   });

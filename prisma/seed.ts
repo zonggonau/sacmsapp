@@ -136,10 +136,22 @@ async function seedSuperAdmin() {
   }
 
   // Pengaman: tidak ada kata sandi default di repositori.
-  if (process.env.NODE_ENV === "production" && (!password || password.length < 16)) {
+  //
+  // Minimum 10 berlaku di SEMUA lingkungan karena itu batas yang ditegakkan
+  // Better Auth (lihat src/lib/auth.ts). Kata sandi lebih pendek menghasilkan
+  // akun yang tidak bisa dipakai masuk — gagal diam-diam yang membingungkan.
+  // Production menuntut 16 karena akun ini memegang kendali penuh sistem.
+  const minLength = process.env.NODE_ENV === "production" ? 16 : 10;
+
+  if (password && password.length < minLength) {
     throw new Error(
-      "SEED_SUPERADMIN_PASSWORD wajib diisi minimal 16 karakter di production.",
+      `SEED_SUPERADMIN_PASSWORD terlalu pendek (${password.length} karakter). ` +
+        `Minimal ${minLength} karakter. Akun super admin memegang kendali penuh sistem.`,
     );
+  }
+
+  if (process.env.NODE_ENV === "production" && !password) {
+    throw new Error("SEED_SUPERADMIN_PASSWORD wajib diisi di production.");
   }
 
   const businessPlan = await db.plan.findUniqueOrThrow({ where: { slug: "business" } });

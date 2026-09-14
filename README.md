@@ -10,14 +10,18 @@ Prompt → Generate → Preview → Edit → Deploy → Live
 
 ## Status
 
-**Tahap: Fase 0 selesai di lokal.** Aplikasi berjalan (`pnpm dev`), lint/typecheck/build
-lulus, design system terpasang. Tiga item menunggu kredensial pemilik (Neon, GitHub,
-Vercel) — rinciannya di [`docs/00-INDEX.md`](./docs/00-INDEX.md).
+**Tahap: Fase 1 kode lengkap.** Autentikasi berjalan terhadap database sungguhan —
+pendaftaran, penolakan naik peran, blokir login sebelum konfirmasi email, dan rate limit
+semuanya sudah diuji dan lulus. Tiga butir Definition of Done masih menunggu konfigurasi
+(domain pengirim Resend, kredensial Google OAuth, pemeriksaan visual).
+
+Rincian apa yang sudah terbukti dan apa yang belum:
+[`docs/00-INDEX.md`](./docs/00-INDEX.md).
 
 ```
-v  FASE 0 - Fondasi & Setup        [ SELESAI LOKAL ]
->  FASE 1 - Auth & App Shell       [ SIAP DIMULAI ]
-   FASE 2 - Project CRUD           [ terkunci ]
+v  FASE 0 - Fondasi & Setup        [ SELESAI ]
+v  FASE 1 - Auth & App Shell       [ KODE LENGKAP ]
+>  FASE 2 - Project CRUD           [ SIAP DIMULAI ]
    FASE 3 - AI Builder Core        [ terkunci ]
    FASE 4 - Deploy & Domain        [ terkunci ]
    FASE 5 - Super Admin            [ terkunci ]
@@ -73,17 +77,24 @@ Keputusan arsitektur: [`docs/adr/`](./docs/adr/)
 
 ## Menjalankan Secara Lokal
 
-> Berlaku setelah Fase 0 selesai.
-
 ```bash
 pnpm install
 cp .env.example .env.local     # isi nilainya
-pnpm prisma migrate dev
-pnpm prisma db seed
+pnpm db:generate               # menghasilkan Prisma Client
+pnpm db:migrate                # membuat database + menerapkan skema
+pnpm db:seed                   # 3 paket, pengaturan sistem, super admin
 pnpm dev
 ```
 
-Untuk pengembangan tanpa membakar kredit AI: set `V0_MOCK=true`.
+Catatan:
+
+- Berlaku untuk PostgreSQL mana pun — Neon maupun Postgres lokal
+  ([ADR-007](./docs/adr/ADR-007-prisma-driver-adapter.md)).
+- `SEED_SUPERADMIN_PASSWORD` minimal 10 karakter, kalau tidak akun super admin terbuat
+  tapi tidak bisa dipakai masuk.
+- Email: domain pengirim harus terverifikasi di Resend. Sebelum itu, pakai
+  `EMAIL_FROM="SaCMS <onboarding@resend.dev>"`.
+- Untuk pengembangan tanpa membakar kredit AI: set `V0_MOCK=true`.
 
 ## Aturan Kontribusi
 

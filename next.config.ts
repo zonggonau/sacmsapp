@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Header keamanan dasar — lihat docs/12-KEAMANAN.md §12.3.
@@ -29,9 +30,31 @@ const nextConfig: NextConfig = {
   // ditegakkan lewat langkah terpisah `pnpm lint` di CI (.github/workflows/ci.yml).
   typescript: { ignoreBuildErrors: false },
 
+  experimental: {
+    // Mengaktifkan forbidden() / unauthorized() dan berkas forbidden.tsx.
+    // Tanpa ini, penolakan akses hanya bisa dilaporkan sebagai error 500 —
+    // padahal 403 adalah status yang benar dan penting untuk pemantauan.
+    // Satu-satunya flag experimental yang dipakai proyek ini (docs/03 §3.2).
+    authInterrupts: true,
+  },
+
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
 };
 
-export default nextConfig;
+/**
+ * Pembungkus Sentry.
+ *
+ * Unggah source map hanya dilakukan bila SENTRY_AUTH_TOKEN ada — tanpa itu
+ * build lokal dan CI tetap berjalan tanpa perlu akun Sentry.
+ * docs/02-ARSITEKTUR-SISTEM.md §2.9
+ */
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  disableLogger: true,
+  telemetry: false,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+  ...(process.env.SENTRY_ORG ? { org: process.env.SENTRY_ORG } : {}),
+  ...(process.env.SENTRY_PROJECT ? { project: process.env.SENTRY_PROJECT } : {}),
+});

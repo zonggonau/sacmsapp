@@ -72,7 +72,7 @@ Pekerjaan:
 3. Halaman `(auth)`: masuk, daftar, lupa sandi, atur sandi, verifikasi email
 4. Google OAuth
 5. Email lewat Resend: verifikasi, reset sandi (template hitam-oranye)
-6. `middleware.ts` + `lib/auth-guard.ts` (empat lapis, [07 §7.4](./07-AUTH-DAN-RBAC.md))
+6. `proxy.ts` + `lib/auth-guard.ts` (empat lapis, [07 §7.4](./07-AUTH-DAN-RBAC.md))
 7. `lib/safe-action.ts` — rantai middleware lengkap ([08 §8.3](./08-SERVER-ACTIONS.md))
 8. `lib/ratelimit.ts` + Upstash
 9. `AppShell`: sidebar, topbar, menu pengguna, toggle tema, skip-to-content
