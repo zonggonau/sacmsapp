@@ -1,5 +1,3 @@
-import { notFound } from "next/navigation";
-
 import { ProjectHeader } from "@/components/features/project/project-header";
 import { requireUser } from "@/lib/auth-guard";
 import { loadProject } from "@/lib/project-loader";
@@ -7,10 +5,18 @@ import { loadProject } from "@/lib/project-loader";
 /**
  * Nested layout project — docs/05 §5.3.
  *
- * Kepemilikan diperiksa SEKALI di sini, di dalam klausa where query. Halaman di
- * bawahnya tinggal memuat project yang sama lewat loadProject() yang ber-cache.
- *
  * Berpindah antar tab tidak merender ulang sidebar, topbar, maupun header ini.
+ *
+ * KENAPA notFound() TIDAK DIPANGGIL DI SINI:
+ * sebuah layout tidak bisa membungkus halaman not-found-nya sendiri — layout
+ * itulah yang gagal. Memanggil notFound() dari layout membuat Next.js membalas
+ * status 500 (dengan digest NEXT_HTTP_ERROR_FALLBACK;404), padahal 404 yang
+ * benar. Halaman di dalamnya yang memanggilnya.
+ *
+ * Itu TIDAK membuka celah kepemilikan: setiap halaman harus memanggil
+ * loadProject(projectId, user.id) untuk mendapat datanya, dan query itu
+ * memfilter berdasarkan userId. Halaman yang lupa memanggilnya tidak punya
+ * apa pun untuk dirender.
  */
 export default async function ProjectLayout({
   children,
@@ -25,9 +31,9 @@ export default async function ProjectLayout({
 
   const project = await loadProject(projectId, user.id);
 
-  // notFound(), BUKAN forbidden(): membalas 403 akan mengonfirmasi bahwa
-  // project tersebut ada milik orang lain (docs/12 ancaman A1).
-  if (!project) notFound();
+  // Tidak ada / bukan milik pengguna ini: serahkan ke halaman, yang memanggil
+  // notFound() sehingga status 404 keluar dengan benar.
+  if (!project) return <>{children}</>;
 
   return (
     <div className="space-y-6">

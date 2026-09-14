@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
+// Diimpor dari "@sentry/nextjs/config", bukan "@sentry/nextjs" —
+// jalur yang terakhir sudah deprecated dan berhenti bekerja di Sentry v11.
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 /**
  * Header keamanan dasar — lihat docs/12-KEAMANAN.md §12.3.
@@ -52,8 +54,9 @@ const nextConfig: NextConfig = {
  */
 export default withSentryConfig(nextConfig, {
   silent: true,
-  disableLogger: true,
   telemetry: false,
+  // `disableLogger` sengaja tidak dipakai: sudah deprecated dan tidak didukung
+  // Turbopack, yang merupakan bundler kita.
   sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
   ...(process.env.SENTRY_ORG ? { org: process.env.SENTRY_ORG } : {}),
   ...(process.env.SENTRY_PROJECT ? { project: process.env.SENTRY_PROJECT } : {}),

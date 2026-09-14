@@ -25,8 +25,3 @@ export const ACCOUNT_NAV: NavItem[] = [
   { label: "Profil", href: "/akun/profil", icon: User },
   { label: "Keamanan", href: "/akun/keamanan", icon: ShieldCheck },
 ];
-
-/** Menentukan apakah sebuah item nav sedang aktif untuk path saat ini. */
-export function isNavActive(pathname: string, item: NavItem): boolean {
-  return item.exact ? pathname === item.href : pathname.startsWith(item.href);
-}

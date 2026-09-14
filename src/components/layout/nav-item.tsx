@@ -1,9 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isNavActive, type NavItem as NavItemType } from "@/config/navigation";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,15 +13,31 @@ import { cn } from "@/lib/utils";
  * Memakai `primary-text` (bukan `primary`) karena token itu otomatis menjadi
  * #FFA274 di dark dan #C24A00 di light — keduanya lulus kontras WCAG AA.
  * docs/04-DESIGN-SYSTEM.md §4.7
+ *
+ * PENTING — `icon` bertipe ReactNode, BUKAN komponen.
+ * Komponen ikon Lucide adalah fungsi, dan fungsi tidak bisa diserialisasi
+ * melewati batas Server -> Client Component. Mengirimnya membuat Next.js
+ * melempar "Functions cannot be passed directly to Client Components" dan
+ * seluruh halaman membalas status 500 meskipun isinya tetap terender.
+ * Pemanggil me-render ikonnya lebih dulu, lalu mengirim elemen hasilnya.
  */
-export function NavItem({ item }: { item: NavItemType }) {
+export function NavItem({
+  label,
+  href,
+  icon,
+  exact = false,
+}: {
+  label: string;
+  href: string;
+  icon: ReactNode;
+  exact?: boolean;
+}) {
   const pathname = usePathname();
-  const active = isNavActive(pathname, item);
-  const Icon = item.icon;
+  const active = exact ? pathname === href : pathname.startsWith(href);
 
   return (
     <Link
-      href={item.href}
+      href={href}
       data-active={active}
       aria-current={active ? "page" : undefined}
       className={cn(
@@ -34,8 +50,8 @@ export function NavItem({ item }: { item: NavItemType }) {
         "data-[active=true]:before:bg-primary data-[active=true]:before:rounded-r-full",
       )}
     >
-      <Icon className="size-4 shrink-0" />
-      {item.label}
+      {icon}
+      {label}
     </Link>
   );
 }

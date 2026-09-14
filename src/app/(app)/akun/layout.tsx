@@ -24,7 +24,13 @@ export default function AkunLayout({ children }: { children: React.ReactNode }) 
           aria-label="Navigasi pengaturan akun"
         >
           {ACCOUNT_NAV.map((item) => (
-            <NavItem key={item.href} item={item} />
+            <NavItem
+              key={item.href}
+              label={item.label}
+              href={item.href}
+              exact={item.exact}
+              icon={<item.icon className="size-4 shrink-0" />}
+            />
           ))}
         </nav>
 

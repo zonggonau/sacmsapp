@@ -242,6 +242,49 @@ export default async function DashboardPage() {
 Larangan: **jangan** mengambil semua data di komponen induk lalu mengoper ke bawah — itu
 menciptakan satu titik tunggu tunggal dan membuang manfaat streaming.
 
+### Dua jebakan yang sudah kami tabrak
+
+Keduanya ditemukan saat pengujian Fase 2 dan sudah diperbaiki. Catat supaya tidak
+terulang — keduanya gagal dengan cara yang menyesatkan.
+
+**1. `notFound()` tidak boleh dipanggil dari sebuah `layout.tsx`.**
+Sebuah layout tidak bisa membungkus halaman not-found-nya sendiri — layout itulah yang
+gagal. Akibatnya Next.js membalas **status 500** dengan digest
+`NEXT_HTTP_ERROR_FALLBACK;404`, bukan 404. Pemeriksaan kepemilikan karena itu memanggil
+`notFound()` dari **halaman**, dan layout cukup merender `{children}` tanpa header bila
+datanya tidak ada.
+
+> Itu tidak membuka celah kepemilikan: setiap halaman harus memanggil
+> `loadProject(projectId, user.id)` untuk mendapat datanya, dan query itu memfilter
+> berdasarkan `userId`. Halaman yang lupa memanggilnya tidak punya apa pun untuk dirender.
+
+> Catatan yang diketahui: karena streaming SSR sudah mengirim shell lebih dulu, status
+> akhirnya **200** meski halaman not-found dirender dengan benar. Untuk halaman privat
+> ber-`noindex` ini tidak berdampak pada pengguna maupun SEO; yang penting — dan sudah
+> diuji — tidak ada data pengguna lain yang bocor.
+
+**2. Komponen ikon tidak boleh dioper dari Server ke Client Component.**
+Komponen Lucide adalah fungsi, dan fungsi tidak bisa diserialisasi melewati batas itu.
+Mengirim `<NavItem item={item} />` yang `item`-nya memuat `icon: LucideIcon` membuat
+Next.js melempar _"Functions cannot be passed directly to Client Components"_ dan
+**setiap halaman terautentikasi membalas 500** — padahal isinya tetap terender, sehingga
+sekilas tampak normal.
+
+Yang benar: render ikonnya di Server Component lalu kirim **elemen** hasilnya.
+
+```tsx
+// SALAH — mengirim komponen
+<NavItem item={item} />
+
+// BENAR — mengirim elemen yang sudah dirender
+<NavItem label={item.label} href={item.href} icon={<item.icon className="size-4" />} />
+```
+
+> Pelajaran pengujiannya: bug ini lolos dari verifikasi Fase 1 karena seluruh uji HTTP
+> dilakukan **tanpa sesi**, sehingga semua halaman terautentikasi hanya dialihkan ke
+> `/masuk` dan tidak pernah benar-benar dirender. Sejak Fase 2, verifikasi wajib
+> menyertakan sesi login yang sah.
+
 ## 5.6 Batas Server vs Client Component
 
 Default: **Server Component**. `"use client"` hanya jika salah satu berlaku:

@@ -47,7 +47,15 @@ export function AppShell({
 
         <nav className="flex-1 space-y-1 px-2 py-2" aria-label="Navigasi utama">
           {MAIN_NAV.map((item) => (
-            <NavItem key={item.href} item={item} />
+            <NavItem
+              key={item.href}
+              label={item.label}
+              href={item.href}
+              exact={item.exact}
+              // Ikon di-render DI SINI lalu dikirim sebagai elemen.
+              // Mengirim komponennya akan gagal serialisasi — lihat nav-item.tsx.
+              icon={<item.icon className="size-4 shrink-0" />}
+            />
           ))}
         </nav>
 
