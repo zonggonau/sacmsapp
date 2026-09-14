@@ -51,6 +51,10 @@ pernah bingung sedang berada di mana:
 Blok "Perlu Perhatian" muncul **hanya bila ada isinya**. Panel yang selalu penuh
 peringatan akan diabaikan.
 
+> **Fase 5:** estimasi biaya AI dan proyeksinya **belum** ditampilkan — angkanya berasal dari
+> rekonsiliasi biaya vendor di Fase 6. Menampilkan angka karangan lebih buruk daripada
+> tidak menampilkannya. Pemakai kredit terbesar muncul di "Perlu Perhatian" bila ≥ 90% kuota.
+
 ## 10.4 `/admin/pengguna`
 
 Tabel: Nama & email · Paket · Project · Kredit terpakai · Status · Terakhir masuk.
@@ -147,6 +151,19 @@ adalah cara cepat kehilangan pelanggan.
 > **semua** hasil generate berikutnya. Karena itu: simpan versi lama, tampilkan diff
 > sebelum menyimpan, catat ke audit, dan sediakan tombol "Kembalikan ke versi sebelumnya".
 
+**Implementasi Fase 5:**
+
+- Yang bisa diedit hanya **blok ATURAN**. Kerangka teknologi, spesifikasi, serta pembatas dan
+  label DATA untuk prompt pengguna dikunci di kode (`lib/v0/system-prompt.ts`) — satu salah
+  ketik di sana membuka sistem terhadap prompt injection. Aturan yang memuat penanda
+  `PERMINTAAN_PENGGUNA` ditolak.
+- Riwayat disimpan append-only di `SystemSetting["ai.systemPromptRules"]` (maks 30 versi).
+  "Kembalikan" menyalin versi lama sebagai versi baru; tidak ada versi yang ditimpa.
+- System prompt dan pesan yang benar-benar terkirim disimpan per job (`BuildJob.systemPrompt`,
+  `sentMessage`, `model`) sehingga detail build tetap jujur setelah aturan diubah.
+- **Ditunda** (lihat BACKLOG): editor template tipe website, batas percobaan ulang & timeout
+  dari UI, ambang biaya harian + kill switch otomatis (butuh data biaya Fase 6).
+
 ## 10.8 `/admin/sistem` dan `/admin/audit`
 
 **Sistem** — maintenance mode (hanya admin bisa masuk, pengguna lain melihat halaman
@@ -163,7 +180,12 @@ Aturan audit:
   maintenance, perubahan system prompt, mulai/selesai impersonasi, login gagal
   berulang, dan hard delete.
 - Retensi minimal 12 bulan.
-- Dapat diekspor CSV.
+- Dapat diekspor CSV (`/admin/audit/ekspor`, maks 10.000 baris per unduhan, sel diamankan
+  dari CSV injection). Ekspor itu sendiri tercatat sebagai `admin.audit.export`.
+
+**Fase 5:** halaman Sistem menampilkan mode setiap integrasi (nyata / tiruan / belum
+diatur) dari konfigurasi. Tombol "Uji Koneksi" langsung ke vendor dan feature flag
+ditunda ke BACKLOG.
 
 ## 10.9 Aturan Keamanan Panel Admin
 

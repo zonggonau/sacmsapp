@@ -23,6 +23,8 @@ const PUBLIC_PREFIXES = [
   // putus di tengah jalan.
   "/verifikasi-email",
   "/akun-ditangguhkan",
+  // Tujuan pengalihan maintenance mode; harus terbuka tanpa pemeriksaan sesi.
+  "/pemeliharaan",
 ];
 const AUTH_PAGES = ["/masuk", "/daftar", "/lupa-sandi", "/atur-sandi"];
 

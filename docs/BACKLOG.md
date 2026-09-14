@@ -47,6 +47,41 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 - **Perkiraan usaha:** 0,5 hari (Vercel mendukung `redirect` pada domain project)
 - **Target versi usulan:** v1.1
 
+### Sisa isi docs/10 yang ditunda dari Fase 5
+
+- **Ditemukan saat:** Fase 5, 2026-09-15
+- **Masalah nyata yang diselesaikan:** DoD Fase 5 terpenuhi tanpa butir ini, tetapi docs/10
+  menyebutnya:
+  - Editor template tipe website (`requirements` per tipe) dari UI
+  - Batas percobaan ulang & timeout build dari UI
+  - Tombol "Uji Koneksi" langsung ke v0 / Vercel / Resend / Upstash
+  - Feature flag
+  - Grafik pemakaian 30 hari di halaman investigasi pengguna
+  - Estimasi & ambang biaya + kill switch otomatis (bergantung rekonsiliasi biaya Fase 6)
+- **Perkiraan usaha:** 2–3 hari total
+- **Target versi usulan:** biaya → Fase 6; sisanya v1.1
+
+### Status HTTP 404 untuk project yang tidak dimiliki
+
+- **Ditemukan saat:** Fase 5 (uji 07 §7.8), 2026-09-15
+- **Masalah nyata yang diselesaikan:** `/projects/{id-milik-orang-lain}` menampilkan halaman
+  "tidak ditemukan" tanpa data apa pun dan dengan `noindex`, tetapi status HTTP-nya **200**:
+  `projects/loading.tsx` membuat Suspense boundary sehingga respons sudah mulai dialirkan
+  sebelum `notFound()` dipanggil. Keberadaan project tidak terkonfirmasi, jadi tujuan butir
+  keamanannya terpenuhi; status yang benar tetap penting untuk pemantauan.
+- **Perkiraan usaha:** 0,5 hari (pindahkan pemeriksaan kepemilikan sebelum boundary, atau
+  pisahkan loading daftar project ke route group sendiri; uji ulang builder/deployment/domain)
+- **Target versi usulan:** Fase 7 (hardening)
+
+### Audit akhir impersonasi yang kedaluwarsa sendiri
+
+- **Ditemukan saat:** Fase 5, 2026-09-15
+- **Masalah nyata yang diselesaikan:** `user.impersonate.end` hanya tercatat bila admin
+  menekan "Kembali ke akun saya". Sesi yang habis sendiri setelah 60 menit tidak meninggalkan
+  catatan akhir.
+- **Perkiraan usaha:** 2 jam (cron cleanup mencatat sesi impersonasi yang kedaluwarsa)
+- **Target versi usulan:** Fase 7
+
 ---
 
 ## Sudah Dijadwalkan

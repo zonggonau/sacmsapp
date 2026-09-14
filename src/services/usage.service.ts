@@ -111,6 +111,78 @@ export async function record(input: Omit<ReserveInput, "buildJobId">): Promise<v
   logger.info("usage.recorded", { kind: input.kind, credits: input.credits });
 }
 
+export interface QuotaSnapshot {
+  planName: string;
+  planSlug: string;
+  creditsUsed: number;
+  creditLimit: number;
+  creditsOverridden: boolean;
+  projectCount: number;
+  projectLimit: number;
+  projectsOverridden: boolean;
+  deploysToday: number;
+  deployLimit: number;
+  periodStartedAt: Date;
+}
+
+/**
+ * Batas kuota yang BERLAKU saat ini, dihitung dari paket di database setiap
+ * kali dibaca — tidak pernah disalin ke kolom pengguna. Karena itu mengubah
+ * paket atau definisi paket berlaku seketika (docs/10 §10.6).
+ *
+ * Fase 6 memakai fungsi yang sama untuk menegakkan batas.
+ */
+export async function getQuota(userId: string): Promise<QuotaSnapshot | null> {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      creditsUsed: true,
+      creditsOverride: true,
+      maxProjectsOverride: true,
+      periodStartedAt: true,
+      plan: {
+        select: {
+          name: true,
+          slug: true,
+          monthlyCredits: true,
+          maxProjects: true,
+          maxDeploysPerDay: true,
+        },
+      },
+    },
+  });
+  if (!user) return null;
+
+  const [projectCount, deploysToday] = await Promise.all([
+    db.project.count({ where: { userId, deletedAt: null } }),
+    db.usageEvent.count({
+      where: {
+        userId,
+        kind: "DEPLOY",
+        state: "COMMITTED",
+        createdAt: { gte: startOfDay },
+      },
+    }),
+  ]);
+
+  return {
+    planName: user.plan.name,
+    planSlug: user.plan.slug,
+    creditsUsed: user.creditsUsed,
+    creditLimit: user.creditsOverride ?? user.plan.monthlyCredits,
+    creditsOverridden: user.creditsOverride !== null,
+    projectCount,
+    projectLimit: user.maxProjectsOverride ?? user.plan.maxProjects,
+    projectsOverridden: user.maxProjectsOverride !== null,
+    deploysToday,
+    deployLimit: user.plan.maxDeploysPerDay,
+    periodStartedAt: user.periodStartedAt,
+  };
+}
+
 /** Kerja berhasil: reservasi menjadi final, penghitung tetap. */
 export async function commit(usageEventId: string): Promise<void> {
   const result = await db.usageEvent.updateMany({

@@ -371,20 +371,31 @@ dihitung saat **berhasil** saja.
 
 ### `admin.actions.ts` — semua `requireRole: "SUPER_ADMIN"`, semua `audit: true`
 
-| Action                  | Input                                              | Catatan                                        |
-| ----------------------- | -------------------------------------------------- | ---------------------------------------------- |
-| `adminUpdateUserRole`   | `{userId, role}`                                   | Tolak jika menurunkan Super Admin terakhir     |
-| `adminUpdateUserPlan`   | `{userId, planId, expiresAt?}`                     |                                                |
-| `adminSetUserQuota`     | `{userId, creditsOverride?, maxProjectsOverride?}` |                                                |
-| `adminResetUserUsage`   | `{userId}`                                         | Kembalikan `creditsUsed=0`                     |
-| `adminSuspendUser`      | `{userId, reason}`                                 | Cabut semua sesi                               |
-| `adminReactivateUser`   | `{userId}`                                         |                                                |
-| `adminDeleteUser`       | `{userId, confirmEmail}`                           | Hard delete; audit tetap tinggal               |
-| `adminImpersonateUser`  | `{userId}`                                         |                                                |
-| `adminUpsertPlan`       | `{...Plan}`                                        |                                                |
-| `adminCancelBuild`      | `{jobId}`                                          | Berlaku untuk build siapa pun                  |
-| `adminRetryBuild`       | `{jobId}`                                          |                                                |
-| `adminSetSystemSetting` | `{key, value}`                                     | Kill switch, maintenance, model, system prompt |
+| Action                 | actionName               | Input                                            | Catatan                                                      |
+| ---------------------- | ------------------------ | ------------------------------------------------ | ------------------------------------------------------------ |
+| `adminUpdateUserRole`  | `admin.user.role`        | `{userId, role}`                                 | Tolak bila menurunkan Super Admin aktif terakhir; cabut sesi |
+| `adminUpdateUserPlan`  | `admin.user.plan`        | `{userId, planId}`                               | Batas dibaca dari paket saat itu juga                        |
+| `adminSetUserQuota`    | `admin.user.quota`       | `{userId, creditsOverride, maxProjectsOverride}` | Kosong = ikuti paket                                         |
+| `adminResetUserUsage`  | `admin.user.reset`       | `{userId}`                                       | `creditsUsed=0`, periode baru                                |
+| `adminSuspendUser`     | `admin.user.suspend`     | `{userId, reason}`                               | Cabut semua sesi seketika; email alasan; bukan diri sendiri  |
+| `adminReactivateUser`  | `admin.user.reactivate`  | `{userId}`                                       |                                                              |
+| `adminDeleteUser`      | `admin.user.delete`      | `{userId, confirmEmail}`                         | Hard delete; audit & usage tetap tinggal; bukan diri sendiri |
+| `adminImpersonateUser` | `user.impersonate.start` | `{userId}`                                       | Hanya target `USER` aktif; 60 menit                          |
+| `stopImpersonation`    | `user.impersonate.end`   | –                                                | Dari sesi yang disamarkan; audit atas nama admin             |
+| `adminUpsertPlan`      | `admin.plan.upsert`      | `{id?, slug, name, …, allowedModels}`            | Slug paket lama tidak bisa diubah; tidak ada hapus           |
+| `adminCancelBuild`     | `admin.build.cancel`     | `{jobId}`                                        | Build siapa pun; kredit pemilik dikembalikan                 |
+| `adminRetryBuild`      | `admin.build.retry`      | `{jobId}`                                        | Job baru, kredit dari pemilik project                        |
+| `adminSetToggle`       | `admin.setting.toggle`   | `{key, value}`                                   | Kill switch, maintenance, pendaftaran                        |
+| `adminSetDefaultModel` | `admin.setting.model`    | `{model}`                                        |                                                              |
+| `adminSaveRules`       | `admin.prompt.save`      | `{text}`                                         | Blok ATURAN system prompt; versi baru                        |
+| `adminRestoreRules`    | `admin.prompt.restore`   | `{version}`                                      | Salinan versi lama sebagai versi baru                        |
+
+**Penjamin audit.** Service admin mengembalikan jejak `{targetType, targetId, before, after}`
+di kunci `audit`; middleware (`lib/safe-action.ts`) menulisnya ke audit log lalu membuangnya
+dari respons. Action dengan `requireRole` tanpa `audit: true` **ditolak dijalankan** oleh
+middleware — pengaman ini menggantikan "lint kustom" di docs/10 §10.9 karena berlaku saat
+runtime dan tidak bisa dilewati. Percobaan memanggil action admin tanpa hak dicatat sebagai
+`admin.access_denied`.
 
 ## 8.7 Kebijakan Revalidasi
 

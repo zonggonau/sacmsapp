@@ -371,6 +371,12 @@ model BuildJob {
   // Untuk Super Admin — boleh mentah
   rawError String? @db.Text
 
+  // Apa yang BENAR-BENAR dikirim ke v0, untuk investigasi Super Admin
+  // (docs/10 §10.5). Tidak pernah dikembalikan ke pengguna.
+  systemPrompt String? @db.Text
+  sentMessage  String? @db.Text
+  model        String?
+
   correlationId String @unique
 
   creditsCost Int @default(1)

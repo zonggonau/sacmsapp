@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation";
+
 import { AppShell } from "@/components/layout/app-shell";
-import { requireUser } from "@/lib/auth-guard";
+import { getImpersonator, isAdminRole, requireUser } from "@/lib/auth-guard";
+import * as systemService from "@/services/system.service";
 
 /**
  * Gerbang tunggal area terautentikasi — lapis 2 pertahanan (docs/07 §7.4).
@@ -10,6 +13,17 @@ import { requireUser } from "@/lib/auth-guard";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
 
+  const [impersonator, maintenance] = await Promise.all([
+    getImpersonator(),
+    systemService.isMaintenanceMode(),
+  ]);
+
+  // Maintenance: pengguna biasa dialihkan; admin tetap bisa bekerja, termasuk
+  // saat menyamar untuk melihat masalah pengguna (docs/10 §10.8).
+  if (maintenance && !isAdminRole(user.role) && !impersonator) {
+    redirect("/pemeliharaan");
+  }
+
   return (
     <AppShell
       user={{
@@ -18,6 +32,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         image: user.image,
         role: user.role,
       }}
+      impersonation={
+        impersonator
+          ? { userName: user.name, userEmail: user.email, adminName: impersonator.name }
+          : null
+      }
     >
       {children}
     </AppShell>

@@ -119,24 +119,24 @@ function layout(opts: {
   return `
 <!doctype html>
 <html lang="id">
-<body style="margin:0;padding:0;background:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000;padding:40px 16px;">
+<body style="margin:0;padding:0;background:#212121;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#212121;padding:40px 16px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#0A0A0A;border:1px solid #262626;border-radius:10px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#2A2A2A;border:1px solid #383838;border-radius:10px;">
         <tr><td style="padding:28px 28px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-            <td style="background:#FF6B00;border-radius:6px;width:28px;height:28px;text-align:center;color:#000000;font-weight:800;font-size:14px;line-height:28px;">S</td>
+            <td style="background:#FF6B00;border-radius:6px;width:28px;height:28px;text-align:center;color:#212121;font-weight:800;font-size:14px;line-height:28px;">S</td>
             <td style="padding-left:10px;color:#FFFFFF;font-weight:700;font-size:17px;">SaCMS</td>
           </tr></table>
         </td></tr>
 
         <tr><td style="padding:24px 28px 0;">
           <h1 style="margin:0;color:#FFFFFF;font-size:21px;font-weight:700;line-height:1.3;">${opts.heading}</h1>
-          <p style="margin:12px 0 0;color:#A1A1A1;font-size:14px;line-height:1.65;">${opts.body}</p>
+          <p style="margin:12px 0 0;color:#A8A8A8;font-size:14px;line-height:1.65;">${opts.body}</p>
         </td></tr>
 
         <tr><td style="padding:24px 28px 0;">
-          <a href="${opts.ctaUrl}" style="display:inline-block;background:#FF6B00;color:#000000;font-weight:600;font-size:14px;text-decoration:none;padding:11px 20px;border-radius:8px;">${opts.ctaLabel}</a>
+          <a href="${opts.ctaUrl}" style="display:inline-block;background:#FF6B00;color:#212121;font-weight:600;font-size:14px;text-decoration:none;padding:11px 20px;border-radius:8px;">${opts.ctaLabel}</a>
         </td></tr>
 
         <tr><td style="padding:20px 28px 0;">
@@ -201,6 +201,28 @@ export async function sendWebsiteReadyEmail(args: {
       ctaUrl: args.url,
       footer:
         "Anda menerima email ini karena membuat website di SaCMS. Pengaturan notifikasi ada di halaman akun Anda.",
+    }),
+  });
+}
+
+/** Dikirim saat Super Admin menangguhkan akun — docs/10 §10.4. */
+export async function sendAccountSuspendedEmail(args: {
+  to: string;
+  name: string;
+  reason: string;
+}) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  await send({
+    to: args.to,
+    subject: "Akun SaCMS Anda ditangguhkan",
+    html: layout({
+      heading: `Halo ${escapeHtml(args.name)}, akun Anda ditangguhkan`,
+      body: `Akses ke akun SaCMS Anda dihentikan sementara oleh administrator. Alasan: ${escapeHtml(args.reason)}`,
+      ctaLabel: "Lihat Informasi",
+      ctaUrl: `${appUrl}/akun-ditangguhkan`,
+      footer:
+        "Website yang sudah Anda terbitkan tidak otomatis dihapus. Kalau menurut Anda ini keliru, balas email ini untuk menghubungi kami.",
     }),
   });
 }

@@ -113,12 +113,39 @@ export function flagSuspiciousPrompt(prompt: string): string[] {
 }
 
 /**
+ * Blok ATURAN bawaan.
+ *
+ * Hanya blok inilah yang bisa diubah Super Admin dari /admin/ai (docs/10 §10.7).
+ * Kerangka lain — teknologi, spesifikasi, dan terutama pembatas + label DATA
+ * untuk prompt pengguna — sengaja TIDAK bisa diedit: satu salah ketik di sana
+ * membuka seluruh sistem terhadap prompt injection (docs/12 ancaman A3).
+ */
+export const DEFAULT_RULES = `- Bahasa antarmuka: Indonesia.
+- Responsif dari 360px sampai desktop.
+- Aksesibel: kontras WCAG AA, fokus keyboard terlihat, alt text pada gambar.
+- SEO: metadata lengkap, judul semantik, sitemap.
+- TIDAK ADA rahasia yang ditulis langsung di kode. Gunakan environment variable.
+- TIDAK ADA pustaka UI selain shadcn/ui.
+- Konten contoh harus relevan dengan konteks Indonesia (nama, alamat, istilah).
+- Jika spesifikasi tidak lengkap, pilih default yang wajar. JANGAN bertanya balik.`;
+
+/** Aturan yang disimpan tidak boleh memuat penanda pembatas prompt pengguna. */
+export function rulesContainDelimiter(rules: string): boolean {
+  return /PERMINTAAN_PENGGUNA/i.test(rules);
+}
+
+/**
  * Menyusun system prompt.
  *
  * Prompt pengguna disisipkan ke dalam blok berpembatas dan dilabeli DATA —
  * tidak pernah digabung begitu saja dengan aturan sistem.
  */
-export function buildSystemPrompt(plan: BuildPlan): string {
+export function buildSystemPrompt(
+  plan: BuildPlan,
+  rules: string = DEFAULT_RULES,
+): string {
+  const safeRules = rulesContainDelimiter(rules) ? DEFAULT_RULES : rules.trim();
+
   return `
 Anda adalah SaCMS Website Builder.
 
@@ -131,14 +158,7 @@ TEKNOLOGI (wajib, tidak boleh diganti)
 - Server Component sebagai default
 
 ATURAN
-- Bahasa antarmuka: Indonesia.
-- Responsif dari 360px sampai desktop.
-- Aksesibel: kontras WCAG AA, fokus keyboard terlihat, alt text pada gambar.
-- SEO: metadata lengkap, judul semantik, sitemap.
-- TIDAK ADA rahasia yang ditulis langsung di kode. Gunakan environment variable.
-- TIDAK ADA pustaka UI selain shadcn/ui.
-- Konten contoh harus relevan dengan konteks Indonesia (nama, alamat, istilah).
-- Jika spesifikasi tidak lengkap, pilih default yang wajar. JANGAN bertanya balik.
+${safeRules}
 
 SPESIFIKASI
 ${JSON.stringify(plan.spec, null, 2)}

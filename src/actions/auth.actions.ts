@@ -18,6 +18,7 @@ import {
   updateProfileSchema,
 } from "@/schemas/auth.schema";
 import * as auditService from "@/services/audit.service";
+import * as systemService from "@/services/system.service";
 
 /**
  * Aksi autentikasi — docs/07-AUTH-DAN-RBAC.md §7.5.
@@ -54,6 +55,13 @@ export const signUp = publicActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { name, email, password } = parsedInput;
 
+    if (!(await systemService.isSignupEnabled())) {
+      throw new AppError(
+        "FORBIDDEN",
+        "Pendaftaran akun baru sedang ditutup. Silakan coba lagi nanti.",
+      );
+    }
+
     try {
       await auth.api.signUpEmail({
         body: { name, email, password },
@@ -63,6 +71,13 @@ export const signUp = publicActionClient
       // Better Auth melempar APIError dengan pesan berbahasa Inggris.
       // Jangan diteruskan mentah ke pengguna.
       const message = error instanceof Error ? error.message : "";
+
+      if (/SIGNUP_CLOSED/.test(message)) {
+        throw new AppError(
+          "FORBIDDEN",
+          "Pendaftaran akun baru sedang ditutup. Silakan coba lagi nanti.",
+        );
+      }
 
       if (/already exists|USER_ALREADY_EXISTS/i.test(message)) {
         throw new AppError(

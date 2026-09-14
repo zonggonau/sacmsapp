@@ -126,6 +126,19 @@ export const auth = betterAuth({
       create: {
         // Setiap pengguna baru otomatis masuk paket FREE.
         before: async (user) => {
+          // Pendaftaran ditutup dari /admin/sistem. Diperiksa DI SINI, bukan
+          // hanya di action daftar: endpoint /api/auth/sign-up/email dan login
+          // Google pertama kali sama-sama membuat pengguna lewat hook ini.
+          // Kunci ditulis literal karena lib tidak boleh mengimpor service
+          // (sama dengan SETTING_KEYS.signupEnabled di system.service.ts).
+          const signup = await db.systemSetting.findUnique({
+            where: { key: "signup.enabled" },
+            select: { value: true },
+          });
+          if (signup?.value === false) {
+            throw new Error("SIGNUP_CLOSED");
+          }
+
           const free = await db.plan.findUnique({ where: { slug: "free" } });
 
           if (!free) {
@@ -154,6 +167,8 @@ export const auth = betterAuth({
       roles,
       defaultRole: "USER",
       adminRoles: ["ADMIN", "SUPER_ADMIN"],
+      // Sesi impersonasi berakhir sendiri dalam 60 menit — docs/07 §7.5.
+      impersonationSessionDuration: 60 * 60,
     }),
     // nextCookies() HARUS menjadi plugin terakhir — ia yang membuat cookie
     // tertulis saat auth dipanggil dari dalam Server Action.

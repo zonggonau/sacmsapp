@@ -19,6 +19,8 @@ next-env.d.ts
 /coverage
 /test-results
 /playwright-report
+/scratch
+verify-*.ts
 
 # environment — HANYA .env.example yang boleh di-commit
 .env

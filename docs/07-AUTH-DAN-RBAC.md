@@ -282,6 +282,18 @@ menyamar lalu melakukan perubahan adalah insiden data yang nyata.
 | Masa token verifikasi  | 1 jam                                                     |
 | Masa token reset sandi | 1 jam, sekali pakai                                       |
 
+> **Cookie cache dimatikan di `getSession()` (Fase 5).** Better Auth menyimpan sesi beserta
+> peran dan status pengguna di cookie selama 5 menit. Dengan cache itu, pengguna yang baru
+> ditangguhkan atau diturunkan perannya tetap lolos hingga 5 menit — melanggar "cabut saat
+> itu juga". `lib/auth-guard.ts` memanggil `getSession` dengan `disableCookieCache: true`;
+> satu query per permintaan (sudah didedupe `cache()`).
+>
+> **Penangguhan** menulis `status=SUSPENDED` **dan** `banned=true`, lalu menghapus semua baris
+> `Session`. `banned` membuat endpoint `/api/auth/sign-in/email` Better Auth ikut menolak.
+>
+> **Pendaftaran ditutup** diperiksa di `databaseHooks.user.create`, sehingga berlaku untuk
+> formulir, panggilan API langsung, dan login Google pertama kali.
+
 ## 7.7 Rate Limit
 
 ```ts

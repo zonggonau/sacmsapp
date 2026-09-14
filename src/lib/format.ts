@@ -37,6 +37,16 @@ export function rupiah(value: number): string {
   }).format(value);
 }
 
+/** "1 mnt 12 dtk", "850 md" — durasi build dan langkah. */
+export function durasi(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "—";
+  if (ms < 1000) return `${Math.round(ms)} md`;
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return minutes > 0 ? `${minutes} mnt ${seconds} dtk` : `${seconds} dtk`;
+}
+
 /** Membuang skema dan garis miring akhir agar URL enak dibaca di kartu. */
 export function urlRingkas(value: string): string {
   return value.replace(/^https?:\/\//, "").replace(/\/$/, "");

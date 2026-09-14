@@ -57,14 +57,14 @@ Diuji dengan rasio kontras WCAG 2.1:
 
 | Token                           | Dark      | Light     | Peran                         |
 | ------------------------------- | --------- | --------- | ----------------------------- |
-| `background`                    | `#000000` | `#FFFFFF` | Latar halaman                 |
-| `surface-1` (`card`, `popover`) | `#0A0A0A` | `#FFFFFF` | Kartu, dropdown, dialog       |
-| `surface-2` (`muted`, `input`)  | `#141414` | `#F5F5F5` | Field, blok kode, baris zebra |
-| `surface-3` (`accent`)          | `#1F1F1F` | `#F0F0F0` | Hover item menu, baris tabel  |
-| `border`                        | `#262626` | `#E5E5E5` | Semua garis pemisah           |
-| `border-strong`                 | `#333333` | `#D4D4D4` | Border field saat fokus       |
+| `background`                    | `#212121` | `#FFFFFF` | Latar halaman                 |
+| `surface-1` (`card`, `popover`) | `#2A2A2A` | `#FFFFFF` | Kartu, dropdown, dialog       |
+| `surface-2` (`muted`, `input`)  | `#303030` | `#F5F5F5` | Field, blok kode, baris zebra |
+| `surface-3` (`accent`)          | `#383838` | `#F0F0F0` | Hover item menu, baris tabel  |
+| `border`                        | `#383838` | `#E5E5E5` | Semua garis pemisah           |
+| `border-strong`                 | `#484848` | `#D4D4D4` | Border field saat fokus       |
 | `foreground`                    | `#FFFFFF` | `#0A0A0A` | Teks utama                    |
-| `muted-foreground`              | `#A1A1A1` | `#737373` | Teks sekunder, label, hint    |
+| `muted-foreground`              | `#A8A8A8` | `#737373` | Teks sekunder, label, hint    |
 | `destructive`                   | `#EF4444` | `#DC2626` | Hapus, gagal                  |
 | `success`                       | `#22C55E` | `#16A34A` | Live, berhasil                |
 | `warning`                       | `#F59E0B` | `#D97706` | Peringatan kuota              |

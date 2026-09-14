@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { NavItem } from "@/components/layout/nav-item";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -13,17 +15,25 @@ interface ShellUser {
   role: string;
 }
 
+interface Impersonation {
+  userName: string;
+  userEmail: string;
+  adminName: string;
+}
+
 /**
  * Kerangka area terautentikasi: sidebar + topbar.
  *
- * Server Component — hanya UserMenu, NavItem, dan ThemeToggle yang client,
- * sesuai aturan "dorong client ke bawah" (docs/05 §5.6).
+ * Server Component — hanya UserMenu, NavItem, ThemeToggle, dan banner yang
+ * client, sesuai aturan "dorong client ke bawah" (docs/05 §5.6).
  */
 export function AppShell({
   user,
+  impersonation,
   children,
 }: {
   user: ShellUser;
+  impersonation: Impersonation | null;
   children: React.ReactNode;
 }) {
   return (
@@ -59,31 +69,43 @@ export function AppShell({
           ))}
         </nav>
 
-        <div className="border-sidebar-border border-t p-4">
-          <p className="text-muted-foreground font-mono text-[11px]">
-            Fase 1 · Auth &amp; App Shell
-          </p>
-        </div>
+        {user.role === "SUPER_ADMIN" && !impersonation ? (
+          <div className="border-sidebar-border border-t px-2 py-2">
+            <NavItem
+              label="Panel Admin"
+              href="/admin"
+              icon={<ShieldCheck className="size-4 shrink-0" />}
+            />
+          </div>
+        ) : null}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-border bg-background/85 sticky top-0 z-20 flex h-14 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 rounded-md md:hidden"
-          >
-            <span className="bg-primary text-primary-foreground grid size-6 place-items-center rounded text-[10px] font-bold">
-              S
-            </span>
-            <span className="text-sm font-bold">SaCMS</span>
-          </Link>
+        {/* Banner dan topbar menempel bersama, supaya banner impersonasi
+            tidak pernah tergulung keluar layar. */}
+        <div className="sticky top-0 z-20">
+          {impersonation ? <ImpersonationBanner {...impersonation} /> : null}
 
-          <div className="flex-1" />
+          <header className="border-border bg-background/85 flex h-14 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 rounded-md md:hidden"
+            >
+              <span className="bg-primary text-primary-foreground grid size-6 place-items-center rounded text-[10px] font-bold">
+                S
+              </span>
+              <span className="text-sm font-bold">SaCMS</span>
+            </Link>
 
-          {user.role === "SUPER_ADMIN" ? <Badge>SUPER ADMIN</Badge> : null}
-          <ThemeToggle />
-          <UserMenu name={user.name} email={user.email} image={user.image} />
-        </header>
+            <div className="flex-1" />
+
+            {user.role === "SUPER_ADMIN" && !impersonation ? (
+              <Badge>SUPER ADMIN</Badge>
+            ) : null}
+            <ThemeToggle />
+            <UserMenu name={user.name} email={user.email} image={user.image} />
+          </header>
+        </div>
 
         <main id="konten" className="flex-1 p-6 lg:p-8">
           {children}

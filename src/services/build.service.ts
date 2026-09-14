@@ -337,6 +337,10 @@ export async function run(jobId: string): Promise<void> {
 
     await step(jobId, "PLAN", async () => plan.spec, doneKeys);
 
+    // Aturan system prompt dibaca SEKALI per job dari pengaturan berversi
+    // (docs/10 §10.7), supaya PROVISION dan COMPOSE memakai teks yang sama.
+    const rules = await systemService.getSystemPromptRules();
+
     const v0ProjectId = await step(
       jobId,
       "PROVISION",
@@ -347,7 +351,7 @@ export async function run(jobId: string): Promise<void> {
           v0Engine.createWorkspace({
             name: project.name,
             description: `Project SaCMS — ${plan.spec.projectTypeLabel}`,
-            instructions: buildSystemPrompt(plan),
+            instructions: buildSystemPrompt(plan, rules),
           }),
         );
 
@@ -364,10 +368,20 @@ export async function run(jobId: string): Promise<void> {
     const composed = await step(
       jobId,
       "COMPOSE",
-      async () => ({
-        system: buildSystemPrompt(plan),
-        message: buildUserMessage(plan),
-      }),
+      async () => {
+        const system = buildSystemPrompt(plan, rules);
+        const message = buildUserMessage(plan);
+
+        // Disimpan untuk investigasi Super Admin (docs/10 §10.5): tanpa ini,
+        // "prompt apa yang sebenarnya dikirim?" tidak bisa dijawab setelah
+        // aturan diubah.
+        await db.buildJob.update({
+          where: { id: jobId },
+          data: { systemPrompt: system, sentMessage: message, model: plan.model },
+        });
+
+        return { system, message };
+      },
       doneKeys,
     );
 
@@ -751,11 +765,27 @@ export async function cancel({
   jobId: string;
   userId: string;
 }): Promise<void> {
+  await cancelJob(jobId, { userId });
+}
+
+/** Super Admin membatalkan build siapa pun — docs/10 §10.5. */
+export async function cancelAsAdmin(jobId: string): Promise<{ projectId: string }> {
+  return cancelJob(jobId, null);
+}
+
+/**
+ * @param owner null = pembatalan oleh admin (tanpa filter pemilik). Selain itu
+ *              kepemilikan WAJIB ada di klausa where.
+ */
+async function cancelJob(
+  jobId: string,
+  owner: { userId: string } | null,
+): Promise<{ projectId: string }> {
   const job = await db.buildJob.findFirst({
     where: {
       id: jobId,
       status: { in: ["QUEUED", "RUNNING"] },
-      project: { userId, deletedAt: null },
+      ...(owner ? { project: { userId: owner.userId, deletedAt: null } } : {}),
     },
     select: { id: true, projectId: true },
   });
@@ -778,7 +808,10 @@ export async function cancel({
 
   await db.buildStep.updateMany({
     where: { buildJobId: jobId, status: { in: ["PENDING", "RUNNING"] } },
-    data: { status: "SKIPPED", detail: "Dibatalkan pengguna" },
+    data: {
+      status: "SKIPPED",
+      detail: owner ? "Dibatalkan pengguna" : "Dibatalkan administrator",
+    },
   });
 
   // Membatalkan edit pada situs yang sudah tayang tidak boleh menjadikannya DRAFT.
@@ -790,7 +823,8 @@ export async function cancel({
   });
   for (const e of events) await usageService.refund(e.id);
 
-  logger.info("build.cancelled", { jobId });
+  logger.info("build.cancelled", { jobId, byAdmin: owner === null });
+  return { projectId: job.projectId };
 }
 
 /**
@@ -829,6 +863,53 @@ export async function retry({
     kind: old.kind,
     prompt: old.prompt,
   });
+}
+
+/**
+ * Super Admin mengulang build siapa pun — docs/10 §10.5.
+ *
+ * Kredit direservasi dari PEMILIK project, sama seperti bila pemilik menekan
+ * Coba Lagi: job ulang memakai kuota yang sama dan tetap di-refund bila gagal.
+ */
+export async function retryAsAdmin(
+  jobId: string,
+): Promise<{ jobId: string; projectId: string }> {
+  const old = await db.buildJob.findFirst({
+    where: {
+      id: jobId,
+      status: { in: ["FAILED", "CANCELLED"] },
+      project: { deletedAt: null },
+    },
+    select: {
+      projectId: true,
+      kind: true,
+      prompt: true,
+      project: { select: { userId: true } },
+    },
+  });
+
+  if (!old) {
+    throw new AppError(
+      "NOT_FOUND",
+      "Proses build tidak ditemukan atau tidak bisa diulang.",
+    );
+  }
+
+  const active = await db.buildJob.count({
+    where: { projectId: old.projectId, status: { in: ["QUEUED", "RUNNING"] } },
+  });
+  if (active > 0) {
+    throw new AppError("CONFLICT", "Project ini masih punya build yang berjalan.");
+  }
+
+  const { jobId: newJobId } = await createJob({
+    projectId: old.projectId,
+    userId: old.project.userId,
+    kind: old.kind,
+    prompt: old.prompt,
+  });
+
+  return { jobId: newJobId, projectId: old.projectId };
 }
 
 export interface BuildStatus {

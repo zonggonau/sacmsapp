@@ -7,6 +7,7 @@ import { AppError, ERROR_MESSAGES, isAppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { checkRateLimit, type RateLimitKey } from "@/lib/ratelimit";
 import * as auditService from "@/services/audit.service";
+import * as systemService from "@/services/system.service";
 
 /**
  * Klien Server Action — docs/08-SERVER-ACTIONS.md §8.3.
@@ -15,10 +16,11 @@ import * as auditService from "@/services/audit.service";
  * mewarisinya otomatis dan lupa memasang pemeriksaan menjadi hampir mustahil.
  *
  * Urutannya mengikat:
- *   1 autentikasi -> 2 peran -> 3 impersonasi -> 4 rate limit -> 5 jalankan -> 6 audit
+ *   1 autentikasi -> 2 peran -> 3 impersonasi -> 4 maintenance -> 5 rate limit
+ *   -> 6 jalankan -> 7 audit
  *
- * Kuota (langkah 5 di dokumen) dipasang di Fase 6 pada titik yang ditandai
- * di bawah — lihat docs/11-QUOTA-DAN-BILLING.md §11.4.
+ * Kuota dipasang di Fase 6 pada titik yang ditandai di bawah — lihat
+ * docs/11-QUOTA-DAN-BILLING.md §11.4.
  */
 
 const metadataSchema = z.object({
@@ -42,6 +44,8 @@ const metadataSchema = z.object({
 
 /** Aksi yang tidak boleh dijalankan saat Super Admin sedang menyamar. */
 const DESTRUCTIVE_ACTION = /\.(delete|destroy|suspend|purge|reset|role)$/;
+
+const ADMIN_ROLES: readonly UserRole[] = ["ADMIN", "SUPER_ADMIN"];
 
 export const actionClient = createSafeActionClient({
   defineMetadataSchema: () => metadataSchema,
@@ -68,6 +72,18 @@ async function requestContext() {
     userAgent: h.get("user-agent") ?? "unknown",
     correlationId: crypto.randomUUID(),
   };
+}
+
+/**
+ * Mengambil jejak audit dari hasil action lalu MEMBUANGNYA dari respons.
+ * Nilai before/after bisa memuat data yang tidak perlu sampai ke peramban.
+ */
+function takeAuditTrail(data: unknown): auditService.AuditTrail | null {
+  if (typeof data !== "object" || data === null || !("audit" in data)) return null;
+  const record = data as Record<string, unknown>;
+  const trail = record.audit;
+  delete record.audit;
+  return auditService.isAuditTrail(trail) ? trail : null;
 }
 
 /* ============================================================
@@ -99,35 +115,64 @@ export const authActionClient = actionClient.use(async ({ next, metadata }) => {
     throw new AppError("SUSPENDED", ERROR_MESSAGES.SUSPENDED);
   }
 
+  const role = session.user.role as UserRole;
+  const impersonatedBy = session.session.impersonatedBy ?? null;
+  const request = await requestContext();
+
   // --- 2. PERAN ---
   if (metadata.requireRole) {
-    const allowed: UserRole[] =
-      metadata.requireRole === "SUPER_ADMIN"
-        ? ["SUPER_ADMIN"]
-        : ["ADMIN", "SUPER_ADMIN"];
+    // Action admin tanpa audit adalah bug (docs/10 §10.9 aturan 2). Gagal
+    // tertutup: lebih baik action itu tidak berjalan sama sekali daripada
+    // berjalan tanpa jejak.
+    if (metadata.audit !== true) {
+      logger.error("action.admin_without_audit", { action: metadata.actionName });
+      throw new AppError("INTERNAL", ERROR_MESSAGES.INTERNAL);
+    }
 
-    if (!allowed.includes(session.user.role as UserRole)) {
+    const allowed: readonly UserRole[] =
+      metadata.requireRole === "SUPER_ADMIN" ? ["SUPER_ADMIN"] : ADMIN_ROLES;
+
+    if (!allowed.includes(role)) {
+      // Percobaan memanggil action admin tanpa hak adalah sinyal serangan.
+      await auditService.record({
+        action: "admin.access_denied",
+        actorId: session.user.id,
+        actorRole: role,
+        targetType: "Action",
+        targetId: metadata.actionName,
+        ipAddress: request.ip,
+        userAgent: request.userAgent,
+      });
       throw new AppError("FORBIDDEN", ERROR_MESSAGES.FORBIDDEN);
     }
   }
 
   // --- 3. IMPERSONASI: blokir aksi destruktif ---
-  if (session.session.impersonatedBy && DESTRUCTIVE_ACTION.test(metadata.actionName)) {
+  if (impersonatedBy && DESTRUCTIVE_ACTION.test(metadata.actionName)) {
     throw new AppError(
       "FORBIDDEN",
       "Tindakan ini tidak tersedia saat menyamar sebagai pengguna.",
     );
   }
 
-  const request = await requestContext();
+  // --- 4. MAINTENANCE ---
+  // Admin tetap bekerja, termasuk saat sedang menyamar untuk melihat masalah.
+  if (
+    !ADMIN_ROLES.includes(role) &&
+    !impersonatedBy &&
+    (await systemService.isMaintenanceMode())
+  ) {
+    throw new AppError("MAINTENANCE", ERROR_MESSAGES.MAINTENANCE);
+  }
+
   const ctx = {
     ...request,
     user: session.user,
     session: session.session,
-    isImpersonating: Boolean(session.session.impersonatedBy),
+    isImpersonating: Boolean(impersonatedBy),
   };
 
-  // --- 4. RATE LIMIT ---
+  // --- 5. RATE LIMIT ---
   if (metadata.rateLimit) {
     const subject = (metadata.rateLimit.by ?? "user") === "ip" ? ctx.ip : ctx.user.id;
     const result = await checkRateLimit(metadata.rateLimit.key, subject);
@@ -136,17 +181,34 @@ export const authActionClient = actionClient.use(async ({ next, metadata }) => {
     }
   }
 
-  // --- 5. KUOTA --- (Fase 6: quotaService.reserve() dipasang di sini,
+  // --- KUOTA --- (Fase 6: quotaService.reserve() dipasang di sini,
   // dengan commit saat sukses dan refund saat gagal. docs/11 §11.4)
 
   // --- 6. JALANKAN + 7. AUDIT ---
   const result = await next({ ctx });
 
   if (metadata.audit) {
+    const trail = takeAuditTrail(result.data);
+    const after = {
+      ...(trail?.after !== undefined
+        ? typeof trail.after === "object" && trail.after !== null
+          ? trail.after
+          : { nilai: trail.after }
+        : {}),
+      ...(result.success ? {} : { gagal: result.serverError ?? "validasi ditolak" }),
+      // Aksi saat menyamar dicatat atas nama ADMIN, dengan akun yang dipakai.
+      ...(impersonatedBy ? { sebagaiPengguna: ctx.user.id } : {}),
+    };
+
     await auditService.record({
       action: metadata.actionName,
-      actorId: ctx.user.id,
-      actorRole: ctx.user.role as UserRole,
+      actorId: impersonatedBy ?? ctx.user.id,
+      // Impersonasi hanya bisa dilakukan SUPER_ADMIN (lib/auth.ts).
+      actorRole: impersonatedBy ? "SUPER_ADMIN" : role,
+      targetType: trail?.targetType ?? null,
+      targetId: trail?.targetId ?? null,
+      before: trail?.before,
+      after: Object.keys(after).length > 0 ? after : undefined,
       ipAddress: ctx.ip,
       userAgent: ctx.userAgent,
     });
