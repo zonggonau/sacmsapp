@@ -69,9 +69,9 @@
 ✓ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
 ✓ FASE 2 — Project CRUD           [ SELESAI — 22 asertasi lulus ]
 ✓ FASE 3 — AI Builder Core        [ SELESAI — 62 asertasi DoD + uji after() di server nyata ]
-▶ FASE 4 — Deploy & Domain        [ KODE LENGKAP — 75 asertasi lulus; 3 butir DoD menunggu uji nyata ]
-  FASE 5 — Super Admin            [ terkunci ]
-  FASE 6 — Quota & Billing        [ terkunci ]
+◐ FASE 4 — Deploy & Domain        [ KODE LENGKAP — 75 asertasi; 3 butir menunggu kredit v0 & domain uji (pengecualian) ]
+✓ FASE 5 — Super Admin            [ SELESAI — 60 asertasi HTTP + 13 service ]
+▶ FASE 6 — Quota & Billing        [ BERJALAN ]
   FASE 7 — Hardening & Go-Live    [ terkunci ]
 ```
 

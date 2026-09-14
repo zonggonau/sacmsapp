@@ -206,17 +206,21 @@ AI & model + kill switch, sistem + maintenance, audit log.
 
 **Definition of Done:**
 
-- [ ] `USER` membuka `/admin` → 403
-- [ ] `USER` memanggil action admin lewat DevTools → ditolak
-- [ ] Ubah paket pengguna → kuota berlaku seketika
-- [ ] Tangguhkan pengguna → sesi tercabut, tidak bisa masuk
-- [ ] Impersonasi → banner tampil, aksi destruktif diblokir, audit mulai & selesai tercatat
-- [ ] Kill switch menyala → generate ditolak dengan pesan sopan
-- [ ] Maintenance mode → pengguna biasa melihat halaman pemberitahuan, admin tetap masuk
-- [ ] Detail build menampilkan `rawError`, prompt lengkap, dan `correlationId`
-- [ ] Audit mencatat **setiap** aksi admin; tidak ada cara menghapusnya dari UI
-- [ ] Super Admin terakhir tidak bisa menurunkan dirinya sendiri
-- [ ] Checklist [07 §7.8](./07-AUTH-DAN-RBAC.md) lulus seluruhnya
+- [x] `USER` membuka `/admin` → 403
+- [x] `USER` memanggil action admin lewat DevTools → ditolak
+- [x] Ubah paket pengguna → kuota berlaku seketika
+- [x] Tangguhkan pengguna → sesi tercabut, tidak bisa masuk
+- [x] Impersonasi → banner tampil, aksi destruktif diblokir, audit mulai & selesai tercatat
+- [x] Kill switch menyala → generate ditolak dengan pesan sopan
+- [x] Maintenance mode → pengguna biasa melihat halaman pemberitahuan, admin tetap masuk
+- [x] Detail build menampilkan `rawError`, prompt lengkap, dan `correlationId`
+- [x] Audit mencatat **setiap** aksi admin; tidak ada cara menghapusnya dari UI
+- [x] Super Admin terakhir tidak bisa menurunkan dirinya sendiri
+- [x] Checklist [07 §7.8](./07-AUTH-DAN-RBAC.md) lulus seluruhnya — _catatan: project milik orang lain membalas halaman "tidak ditemukan" identik dengan ID yang tidak ada, tetapi berstatus 200 karena streaming `loading.tsx` (BACKLOG, Fase 7)_
+
+Status 2026-09-15: **SELESAI** — 60 asertasi HTTP pada server dev nyata + 13 asertasi
+tingkat service. Fase 5 dibuka dengan pengecualian tercatat untuk tiga butir Fase 4 yang
+menunggu kredit v0 dan domain uji (keputusan pemilik); butir itu wajib selesai sebelum Fase 7.
 
 ---
 
