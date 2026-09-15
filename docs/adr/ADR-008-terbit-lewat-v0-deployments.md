@@ -70,10 +70,17 @@ memerlukan alternatif kedua di atas.
 | `GET /v6/domains/:d/config` memberi `misconfigured`, `recommendedIPv4`, `recommendedCNAME` berperingkat              | Rekaman DNS memakai anjuran peringkat 1, tidak ditanam di kode                                       |
 | Kredit akun v0 habis dikembalikan sebagai **200** berisi chat tanpa versi + pesan `task-stopped-v1 / out-of-credits` | `lib/v0` menerjemahkannya menjadi kegagalan `CONFIG`, bukan "AI tidak menghasilkan website"          |
 
-**Belum terverifikasi** (terhalang kredit v0 habis): bentuk id yang dikembalikan
-`v0.deployments.create` terhadap id deployment Vercel. Kode menangani tiga kemungkinan
-(id `dpl_…`, segmen terakhir `inspectorUrl`, atau pencarian di daftar deployment production
-project sejak deployment dibuat), jadi tidak bergantung pada salah satunya.
+**Terverifikasi dengan uji nyata (2026-09-15, tim Vercel Pro):** `v0.deployments.create`
+mengembalikan id yang **sama** dengan id deployment Vercel (`dpl_…`), sehingga pencocokan
+langsung berhasil pada percobaan pertama. Generate v0-mini 120 dtk, build Vercel READY ±22 dtk,
+alias `https://uji-nyata-sma-jayapura.vercel.app` HTTP 200 tanpa login. Dua jalur cadangan
+pencocokan (segmen `inspectorUrl`, daftar deployment project) tetap dipertahankan bila v0
+mengubah bentuk id.
+
+**Lokasi hosting:** website pengguna dibuat di tim Vercel **Pro** yang terhubung ke v0.
+`V0_API_KEY`, `VERCEL_TOKEN`, dan `VERCEL_TEAM_ID` wajib menunjuk tim yang sama — bila tidak,
+v0 membuat project di satu tim sementara SaCMS mencarinya di tim lain (403/404). Paket Hobby
+tidak dipakai: penggunaan komersial dan cron berfrekuensi tinggi membutuhkan Pro.
 
 ## Kapan Ditinjau Ulang
 

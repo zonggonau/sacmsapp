@@ -71,6 +71,10 @@
     "typescript": "^5.9.0"
   },
   "pnpm": {
+    "overrides": {
+      "mysql2": ">=3.23.1 <4",
+      "deepmerge-ts": ">=8.0.0 <9"
+    },
     "onlyBuiltDependencies": [
       "@prisma/client",
       "@prisma/engines",

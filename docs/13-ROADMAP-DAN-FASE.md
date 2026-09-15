@@ -183,16 +183,17 @@ Pekerjaan:
 
 **Definition of Done:**
 
-- [ ] Terbitkan → URL `*.vercel.app` dapat dibuka dari perangkat lain — _mesin tiruan lulus; uji nyata terhalang kredit v0 habis. Alias production publik (200) terverifikasi pada project v0 yang sudah ada_
+- [x] Terbitkan → URL `*.vercel.app` dapat dibuka dari perangkat lain — _uji nyata 2026-09-15: `https://uji-nyata-sma-jayapura.vercel.app` HTTP 200 tanpa login (UA desktop & ponsel), tim Vercel Pro_
 - [x] Deploy gagal → production lama **tetap hidup**, pengguna melihat pesan yang jelas
 - [x] Rollback mengembalikan versi sebelumnya
 - [x] Tambah domain menampilkan rekaman DNS yang benar dan dapat disalin — _logika & anjuran Vercel terverifikasi; salin belum dicek di peramban_
 - [ ] Domain terverifikasi menjadi `ACTIVE` dengan HTTPS — _mesin tiruan lulus; butuh domain sungguhan_
 - [x] Webhook dengan signature salah → ditolak
-- [ ] **Alur penuh: daftar → prompt → generate → pratinjau → terbitkan → buka di ponsel** — _terhalang kredit v0 habis_
+- [x] **Alur penuh: daftar → prompt → generate → pratinjau → terbitkan → buka di ponsel** — _uji nyata lewat pipeline SaCMS: generate v0-mini 120 dtk (SUCCEEDED) → deploy READY ±22 dtk → URL publik 200. Langkah daftar & klik UI diuji terpisah di Fase 1/5 dan akan disatukan di E2E Fase 7_
 
-Status 2026-09-15: kode lengkap, 75 asertasi lulus (mesin tiruan + penjaga mode nyata).
-Tiga butir di atas menunggu kredit v0 diisi ulang dan satu domain uji.
+Status 2026-09-15: kode lengkap, 75 asertasi + uji nyata 1 generate + 1 deploy berhasil
+(biaya v0 ±0,02 kredit). **Tersisa satu butir:** domain `ACTIVE` dengan HTTPS — butuh satu
+domain uji yang DNS-nya bisa diubah.
 
 ---
 

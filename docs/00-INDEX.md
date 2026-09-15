@@ -69,7 +69,7 @@
 ✓ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
 ✓ FASE 2 — Project CRUD           [ SELESAI — 22 asertasi lulus ]
 ✓ FASE 3 — AI Builder Core        [ SELESAI — 62 asertasi DoD + uji after() di server nyata ]
-◐ FASE 4 — Deploy & Domain        [ KODE LENGKAP — 75 asertasi; 3 butir menunggu kredit v0 & domain uji (pengecualian) ]
+◐ FASE 4 — Deploy & Domain        [ UJI NYATA LULUS — 1 butir tersisa: domain ACTIVE (butuh domain uji) ]
 ✓ FASE 5 — Super Admin            [ SELESAI — 60 asertasi HTTP + 13 service ]
 ✓ FASE 6 — Quota & Billing        [ SELESAI — 38 asertasi service + uji HTTP ]
 ▶ FASE 7 — Hardening & Go-Live    [ BERIKUTNYA — wajib tuntaskan pengecualian Fase 4 ]
@@ -119,14 +119,14 @@ Diuji langsung terhadap database, bukan hanya lolos kompilasi:
 
 ### Yang belum terverifikasi
 
-| Butir                                          | Penghalang                                                                                                                                |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Email konfirmasi benar-benar sampai            | Domain pengirim `sacms.id` belum diverifikasi di Resend (403). Untuk development, set `EMAIL_FROM="SaCMS <onboarding@resend.dev>"`        |
-| Login Google                                   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi                                                                                   |
-| Tampilan visual (nav aktif oranye, dark/light) | Belum diperiksa dengan mata di peramban                                                                                                   |
-| Generate & deploy dengan v0 sungguhan          | **Kredit akun v0 habis** (probe 2026-09-15: respons `out-of-credits`, tanpa versi). Isi ulang saldo v0, lalu ulangi 1 generate + 1 deploy |
-| Custom domain ACTIVE dengan HTTPS sungguhan    | Butuh satu domain uji yang DNS-nya bisa diubah                                                                                            |
-| Tampilan halaman Deployment & Domain           | Belum diperiksa dengan mata (dark/light, 360px)                                                                                           |
+| Butir                                          | Penghalang                                                                                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Email konfirmasi benar-benar sampai            | Domain pengirim `sacms.id` belum diverifikasi di Resend (403). Untuk development, set `EMAIL_FROM="SaCMS <onboarding@resend.dev>"` |
+| Login Google                                   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi                                                                            |
+| Tampilan visual (nav aktif oranye, dark/light) | Belum diperiksa dengan mata di peramban                                                                                            |
+| Generate & deploy dengan v0 sungguhan          | **LULUS 2026-09-15** — generate 120 dtk, deploy READY ±22 dtk, `uji-nyata-sma-jayapura.vercel.app` HTTP 200 (tim Vercel Pro)       |
+| Custom domain ACTIVE dengan HTTPS sungguhan    | Butuh satu domain uji yang DNS-nya bisa diubah                                                                                     |
+| Tampilan halaman Deployment & Domain           | Belum diperiksa dengan mata (dark/light, 360px)                                                                                    |
 
 ### Menunggu kredensial pemilik
 
