@@ -36,7 +36,9 @@ export default async function ProjectLayout({
   if (!project) return <>{children}</>;
 
   return (
-    <div className="space-y-6">
+    // Ruang kerja project (ringkasan, builder, deployment, domain, pengaturan)
+    // memakai lebar penuh — lihat pembungkus konten di app-shell.tsx.
+    <div data-lebar="penuh" className="space-y-6">
       <ProjectHeader project={project} />
       {children}
     </div>

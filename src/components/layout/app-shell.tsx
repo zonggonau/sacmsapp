@@ -162,8 +162,12 @@ export function AppShell({
         </div>
 
         <main id="konten" className="flex-1 p-6 lg:p-8">
-          {/* Lebar konten seragam di semua halaman: max-w-6xl (1152px), di tengah. */}
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+          {/* Lebar konten seragam: max-w-6xl (1152px), di tengah. Halaman yang
+              menandai dirinya data-lebar="penuh" (ruang kerja project) memakai
+              lebar penuh. */}
+          <div className="mx-auto w-full max-w-6xl has-[[data-lebar=penuh]]:max-w-none">
+            {children}
+          </div>
         </main>
       </div>
     </div>
