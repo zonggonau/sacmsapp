@@ -4,7 +4,8 @@
 > 2026-09-16):** paket per akun dengan kredit bulanan diganti dua hal terpisah:
 >
 > - **Paket Project** — dibayar **per project per tahun** (UMKM Rp 3 juta, Pemda Rp 12 juta), karena setiap
->   project memakai sumber daya sendiri: database Neon, storage Blob, function & hosting Vercel, domain.
+>   website yang tayang memakai hosting, bandwidth, function Vercel, domain, dan dukungan. Database Neon dan
+>   storage Blob tetap hanya untuk platform SaCMS, bukan per website.
 > - **Kredit AI** — melekat pada **akun**, diisi lewat top-up, dan bisa dipakai di **semua project** akun itu.
 >
 > Isi dokumen ini tetap berlaku sampai ADR-012 disetujui dan dikerjakan.
