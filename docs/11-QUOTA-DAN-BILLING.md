@@ -1,5 +1,10 @@
 # 11 — Kuota, Kredit & Paket
 
+> **Usulan perubahan model — [ADR-012](./adr/ADR-012-langganan-per-website-dan-dompet-kredit.md) (diusulkan
+> 2026-09-16):** paket per akun dengan kredit bulanan diganti **langganan tahunan per website** (layanan
+> lengkap, Rp 3 juta UMKM / Rp 12 juta Pemda) ditambah **dompet kredit AI** yang diisi lewat top-up.
+> Isi dokumen ini tetap berlaku sampai ADR-012 disetujui dan dikerjakan.
+
 ## 11.1 Model
 
 Satu satuan saja: **kredit**.
