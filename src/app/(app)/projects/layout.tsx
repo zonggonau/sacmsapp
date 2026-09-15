@@ -15,7 +15,9 @@ export default function ProjectsLayout({
 }) {
   return (
     <>
-      {children}
+      {/* Lebar konten dibatasi breakpoint 2xl (1536px) dan diletakkan di tengah,
+          supaya grid kartu, builder, dan tab project tidak melebar penuh di layar lebar. */}
+      <div className="mx-auto w-full max-w-(--breakpoint-2xl)">{children}</div>
       {modal}
     </>
   );
