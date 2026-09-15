@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useOptimistic, useRef, useState } from "react";
+import { startTransition, useEffect, useOptimistic, useRef, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { ArrowUp, Bot, Loader2, User } from "lucide-react";
 
@@ -54,7 +54,7 @@ export function BuilderChat({
     ],
   );
 
-  const { execute, isPending } = useAction(sendBuilderMessage, {
+  const { executeAsync, isPending } = useAction(sendBuilderMessage, {
     onError: ({ error }) =>
       toastActionError(error.serverError, "Gagal mengirim pesan."),
   });
@@ -69,9 +69,15 @@ export function BuilderChat({
     const text = draft.trim();
     if (text.length < 5 || disabled || isPending) return;
 
-    addOptimistic(text);
-    execute({ projectId, message: text });
     setDraft("");
+
+    // React 19: pembaruan optimistic WAJIB di dalam transition. Pesan sementara
+    // tetap tampil selama action berjalan, lalu digantikan data server setelah
+    // revalidasi — bila action gagal, pesan sementara hilang dengan sendirinya.
+    startTransition(async () => {
+      addOptimistic(text);
+      await executeAsync({ projectId, message: text });
+    });
   }
 
   return (

@@ -22,10 +22,28 @@ type ViewportKey = (typeof VIEWPORTS)[number]["key"];
  * - `referrerPolicy="no-referrer"` supaya URL internal kita tidak ikut terkirim,
  * - tidak pernah dirender inline ke DOM SaCMS.
  *
- * Atribut sandbox sengaja TIDAK memuat `allow-same-origin`: dokumen pratinjau
- * bisa berupa data URI (mode tiruan), dan memberi data URI origin yang sama
- * berarti ia bisa membaca DOM induknya.
+ * Atribut sandbox (docs/12 §12.5):
+ * - Pratinjau v0 (https, domain lain seperti *.vusercontent.net) mendapat
+ *   `allow-same-origin`. Hasil v0 adalah aplikasi Next.js yang memakai
+ *   sessionStorage & service worker; tanpa flag ini halamannya gagal dimuat
+ *   ("This page couldn't load"). Karena origin-nya BERBEDA dari SaCMS, flag ini
+ *   hanya memberinya origin miliknya sendiri — ia tetap tidak bisa membaca DOM,
+ *   cookie, atau sesi SaCMS.
+ * - Data URI (mode tiruan) dan URL yang tidak dikenali tetap TANPA
+ *   `allow-same-origin`.
  */
+function sandboxFor(url: string): string {
+  const base = "allow-scripts allow-forms allow-popups";
+  try {
+    const target = new URL(url);
+    const isForeignHttps =
+      target.protocol === "https:" &&
+      (typeof window === "undefined" || target.origin !== window.location.origin);
+    return isForeignHttps ? `${base} allow-same-origin` : base;
+  } catch {
+    return base;
+  }
+}
 export function PreviewFrame({
   url,
   projectName,
@@ -99,7 +117,7 @@ export function PreviewFrame({
             key={reloadKey}
             src={url}
             title={`Pratinjau ${projectName}`}
-            sandbox="allow-scripts allow-forms allow-popups"
+            sandbox={sandboxFor(url)}
             referrerPolicy="no-referrer"
             loading="lazy"
             className="h-full w-full border-0"

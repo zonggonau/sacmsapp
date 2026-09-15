@@ -136,6 +136,10 @@ asing**:
 - Tidak pernah dirender inline ke dalam DOM SaCMS.
 - Tidak pernah diberi akses ke cookie SaCMS (origin berbeda menjaminnya).
 - Tidak ada `postMessage` dari pratinjau yang dipercaya tanpa memeriksa `event.origin`.
+- `allow-same-origin` **wajib** untuk pratinjau v0 (`*.vusercontent.net`): hasil v0 adalah aplikasi
+  Next.js yang memakai `sessionStorage` & service worker, dan tanpa flag ini halamannya gagal dimuat
+  ("This page couldn't load"). Flag hanya diberikan pada URL https ber-origin lain; data URI (mode
+  tiruan) dan URL tak dikenal tetap tanpa `allow-same-origin` (`sandboxFor()` di `preview-frame.tsx`).
 
 ## 12.6 Privasi Data
 
