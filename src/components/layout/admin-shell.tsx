@@ -42,7 +42,7 @@ export function AdminShell({
         Lewati ke konten utama
       </a>
 
-      <aside className="bg-sidebar border-sidebar-border border-l-primary hidden w-60 shrink-0 flex-col border-r border-l-4 md:flex">
+      <aside className="bg-sidebar border-sidebar-border border-l-primary sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-l-4 md:flex">
         <div className="flex h-14 items-center gap-2.5 px-4">
           <Link href="/admin" className="flex items-center gap-2.5 rounded-md">
             <span className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-xs font-bold">
@@ -52,7 +52,10 @@ export function AdminShell({
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 px-2 py-2" aria-label="Navigasi admin">
+        <nav
+          className="flex-1 space-y-1 overflow-y-auto px-2 py-2"
+          aria-label="Navigasi admin"
+        >
           {nav}
         </nav>
 
@@ -96,7 +99,8 @@ export function AdminShell({
         </div>
 
         <main id="konten-admin" className="flex-1 p-6 lg:p-8">
-          {children}
+          {/* Lebar konten seragam di semua halaman: max-w-6xl (1152px), di tengah. */}
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>
     </div>

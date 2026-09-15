@@ -10,7 +10,7 @@ import { ACCOUNT_NAV } from "@/config/navigation";
  */
 export default function AkunLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="space-y-8">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Pengaturan Akun</h1>
         <p className="text-muted-foreground text-sm">

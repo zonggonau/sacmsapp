@@ -15,9 +15,7 @@ export default function ProjectsLayout({
 }) {
   return (
     <>
-      {/* Lebar konten dibatasi max-w-6xl (1152px, sama dengan halaman harga) dan diletakkan di tengah,
-          supaya grid kartu, builder, dan tab project tidak melebar penuh di layar lebar. */}
-      <div className="mx-auto w-full max-w-6xl">{children}</div>
+      {children}
       {modal}
     </>
   );
