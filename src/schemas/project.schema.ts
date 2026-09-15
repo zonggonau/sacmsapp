@@ -52,6 +52,7 @@ export const projectIdSchema = z.object({
 export const deleteProjectSchema = z.object({
   projectId: z.string().min(1),
   confirmName: z.string().min(1, "Ketik nama project untuk konfirmasi"),
+  confirmPhrase: z.string().min(1, "Ketik kalimat konfirmasi"),
 });
 
 export const projectFiltersSchema = z.object({

@@ -55,18 +55,55 @@ describe("project", () => {
     expect(copy).toBeTruthy();
 
     await expectAppError(
-      () => project.softDelete({ projectId, userId: u.id, confirmName: "nama salah" }),
+      () =>
+        project.softDelete({
+          projectId,
+          userId: u.id,
+          confirmName: "nama salah",
+          confirmPhrase: "delete my project",
+        }),
       "VALIDATION",
     );
     await project.softDelete({
       projectId,
       userId: u.id,
       confirmName: "Toko Kopi Baru",
+      confirmPhrase: "delete my project",
     });
     expect(
       (await db.project.findUniqueOrThrow({ where: { id: projectId } })).deletedAt,
     ).not.toBeNull();
     expect(await project.getForUser(projectId, u.id)).toBeNull();
+  });
+
+  it("hapus mewajibkan nama project dan kalimat konfirmasi", async () => {
+    const u = await f.user("konfirmasi", { maxProjectsOverride: 5 });
+    const p = await f.project(u.id, "konfirmasi");
+
+    await expectAppError(
+      () =>
+        project.softDelete({
+          projectId: p.id,
+          userId: u.id,
+          confirmName: p.name,
+          confirmPhrase: "hapus saja",
+        }),
+      "VALIDATION",
+      /delete my project/,
+    );
+    expect(
+      (await db.project.findUniqueOrThrow({ where: { id: p.id } })).deletedAt,
+    ).toBeNull();
+
+    await project.softDelete({
+      projectId: p.id,
+      userId: u.id,
+      confirmName: p.name,
+      confirmPhrase: "  Delete My Project ",
+    });
+    expect(
+      (await db.project.findUniqueOrThrow({ where: { id: p.id } })).deletedAt,
+    ).not.toBeNull();
   });
 
   it("pengguna lain tidak bisa menyentuh project milik orang", async () => {
@@ -93,6 +130,7 @@ describe("project", () => {
           projectId: p.id,
           userId: stranger.id,
           confirmName: p.name,
+          confirmPhrase: "delete my project",
         }),
       "NOT_FOUND",
     );

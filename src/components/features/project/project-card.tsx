@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
+import { ProjectCardMenu } from "@/components/features/project/project-card-menu";
 import { ProjectStatusBadge } from "@/components/features/project/project-status-badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { getWebsiteType } from "@/config/website-types";
@@ -36,7 +37,15 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
               <p className="text-muted-foreground truncate text-xs">{type.label}</p>
             </div>
           </div>
-          <ProjectStatusBadge status={project.status} />
+          <div className="flex shrink-0 items-center gap-1">
+            <ProjectStatusBadge status={project.status} />
+            <ProjectCardMenu
+              projectId={project.id}
+              projectName={project.name}
+              status={project.status}
+              liveUrl={liveUrl}
+            />
+          </div>
         </div>
       </CardHeader>
 

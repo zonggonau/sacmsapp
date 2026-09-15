@@ -1,3 +1,4 @@
+import { DELETE_CONFIRM_PHRASE } from "@/config/project";
 import { getWebsiteType } from "@/config/website-types";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
@@ -343,10 +344,12 @@ export async function softDelete({
   projectId,
   userId,
   confirmName,
+  confirmPhrase,
 }: {
   projectId: string;
   userId: string;
   confirmName: string;
+  confirmPhrase: string;
 }): Promise<void> {
   const project = await db.project.findFirst({
     where: { id: projectId, userId, deletedAt: null },
@@ -360,6 +363,12 @@ export async function softDelete({
     throw new AppError(
       "VALIDATION",
       "Nama yang Anda ketik tidak sama dengan nama project.",
+    );
+  }
+  if (confirmPhrase.trim().toLowerCase() !== DELETE_CONFIRM_PHRASE) {
+    throw new AppError(
+      "VALIDATION",
+      `Ketik "${DELETE_CONFIRM_PHRASE}" untuk mengonfirmasi penghapusan.`,
     );
   }
 

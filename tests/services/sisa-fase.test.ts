@@ -34,7 +34,12 @@ describe("hapus menurunkan website yang tayang", () => {
     const u = await f.user("hapus-project", { planSlug: "business" });
     const p = await publishedProject(u.id, "tayang");
 
-    await project.softDelete({ projectId: p.id, userId: u.id, confirmName: p.name });
+    await project.softDelete({
+      projectId: p.id,
+      userId: u.id,
+      confirmName: p.name,
+      confirmPhrase: "delete my project",
+    });
 
     const after = await db.project.findUniqueOrThrow({ where: { id: p.id } });
     expect(after.deletedAt).not.toBeNull();

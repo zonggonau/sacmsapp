@@ -105,6 +105,7 @@ export const deleteProject = authActionClient
       projectId: parsedInput.projectId,
       userId: ctx.user.id,
       confirmName: parsedInput.confirmName,
+      confirmPhrase: parsedInput.confirmPhrase,
     });
 
     revalidateLists();
