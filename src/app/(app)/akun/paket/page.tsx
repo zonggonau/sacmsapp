@@ -1,6 +1,8 @@
+import { SUPPORT, whatsappWithText } from "@/config/support";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -113,6 +115,40 @@ export default async function PlanPage() {
             Peningkatan paket saat ini dilakukan oleh admin SaCMS setelah pembayaran.
             Batas baru berlaku seketika.
           </CardDescription>
+          {/* Jalur upgrade manual — docs/11 §11.7 & kanal dukungan docs/14 §14.9. */}
+          {SUPPORT.available ? (
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              <span className="text-muted-foreground text-sm">
+                Ingin naik paket atau menambah kredit?
+              </span>
+              {SUPPORT.whatsapp ? (
+                <Button size="sm" asChild>
+                  <a
+                    href={
+                      whatsappWithText(
+                        `Halo admin SaCMS, saya ingin upgrade paket. Email akun: ${user.email}. Paket saat ini: ${quota.planName}.`,
+                      ) ?? "#"
+                    }
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    Hubungi via WhatsApp
+                  </a>
+                </Button>
+              ) : null}
+              {SUPPORT.emailHref ? (
+                <Button size="sm" variant="outline" asChild>
+                  <a
+                    href={`${SUPPORT.emailHref}?subject=${encodeURIComponent("Upgrade paket SaCMS")}&body=${encodeURIComponent(`Email akun: ${user.email}
+Paket saat ini: ${quota.planName}
+Paket yang diinginkan: `)}`}
+                  >
+                    Kirim email ke admin
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </CardHeader>
         <CardContent>
           <div className="border-border overflow-x-auto rounded-lg border">

@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { WEBSITE_TYPES, getWebsiteType } from "@/config/website-types";
+import { BlockedTooltip } from "@/components/features/quota/blocked-tooltip";
+import { angka } from "@/lib/format";
 import { formAction } from "@/lib/form-action";
 import { toastActionError } from "@/lib/notify";
 import { cn } from "@/lib/utils";
@@ -20,7 +22,21 @@ import type { WebsiteType } from "@/types/db";
  * `@modal/(.)baru`. Menduplikasi form ke dua tempat adalah cara pasti membuat
  * keduanya berbeda perlahan-lahan (docs/05 §5.4).
  */
-export function CreateProjectForm({ compact = false }: { compact?: boolean }) {
+export interface CreateProjectQuota {
+  creditsLeft: number;
+  creditLimit: number;
+  /** Alasan tombol Buat Project nonaktif (project atau kredit habis); null bila bisa. */
+  blocker: string | null;
+}
+
+export function CreateProjectForm({
+  compact = false,
+  quota,
+}: {
+  compact?: boolean;
+  /** docs/11 §11.6: sisa kredit tampil di bawah tombol. */
+  quota?: CreateProjectQuota | null;
+}) {
   const [selected, setSelected] = useState<WebsiteType>("GOVERNMENT");
 
   const { execute, result, isPending } = useAction(createProject, {
@@ -128,19 +144,33 @@ export function CreateProjectForm({ compact = false }: { compact?: boolean }) {
         ) : null}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Membuat…
-          </>
-        ) : (
-          <>
-            <Sparkles className="size-4" />
-            Buat Project
-          </>
-        )}
-      </Button>
+      <div className="space-y-2">
+        <BlockedTooltip reason={quota?.blocker}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isPending || Boolean(quota?.blocker)}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Membuat…
+              </>
+            ) : (
+              <>
+                <Sparkles className="size-4" />
+                Buat Project
+              </>
+            )}
+          </Button>
+        </BlockedTooltip>
+        {quota ? (
+          <p className="text-muted-foreground text-center text-xs">
+            {quota.blocker ??
+              `Sisa kredit ${angka(quota.creditsLeft)} dari ${angka(quota.creditLimit)}. Pembuatan website memakai 1 kredit.`}
+          </p>
+        ) : null}
+      </div>
     </form>
   );
 }

@@ -167,6 +167,8 @@ jobs:
       UPSTASH_REDIS_REST_URL: http://localhost:8079
       UPSTASH_REDIS_REST_TOKEN: token-uji-e2e
       MAIL_OUTBOX_DIR: ${{ github.workspace }}/e2e/.outbox
+      # env.ts mewajibkan CRON_SECRET di production (docs/12 §12.8).
+      CRON_SECRET: rahasia-cron-uji-e2e-bukan-production-0123456789
     steps:
       - uses: actions/checkout@v4
 

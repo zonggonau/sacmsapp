@@ -185,18 +185,18 @@ maintenance mode langsung di halaman itu:
 
 ## 12.8 Checklist Sebelum Go-Live
 
-- [ ] Semua rahasia di Vercel, tidak ada satu pun di repositori
-- [ ] `gitleaks` bersih pada seluruh riwayat git
-- [ ] `env.ts` memvalidasi setiap variabel wajib
-- [ ] Header keamanan aktif dan terverifikasi
-- [ ] Rate limit aktif di semua jalur autentikasi dan AI
-- [ ] Checklist uji akses [07 §7.8](./07-AUTH-DAN-RBAC.md) **lulus seluruhnya**
-- [ ] Tidak ada `console.log` yang tersisa di kode production
-- [ ] Sentry aktif, sampel error terkirim, data sensitif tersamarkan
+- [ ] Semua rahasia di Vercel, tidak ada satu pun di repositori — _repositori bersih (gitleaks); pengisian di Vercel menunggu pemilik_
+- [x] `gitleaks` bersih pada seluruh riwayat git — _job security CI (`fetch-depth: 0`) hijau_
+- [x] `env.ts` memvalidasi setiap variabel wajib — _di production: CRON_SECRET, Upstash, Resend, dan (bila v0 nyata) V0_API_KEY, VERCEL_TOKEN, VERCEL_WEBHOOK_SECRET_
+- [x] Header keamanan aktif dan terverifikasi — _CSP nonce + header §12.3 diperiksa lewat respons server & E2E_
+- [x] Rate limit aktif di semua jalur autentikasi dan AI — _uji E2E 6× gagal masuk; lokal & CI (Upstash emulator)_
+- [x] Checklist uji akses [07 §7.8](./07-AUTH-DAN-RBAC.md) **lulus seluruhnya** — _Fase 5; status 404 sungguhan Fase 7_
+- [x] Tidak ada `console.log` yang tersisa di kode production — _hanya di `lib/logger.ts`_
+- [ ] Sentry aktif, sampel error terkirim, data sensitif tersamarkan — _`sendDefaultPii: false`; menunggu DSN pemilik_
 - [ ] Pencadangan database aktif (Neon PITR) dan **pemulihan sudah diuji sekali**
-- [ ] `CRON_SECRET` memproteksi seluruh endpoint cron
-- [ ] Webhook Vercel memverifikasi signature
-- [ ] Kill switch diuji: menyala → generate ditolak dengan pesan sopan
-- [ ] Impersonasi diuji: banner tampil, aksi destruktif diblokir, audit tercatat
-- [ ] `npm audit` / `pnpm audit` tanpa kerentanan tinggi
-- [ ] Halaman Syarat Layanan & Kebijakan Privasi terbit
+- [x] `CRON_SECRET` memproteksi seluruh endpoint cron — _kedelapan route_
+- [x] Webhook Vercel memverifikasi signature — _Fase 4, signature salah → 401_
+- [x] Kill switch diuji: menyala → generate ditolak dengan pesan sopan — _uji service_
+- [x] Impersonasi diuji: banner tampil, aksi destruktif diblokir, audit tercatat — _Fase 5 + audit kedaluwarsa (cron cleanup)_
+- [x] `npm audit` / `pnpm audit` tanpa kerentanan tinggi — _job security CI_
+- [x] Halaman Syarat Layanan & Kebijakan Privasi terbit — _/legal/syarat & /legal/privasi_

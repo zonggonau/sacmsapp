@@ -17,6 +17,7 @@ import { requireUser } from "@/lib/auth-guard";
 import { sejak, urlRingkas } from "@/lib/format";
 import { loadProject } from "@/lib/project-loader";
 import * as deployService from "@/services/deploy.service";
+import * as quotaService from "@/services/quota.service";
 
 import { DeploymentSkeleton } from "./skeleton";
 
@@ -53,7 +54,10 @@ async function DeploymentData({
   project: Project;
   userId: string;
 }) {
-  const data = await deployService.getPageData(project.id, userId);
+  const [data, blockers] = await Promise.all([
+    deployService.getPageData(project.id, userId),
+    quotaService.getActionBlockers(userId),
+  ]);
   if (!data) notFound();
 
   return (
@@ -69,7 +73,7 @@ async function DeploymentData({
         <DeployButton
           projectId={project.id}
           versionNumber={data.nextVersionNumber}
-          blocker={data.blocker ?? data.alreadyLive}
+          blocker={data.blocker ?? blockers?.deploy ?? data.alreadyLive}
         />
       </div>
 

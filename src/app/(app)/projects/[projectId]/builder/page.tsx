@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth-guard";
 import { loadProject } from "@/lib/project-loader";
 import { getLatestJob } from "@/services/build.service";
 import { listMessages, listVersions } from "@/services/project.service";
+import * as quotaService from "@/services/quota.service";
 
 import { BuilderSkeleton } from "./skeleton";
 
@@ -19,10 +20,11 @@ type Project = NonNullable<Awaited<ReturnType<typeof loadProject>>>;
 
 async function BuilderData({ project, userId }: { project: Project; userId: string }) {
   // Ambil data awal secara paralel untuk efisiensi render SSR
-  const [latestJob, messages, versions] = await Promise.all([
+  const [latestJob, messages, versions, blockers] = await Promise.all([
     getLatestJob(project.id, userId),
     listMessages(project.id, userId),
     listVersions(project.id, userId),
+    quotaService.getActionBlockers(userId),
   ]);
 
   return (
@@ -38,6 +40,7 @@ async function BuilderData({ project, userId }: { project: Project; userId: stri
       initialJob={latestJob}
       messages={messages}
       versions={versions}
+      creditBlocker={blockers?.credit ?? null}
     />
   );
 }

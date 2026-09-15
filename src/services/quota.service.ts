@@ -368,3 +368,51 @@ export async function resetExpiredPeriods(now: Date = new Date()): Promise<numbe
   if (reset > 0) logger.info("quota.periods_reset", { count: reset });
   return reset;
 }
+
+/* ============================================================
+ *  PENGHALANG AKSI UNTUK UI — docs/11 §11.6
+ * ============================================================ */
+
+export interface ActionBlockers {
+  creditsLeft: number;
+  creditLimit: number;
+  /** Alasan generate/edit tidak bisa dijalankan; null bila bisa. */
+  credit: string | null;
+  /** Alasan project baru tidak bisa dibuat; null bila bisa. */
+  project: string | null;
+  /** Alasan penerbitan tidak bisa dijalankan hari ini; null bila bisa. */
+  deploy: string | null;
+}
+
+/**
+ * Alasan tombol dinonaktifkan SEBELUM diklik — docs/11 §11.6: "saat kuota habis,
+ * tombol tetap terlihat tetapi nonaktif dengan tooltip yang menjelaskan".
+ *
+ * Hanya untuk tampilan. Penegakan sebenarnya tetap di assert* di dalam transaksi,
+ * karena keadaan bisa berubah di antara render dan klik.
+ */
+export async function getActionBlockers(
+  userId: string,
+): Promise<ActionBlockers | null> {
+  const q = await getQuota(userId);
+  if (!q) return null;
+
+  const creditsLeft = Math.max(0, q.creditLimit - q.creditsUsed);
+
+  return {
+    creditsLeft,
+    creditLimit: q.creditLimit,
+    credit:
+      creditsLeft <= 0
+        ? `Kredit bulan ini sudah habis. Terisi kembali pada ${tanggal(q.periodEndsAt)} — lihat halaman Paket untuk menambah kuota.`
+        : null,
+    project:
+      q.projectCount >= q.projectLimit
+        ? `Paket ${q.planName} maksimal ${q.projectLimit} website. Hapus project lama atau lihat halaman Paket.`
+        : null,
+    deploy:
+      q.deploysToday >= q.deployLimit
+        ? `Batas penerbitan harian (${q.deployLimit}× sehari) tercapai. Coba lagi setelah pukul 00.00 WIB.`
+        : null,
+  };
+}

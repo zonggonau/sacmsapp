@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { CreateProjectForm } from "@/components/features/project/create-project-form";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth-guard";
+import * as quotaService from "@/services/quota.service";
 
 export const metadata: Metadata = {
   title: "Project Baru",
@@ -19,7 +20,8 @@ export const metadata: Metadata = {
  * komponen form yang SAMA. docs/05 §5.4
  */
 export default async function ProjectBaruPage() {
-  await requireUser();
+  const user = await requireUser();
+  const blockers = await quotaService.getActionBlockers(user.id);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -39,7 +41,17 @@ export default async function ProjectBaruPage() {
         </div>
       </div>
 
-      <CreateProjectForm />
+      <CreateProjectForm
+        quota={
+          blockers
+            ? {
+                creditsLeft: blockers.creditsLeft,
+                creditLimit: blockers.creditLimit,
+                blocker: blockers.project ?? blockers.credit,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

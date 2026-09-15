@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
@@ -21,6 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PLAN_PAGE } from "@/config/quota";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { BuildStatus } from "@/services/build.service";
 import type { ProjectStatus } from "@/types/db";
@@ -45,6 +48,8 @@ interface BuilderWorkspaceProps {
     createdAt: Date;
     isCurrent: boolean;
   }>;
+  /** docs/11 §11.6: alasan generate/edit tidak bisa dijalankan (kredit habis). */
+  creditBlocker?: string | null;
 }
 
 const TABS = ["chat", "versi"] as const;
@@ -70,6 +75,7 @@ export function BuilderWorkspace({
   initialJob,
   messages,
   versions,
+  creditBlocker = null,
 }: BuilderWorkspaceProps) {
   const router = useRouter();
 
@@ -153,7 +159,20 @@ export function BuilderWorkspace({
                     <p className="border-border bg-background text-muted-foreground rounded border p-3 text-left text-xs leading-relaxed whitespace-pre-wrap">
                       {project.initialPrompt}
                     </p>
-                    <StartBuildButton projectId={project.id} label="Bangun Sekarang" />
+                    <StartBuildButton
+                      projectId={project.id}
+                      label="Bangun Sekarang"
+                      blocker={creditBlocker}
+                    />
+                    {creditBlocker ? (
+                      <div className="space-y-2">
+                        <p className="text-muted-foreground text-xs">{creditBlocker}</p>
+                        {/* docs/11 §11.6: batas tercapai → penjelasan + tombol Lihat Paket */}
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={PLAN_PAGE}>Lihat Paket</Link>
+                        </Button>
+                      </div>
+                    ) : null}
                   </CardContent>
                 </Card>
               </div>
@@ -176,9 +195,11 @@ export function BuilderWorkspace({
                 <BuilderChat
                   projectId={project.id}
                   messages={messages}
-                  disabled={isActive}
+                  disabled={isActive || creditBlocker !== null}
                   disabledReason={
-                    isActive ? "Proses pembaruan sedang berlangsung…" : undefined
+                    isActive
+                      ? "Proses pembaruan sedang berlangsung…"
+                      : (creditBlocker ?? undefined)
                   }
                 />
               </div>

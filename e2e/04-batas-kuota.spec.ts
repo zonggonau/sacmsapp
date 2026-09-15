@@ -15,13 +15,16 @@ test("kredit habis: generate ditolak dengan tawaran Lihat Paket", async ({ page 
   await expect(page.getByText(`${limit} / ${limit} kredit`)).toBeVisible();
 
   await page.goto(`/projects/${project.id}/builder`);
-  await page.getByRole("button", { name: "Bangun Sekarang" }).click();
 
-  await expect(page.getByText(/Kredit bulan ini sudah habis/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Lihat Paket" })).toBeVisible();
+  // docs/11 §11.6: saat kuota habis tombol TETAP terlihat tetapi nonaktif,
+  // disertai penjelasan dan tombol Lihat Paket.
+  const bangun = page.getByRole("button", { name: "Bangun Sekarang" });
+  await expect(bangun).toBeVisible();
+  await expect(bangun).toBeDisabled();
+  await expect(page.getByText(/Kredit bulan ini sudah habis/).first()).toBeVisible();
   expect(await dbTask<number>("countBuildJobs", { projectId: project.id })).toBe(0);
 
-  await page.getByRole("button", { name: "Lihat Paket" }).click();
+  await page.getByRole("link", { name: "Lihat Paket" }).click();
   await expect(page).toHaveURL(/\/akun\/paket/);
   await expect(page.getByText("Kredit bulan ini")).toBeVisible();
 });

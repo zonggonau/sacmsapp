@@ -63,6 +63,12 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 - **Perkiraan usaha:** 2–3 hari total
 - **Target versi usulan:** biaya → Fase 6; sisanya v1.1
 
+---
+
+## Selesai
+
+> Entri yang sudah dikerjakan tetap dicatat di sini agar jejak keputusannya tidak hilang.
+
 ### Sisa tampilan kuota dari docs/11 §11.6
 
 - **Ditemukan saat:** Fase 6, 2026-09-15
@@ -73,12 +79,7 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 - **Perkiraan usaha:** 1 hari
 - **Target versi usulan:** Fase 7 atau v1.1
 - **Sebagian selesai 2026-09-16:** halaman `/akun/notifikasi` + lonceng dengan jumlah belum dibaca di topbar. Tersisa: sisa kredit di dialog buat project dan tombol nonaktif + tooltip saat kuota habis → v1.1.
-
----
-
-## Selesai
-
-> Entri yang sudah dikerjakan tetap dicatat di sini agar jejak keputusannya tidak hilang.
+- **Selesai 2026-09-16:** sisa kredit di bawah tombol Buat Project; tombol Bangun Sekarang, kirim chat, Terbitkan, dan Buat Project nonaktif dengan tooltip + tautan Lihat Paket (`tests/services/penghalang-kuota.test.ts`, E2E alur 4).
 
 ### Status HTTP 404 untuk project yang tidak dimiliki
 

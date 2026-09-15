@@ -1,5 +1,6 @@
 import { CreateProjectDialog } from "@/components/features/project/create-project-dialog";
 import { requireUser } from "@/lib/auth-guard";
+import * as quotaService from "@/services/quota.service";
 
 /**
  * Rute yang di-intercept: `(.)baru` mencegat navigasi ke /projects/baru yang
@@ -10,6 +11,19 @@ import { requireUser } from "@/lib/auth-guard";
  * dicegat dan tetap merender halaman penuh. docs/05 §5.4
  */
 export default async function InterceptedProjectBaru() {
-  await requireUser();
-  return <CreateProjectDialog />;
+  const user = await requireUser();
+  const blockers = await quotaService.getActionBlockers(user.id);
+  return (
+    <CreateProjectDialog
+      quota={
+        blockers
+          ? {
+              creditsLeft: blockers.creditsLeft,
+              creditLimit: blockers.creditLimit,
+              blocker: blockers.project ?? blockers.credit,
+            }
+          : null
+      }
+    />
+  );
 }

@@ -127,9 +127,10 @@ Kuota harus terlihat **sebelum** dibutuhkan, bukan saat sudah habis.
 | Batas tercapai      | Dialog dengan penjelasan + tombol "Lihat Paket"                  |
 | Kredit ≤ 20%        | Notifikasi dalam aplikasi (sekali per periode, jangan mengulang) |
 
-**Fase 6:** topbar, `/akun/paket`, dan notifikasi `quota.low` (sekali per periode, dibuat saat
-reservasi) sudah terpasang. Daftar notifikasi di UI dan sisa kredit di dialog buat project
-masih di BACKLOG — batas tercapai tetap dijelaskan lewat pesan + tombol Lihat Paket.
+**Status (Fase 7):** seluruh tabel di atas terpasang — topbar, `/akun/paket`, sisa kredit di
+bawah tombol Buat Project, notifikasi `quota.low` + halaman `/akun/notifikasi`, dan tombol
+Bangun Sekarang / kirim chat / Terbitkan / Buat Project yang nonaktif dengan tooltip saat kuota
+habis (`quotaService.getActionBlockers`). Penegakan sesungguhnya tetap di transaksi.
 
 Aturan: saat kuota habis, tombol **tetap terlihat** tetapi nonaktif dengan tooltip yang
 menjelaskan. Menyembunyikan tombol membuat pengguna mengira fiturnya hilang.

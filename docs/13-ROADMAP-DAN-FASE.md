@@ -269,7 +269,7 @@ Pekerjaan:
 
 - [x] 5 alur E2E hijau di CI — _commit `770f862`: keempat job CI (quality, unit, e2e, security) hijau_
 - [ ] Lighthouse ≥ 90 di landing dan dashboard — _kinerja, aksesibilitas, praktik terbaik ≥ 90 di keduanya (lihat butir 5); tersisa LCP ponsel > 2,5 dtk. SEO dashboard sengaja rendah (`noindex`)_
-- [ ] Checklist keamanan lulus seluruhnya
+- [ ] Checklist keamanan lulus seluruhnya — _12 dari 15 butir [12 §12.8](./12-KEAMANAN.md) lulus; tersisa rahasia di Vercel, Sentry, dan PITR Neon (butuh akun production pemilik)_
 - [ ] Pemulihan database terbukti berhasil — _prosedur lulus di lokal (lihat butir 8); menunggu uji PITR pada Neon production_
 - [ ] 5 penguji beta berhasil membuat website live **tanpa bantuan**
 - [x] Runbook insiden tertulis dan dapat dijalankan dari `/admin` — _`/admin/insiden`: lima skenario [12 §12.7](./12-KEAMANAN.md) dengan kendali langsung; tambahan Cabut Semua Sesi & rollback admin, diuji `tests/services/runbook.test.ts`_

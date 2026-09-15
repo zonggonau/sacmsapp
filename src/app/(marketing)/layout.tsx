@@ -1,3 +1,4 @@
+import { SUPPORT } from "@/config/support";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -85,6 +86,22 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <Link href="/legal/privasi" className="hover:text-foreground">
               Kebijakan Privasi
             </Link>
+            {/* Kanal dukungan — docs/14 §14.9; tampil hanya bila env diisi. */}
+            {SUPPORT.emailHref ? (
+              <a href={SUPPORT.emailHref} className="hover:text-foreground">
+                {SUPPORT.email}
+              </a>
+            ) : null}
+            {SUPPORT.whatsappHref ? (
+              <a
+                href={SUPPORT.whatsappHref}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="hover:text-foreground"
+              >
+                WhatsApp
+              </a>
+            ) : null}
           </nav>
         </div>
       </footer>

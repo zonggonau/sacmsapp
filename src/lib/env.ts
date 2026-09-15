@@ -59,9 +59,51 @@ const serverSchema = z.object({
 const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_SENTRY_DSN: optionalUrl(),
+  // Kanal dukungan — docs/14 §14.9. Kosong = tidak ditampilkan.
+  NEXT_PUBLIC_SUPPORT_EMAIL: z.preprocess(
+    emptyToUndefined,
+    z.string().email().optional(),
+  ),
+  /** Nomor WhatsApp format internasional tanpa +, mis. 6281234567890. */
+  NEXT_PUBLIC_SUPPORT_WHATSAPP: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .regex(/^d{8,15}$/, "Tulis angka saja dengan kode negara, mis. 6281234567890")
+      .optional(),
+  ),
 });
 
-const schema = serverSchema.merge(clientSchema);
+/**
+ * Variabel yang boleh kosong di development tetapi WAJIB di production —
+ * docs/12 §12.8 "env.ts memvalidasi setiap variabel wajib". Tanpa ini aplikasi
+ * production bisa start lalu gagal diam-diam: cron tanpa pelindung, webhook
+ * ditolak, email tidak terkirim.
+ */
+const schema = serverSchema.merge(clientSchema).superRefine((v, ctx) => {
+  if (v.NODE_ENV !== "production") return;
+
+  const missing = (key: string, why: string) =>
+    ctx.addIssue({
+      code: "custom",
+      path: [key],
+      message: `wajib di production: ${why}`,
+    });
+
+  if (!v.CRON_SECRET) missing("CRON_SECRET", "melindungi seluruh endpoint cron");
+  if (!v.UPSTASH_REDIS_REST_URL) missing("UPSTASH_REDIS_REST_URL", "rate limit");
+  if (!v.UPSTASH_REDIS_REST_TOKEN) missing("UPSTASH_REDIS_REST_TOKEN", "rate limit");
+  if (!v.RESEND_API_KEY && !process.env.MAIL_OUTBOX_DIR) {
+    missing("RESEND_API_KEY", "email verifikasi & reset sandi");
+  }
+
+  // Mesin nyata: v0 & Vercel harus bisa dipanggil dan webhook diverifikasi.
+  if (!v.V0_MOCK) {
+    if (!v.V0_API_KEY) missing("V0_API_KEY", "V0_MOCK=false");
+    if (!v.VERCEL_TOKEN) missing("VERCEL_TOKEN", "V0_MOCK=false");
+    if (!v.VERCEL_WEBHOOK_SECRET) missing("VERCEL_WEBHOOK_SECRET", "webhook Vercel");
+  }
+});
 
 export type Env = z.infer<typeof schema>;
 

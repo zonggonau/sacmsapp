@@ -100,6 +100,13 @@ Skrip menolak memasang bila: `DATABASE_URL` menunjuk localhost, `BETTER_AUTH_URL
 `SKIP_ENV_VALIDATION` / `SEED_SUPERADMIN_PASSWORD`. `NEXT_PUBLIC_*` dipasang `plain`, sisanya
 `encrypted`. Nilai tidak pernah dicetak.
 
+**Wajib di production (ditegakkan `src/lib/env.ts`):** `CRON_SECRET`, `UPSTASH_REDIS_REST_URL` +
+`UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, dan bila `V0_MOCK=false` juga `V0_API_KEY`, `VERCEL_TOKEN`,
+`VERCEL_WEBHOOK_SECRET`. Aplikasi menolak start tanpa itu. `VERCEL_MOCK` mengikuti `V0_MOCK`.
+
+**Kanal dukungan (opsional, publik):** `NEXT_PUBLIC_SUPPORT_EMAIL` dan `NEXT_PUBLIC_SUPPORT_WHATSAPP`
+(angka dengan kode negara) tampil di footer dan halaman Paket sebagai jalur upgrade manual.
+
 > **`VERCEL_TOKEN` untuk aplikasi ≠ token untuk skrip ini.** `VERCEL_TOKEN` dipakai SaCMS
 > mengelola website **pengguna** (akun yang sama dengan `V0_API_KEY`, ADR-008). Bila aplikasi
 > SaCMS sendiri di-hosting di akun Vercel lain, `VERCEL_DEPLOY_TOKEN` harus token akun itu.
@@ -227,28 +234,28 @@ tanpa `Authorization: Bearer $CRON_SECRET`, jadi `CRON_SECRET` wajib terisi di V
 - [ ] Semua variabel lingkungan production terisi dan tervalidasi
 - [ ] Domain `sacms.id` aktif dengan HTTPS; `www` diarahkan ke apex
 - [ ] Neon PITR aktif; **pemulihan sudah diuji nyata sekali**
-- [ ] Semua cron terdaftar dan pernah berhasil dijalankan
+- [ ] Semua cron terdaftar dan pernah berhasil dijalankan — _terdaftar di `vercel.json`; bukti jalan menunggu deploy production_
 - [ ] Sentry, log drain, dan uptime monitor aktif
 - [ ] Rate limit aktif di production (bukan hanya di lokal)
-- [ ] Anggaran & ambang biaya v0 dipasang; kill switch otomatis diuji
-- [ ] `robots.txt` memblokir `/admin` dan `/projects`
-- [ ] `sitemap.xml` hanya memuat halaman publik
+- [ ] Anggaran & ambang biaya v0 dipasang; kill switch otomatis diuji — _kill switch otomatis teruji; anggaran di dasbor v0 dipasang pemilik_
+- [x] `robots.txt` memblokir `/admin` dan `/projects`
+- [x] `sitemap.xml` hanya memuat halaman publik
 
 ### Produk
 
 - [ ] Alur penuh berhasil di production dengan akun nyata
-- [ ] Semua pesan error berbahasa Indonesia dan dapat ditindaklanjuti
-- [ ] Empty state, loading, dan error ada di setiap halaman
-- [ ] Responsif diverifikasi pada ponsel nyata (360px)
+- [x] Semua pesan error berbahasa Indonesia dan dapat ditindaklanjuti — _AppError + audit halaman_
+- [x] Empty state, loading, dan error ada di setiap halaman — _loading akun & project baru ditambah Fase 7; tab project memakai skeleton dalam Suspense_
+- [ ] Responsif diverifikasi pada ponsel nyata (360px) — _audit 360px di peramban lulus; ponsel fisik oleh penguji beta_
 - [ ] Dark & light keduanya rapi di setiap halaman
-- [ ] Halaman harga sesuai dengan tabel `Plan` di database
+- [x] Halaman harga sesuai dengan tabel `Plan` di database — _/harga membaca tabel Plan_
 
 ### Legal & Operasional
 
-- [ ] Syarat Layanan & Kebijakan Privasi terbit (menyebut pemakaian AI pihak ketiga)
-- [ ] Kanal dukungan aktif (email/WhatsApp) dan tercantum
+- [x] Syarat Layanan & Kebijakan Privasi terbit (menyebut pemakaian AI pihak ketiga) — _pasal 3 syarat & bagian pihak ketiga privasi_
+- [ ] Kanal dukungan aktif (email/WhatsApp) dan tercantum — _fitur siap (footer & halaman Paket); isi `NEXT_PUBLIC_SUPPORT_EMAIL` / `NEXT_PUBLIC_SUPPORT_WHATSAPP`_
 - [ ] Akun Super Admin dibuat; `SEED_SUPERADMIN_PASSWORD` dihapus dari env
-- [ ] Runbook insiden ([12 §12.7](./12-KEAMANAN.md)) tersedia dan dapat dijalankan dari `/admin`
+- [x] Runbook insiden ([12 §12.7](./12-KEAMANAN.md)) tersedia dan dapat dijalankan dari `/admin` — _/admin/insiden_
 - [ ] Rencana biaya bulanan dihitung (§14.10)
 
 ## 14.10 Perkiraan Biaya Operasional
