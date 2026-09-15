@@ -13,10 +13,13 @@ export interface GenerateInput {
   v0ProjectId: string;
   /** Ada -> pesan lanjutan pada chat yang sama. Kosong -> chat baru. */
   v0ChatId?: string | undefined;
-  /** Prompt pengguna, sudah disanitasi. */
+  /** Prompt pengguna apa adanya (hanya karakter tak terlihat yang dibuang). */
   prompt: string;
-  /** System prompt SaCMS. Tidak pernah dikirim ke klien. */
-  system: string;
+  /**
+   * System prompt tambahan. Sejak ADR-011 SaCMS TIDAK mengirimnya, supaya hasil
+   * sama dengan v0.app; dibiarkan opsional hanya untuk kebutuhan uji.
+   */
+  system?: string | undefined;
   model: V0Model;
 }
 
@@ -32,7 +35,8 @@ export interface GenerateResult {
 export interface CreateWorkspaceInput {
   name: string;
   description?: string | undefined;
-  instructions: string;
+  /** Sejak ADR-011 tidak diisi: project v0 memakai perilaku bawaan v0. */
+  instructions?: string | undefined;
 }
 
 /** Menerbitkan satu versi — ADR-008. */

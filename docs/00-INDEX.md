@@ -57,6 +57,7 @@
 | [008](./adr/ADR-008-terbit-lewat-v0-deployments.md) | Menerbitkan website lewat v0 deployments                 | Accepted  |
 | [009](./adr/ADR-009-csp-nonce-render-dinamis.md)    | CSP nonce membuat seluruh halaman dirender dinamis       | Diusulkan |
 | [010](./adr/ADR-010-pembayaran-midtrans.md)         | Pembayaran otomatis lewat Midtrans (v1.1)                | Accepted  |
+| [011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md)    | Ikuti perilaku bawaan v0 — hasil sama dengan v0.app      | Accepted  |
 
 ---
 

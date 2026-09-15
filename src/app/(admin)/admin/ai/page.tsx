@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/features/admin/admin-ui";
-import { ModelSelect } from "@/components/features/admin/model-select";
-import { RulesEditor } from "@/components/features/admin/rules-editor";
 import { SettingSwitch } from "@/components/features/admin/setting-switch";
 import {
   Card,
@@ -12,16 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SETTING_KEYS } from "@/config/settings";
+import { V0_APP_MODEL } from "@/config/ai-models";
 import * as systemService from "@/services/system.service";
 
 export const metadata: Metadata = { title: "AI & Model" };
 
 export default async function AdminAiPage() {
-  const [settings, versions] = await Promise.all([
-    systemService.getSettings(),
-    systemService.getRuleVersions(),
-  ]);
-  const latest = versions[versions.length - 1]?.version ?? 1;
+  const settings = await systemService.getSettings();
 
   return (
     <div className="space-y-6">
@@ -47,30 +42,33 @@ export default async function AdminAiPage() {
               action: "Nyalakan Kill Switch",
             }}
           />
-          <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">Model default</p>
-              <p className="text-muted-foreground text-xs">
-                Dipakai bila diizinkan paket pengguna; bila tidak, model pertama paket
-                dipakai. Model per paket diatur di halaman Paket.
-              </p>
-            </div>
-            <ModelSelect value={settings.defaultModel} />
-          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Aturan system prompt</CardTitle>
+          <CardTitle className="text-base">Mengikuti v0.app</CardTitle>
           <CardDescription>
-            Perubahan buruk di sini merusak semua hasil generate berikutnya. Setiap
-            simpan menjadi versi baru dan bisa dikembalikan.
+            Keputusan ADR-011: hasil website harus sama dengan v0.app.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* key = versi aktif: editor dimuat ulang setelah simpan atau kembalikan */}
-          <RulesEditor key={latest} versions={versions} />
+          <ul className="text-muted-foreground list-disc space-y-1.5 pl-5 text-sm">
+            <li>
+              Prompt pengguna dikirim apa adanya ke v0 — tanpa system prompt, aturan,
+              atau template tipe website buatan SaCMS.
+            </li>
+            <li>
+              Model semua build:{" "}
+              <span className="text-foreground font-mono">{V0_APP_MODEL}</span> (sama
+              dengan &ldquo;Auto&rdquo; di v0.app).
+            </li>
+            <li>Skills memakai bawaan v0; SaCMS tidak menambahkan skill sendiri.</li>
+            <li>
+              Prompt yang benar-benar terkirim tetap bisa dilihat di detail setiap
+              build.
+            </li>
+          </ul>
         </CardContent>
       </Card>
     </div>

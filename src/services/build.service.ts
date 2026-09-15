@@ -1,10 +1,10 @@
+import { V0_APP_MODEL } from "@/config/ai-models";
 import { BUILD_STEPS, progressFromDone, stepsForKind } from "@/config/build-steps";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { sendWebsiteReadyEmail } from "@/lib/mail";
 import { v0Engine } from "@/lib/v0/client";
-import { buildSystemPrompt, buildUserMessage } from "@/lib/v0/system-prompt";
 import { V0Error, type GenerateResult } from "@/lib/v0/types";
 import * as planner from "@/services/planner.service";
 import * as quotaService from "@/services/quota.service";
@@ -334,10 +334,6 @@ export async function run(jobId: string): Promise<void> {
 
     await step(jobId, "PLAN", async () => plan.spec, doneKeys);
 
-    // Aturan system prompt dibaca SEKALI per job dari pengaturan berversi
-    // (docs/10 §10.7), supaya PROVISION dan COMPOSE memakai teks yang sama.
-    const rules = await systemService.getSystemPromptRules();
-
     const v0ProjectId = await step(
       jobId,
       "PROVISION",
@@ -345,10 +341,10 @@ export async function run(jobId: string): Promise<void> {
         if (project.v0ProjectId) return project.v0ProjectId;
 
         const created = await withRetry(() =>
+          // ADR-011: tanpa instructions — project v0 memakai perilaku bawaan v0.
           v0Engine.createWorkspace({
             name: project.name,
             description: `Project SaCMS — ${plan.spec.projectTypeLabel}`,
-            instructions: buildSystemPrompt(plan, rules),
           }),
         );
 
@@ -366,18 +362,18 @@ export async function run(jobId: string): Promise<void> {
       jobId,
       "COMPOSE",
       async () => {
-        const system = buildSystemPrompt(plan, rules);
-        const message = buildUserMessage(plan);
+        // ADR-011: prompt pengguna dikirim APA ADANYA, tanpa system prompt,
+        // spesifikasi, atau template SaCMS — hasil harus sama dengan v0.app.
+        // Satu-satunya perlakuan: karakter tak terlihat dibuang & panjang dibatasi.
+        const message = plan.sanitizedPrompt;
 
-        // Disimpan untuk investigasi Super Admin (docs/10 §10.5): tanpa ini,
-        // "prompt apa yang sebenarnya dikirim?" tidak bisa dijawab setelah
-        // aturan diubah.
+        // Disimpan untuk investigasi Super Admin (docs/10 §10.5).
         await db.buildJob.update({
           where: { id: jobId },
-          data: { systemPrompt: system, sentMessage: message, model: plan.model },
+          data: { systemPrompt: null, sentMessage: message, model: V0_APP_MODEL },
         });
 
-        return { system, message };
+        return { message };
       },
       doneKeys,
     );
@@ -391,8 +387,7 @@ export async function run(jobId: string): Promise<void> {
             v0ProjectId,
             v0ChatId: project.v0ChatId ?? undefined,
             prompt: composed.message,
-            system: composed.system,
-            model: plan.model,
+            model: V0_APP_MODEL,
           }),
         ),
       doneKeys,
@@ -403,7 +398,7 @@ export async function run(jobId: string): Promise<void> {
     const version = await step(
       jobId,
       "PERSIST",
-      () => persistVersion(job.id, project.id, job.prompt, plan.model, generated),
+      () => persistVersion(job.id, project.id, job.prompt, V0_APP_MODEL, generated),
       doneKeys,
     );
 

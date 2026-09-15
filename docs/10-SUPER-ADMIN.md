@@ -137,6 +137,11 @@ adalah cara cepat kehilangan pelanggan.
 
 ## 10.7 `/admin/ai` — Kendali Mesin
 
+> **Berubah oleh [ADR-011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md):** editor system prompt dan
+> pilihan model default dihapus dari panel. Semua build memakai `v0-auto` tanpa system prompt
+> SaCMS; panel hanya menampilkan kill switch dan ringkasan kebijakan. `BuildJob.sentMessage` dan
+> `model` tetap dicatat; `systemPrompt` kini selalu kosong.
+
 | Kendali                         | Efek                                                                                                |
 | ------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **Kill switch generate**        | Semua build baru ditolak; job berjalan diselesaikan. Pengguna melihat pesan pemeliharaan yang sopan |

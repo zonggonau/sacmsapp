@@ -158,6 +158,11 @@ Tidak ada langkah yang boleh mengubah status sendiri di luar `step()`.
 
 ## 9.5 System Prompt — Pagar Utama
 
+> **Digantikan [ADR-011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md) (2026-09-16).** SaCMS tidak lagi
+> mengirim system prompt, instructions project, spesifikasi planner, maupun template per tipe
+> website. Prompt pengguna dikirim apa adanya dengan model `v0-auto` dan skills bawaan v0, agar
+> hasil sama dengan v0.app. Isi bagian ini disimpan sebagai catatan sejarah.
+
 Ini yang membuat hasil SaCMS konsisten dan tidak "liar".
 
 ```ts
@@ -212,6 +217,11 @@ Pertahanan terhadap prompt injection:
    tidak menghasilkan positif palsu yang menjengkelkan.
 
 ## 9.6 Template Prompt per Tipe Website
+
+> **Digantikan [ADR-011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md) (2026-09-16).** SaCMS tidak lagi
+> mengirim system prompt, instructions project, spesifikasi planner, maupun template per tipe
+> website. Prompt pengguna dikirim apa adanya dengan model `v0-auto` dan skills bawaan v0, agar
+> hasil sama dengan v0.app. Isi bagian ini disimpan sebagai catatan sejarah.
 
 Nilai nyata SaCMS ada di sini: pengguna awam tidak tahu apa yang perlu dimiliki sebuah
 situs pemerintah. SaCMS yang tahu.

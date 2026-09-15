@@ -19,6 +19,13 @@ export const V0_MODELS = [
 
 export type V0Model = (typeof V0_MODELS)[number];
 
+/**
+ * Model yang dipakai SEMUA build — ADR-011: sama dengan pilihan "Auto" di v0.app,
+ * supaya hasil SaCMS identik dengan v0.app. Daftar model per paket tidak lagi
+ * menentukan model build.
+ */
+export const V0_APP_MODEL: V0Model = "v0-auto";
+
 /** Default paling murah — dipakai bila paket atau env tidak menentukan. */
 export const DEFAULT_V0_MODEL: V0Model = "v0-mini";
 

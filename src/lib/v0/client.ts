@@ -157,7 +157,7 @@ const realEngine: V0Engine = {
       const project = await getClient().projects.create({
         name: input.name,
         ...(input.description ? { description: input.description } : {}),
-        instructions: input.instructions,
+        ...(input.instructions ? { instructions: input.instructions } : {}),
         privacy: "private",
       });
       return project.id;
@@ -174,13 +174,13 @@ const realEngine: V0Engine = {
         ? await v0.chats.sendMessage({
             chatId: input.v0ChatId,
             message: input.prompt,
-            system: input.system,
+            ...(input.system ? { system: input.system } : {}),
             modelConfiguration: { modelId: input.model },
             responseMode: "sync",
           })
         : await v0.chats.create({
             message: input.prompt,
-            system: input.system,
+            ...(input.system ? { system: input.system } : {}),
             projectId: input.v0ProjectId,
             modelConfiguration: { modelId: input.model },
             responseMode: "sync",

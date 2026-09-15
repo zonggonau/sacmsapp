@@ -329,7 +329,9 @@ describe("audit", () => {
     expect(items).toHaveLength(1);
     expect(items[0]?.actorEmail).toBe(actor.email);
 
-    const today = new Date().toISOString().slice(0, 10);
+    // Tanggal LOKAL, sama dengan cara service membaca filter (bukan UTC) — bila
+    // tidak, uji gagal di sekitar tengah malam ketika tanggal UTC berbeda.
+    const today = new Date().toLocaleDateString("sv-SE");
     const ranged = await audit.list({
       targetType: "User",
       targetId: actor.id,

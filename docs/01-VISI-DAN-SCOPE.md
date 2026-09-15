@@ -51,13 +51,13 @@ Palet visual brand (hitam bold + oranye) tetap mengikuti [04](./04-DESIGN-SYSTEM
 
 ## 1.2 Masalah yang Dipecahkan
 
-| Masalah hari ini                                                    | Cara SaCMS menyelesaikannya                                                 |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Bikin website butuh developer, waktu, dan biaya                     | Prompt → website live dalam hitungan menit                                  |
-| Tool AI builder yang ada berbahasa Inggris & berorientasi developer | UI bahasa Indonesia, template prompt per sektor (pemerintah, sekolah, UMKM) |
-| Hasil AI sering "liar" — struktur beda-beda tiap generate           | System prompt terkunci + arsitektur yang dipaksakan oleh SaCMS              |
-| Setelah live, mengubah konten harus panggil developer lagi          | Edit lewat prompt di chat yang sama, lalu redeploy                          |
-| Owner sistem tidak punya kendali atas biaya AI & penyalahgunaan     | Panel Super Admin: kuota, kredit, kill switch, audit log                    |
+| Masalah hari ini                                                    | Cara SaCMS menyelesaikannya                                         |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Bikin website butuh developer, waktu, dan biaya                     | Prompt → website live dalam hitungan menit                          |
+| Tool AI builder yang ada berbahasa Inggris & berorientasi developer | UI bahasa Indonesia; prompt diteruskan ke v0 apa adanya (ADR-011)   |
+| Hasil AI sering "liar" — struktur beda-beda tiap generate           | Hasil sama dengan v0.app (ADR-011); edit berulang di chat yang sama |
+| Setelah live, mengubah konten harus panggil developer lagi          | Edit lewat prompt di chat yang sama, lalu redeploy                  |
+| Owner sistem tidak punya kendali atas biaya AI & penyalahgunaan     | Panel Super Admin: kuota, kredit, kill switch, audit log            |
 
 ## 1.3 Posisi Produk (PENTING — jangan salah paham)
 
