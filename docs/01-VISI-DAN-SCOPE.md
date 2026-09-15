@@ -1,5 +1,48 @@
 # 01 — Visi & Scope
 
+## 1.0 Identitas & Brand
+
+> **PACE AI** — _Papua Artificial Creation Engine_
+>
+> **Born in Papua. Built for the World.**
+
+| Huruf | Kata       |
+| ----- | ---------- |
+| **P** | Papua      |
+| **A** | Artificial |
+| **C** | Creation   |
+| **E** | Engine     |
+
+**Makna.** Bukan sekadar "AI dari Papua", tetapi _engine_ yang membantu orang
+**menciptakan** sesuatu dengan AI: website hari ini, lalu aplikasi, landing page, tools, dan
+produk digital lain. Ceritanya: teknologi AI yang lahir dari Tanah Papua dan ditujukan untuk
+dunia.
+
+**Mengapa nama ini dipilih:**
+
+- **PACE** pendek dan mudah diingat.
+- Terhubung langsung dengan **Papua**.
+- **Creation Engine** tidak mengurung produk sebagai "website builder" saja.
+- Bisa tumbuh menjadi ekosistem produk.
+
+| Unsur              | Nilai                                   | Kapan dipakai                               |
+| ------------------ | --------------------------------------- | ------------------------------------------- |
+| Nama brand         | **PACE AI**                             | Selalu, di hadapan publik                   |
+| Kepanjangan        | _Papua Artificial Creation Engine_      | Di bawah nama pada logo, halaman Tentang    |
+| Tagline utama      | **Born in Papua. Built for the World.** | Landing page, presentasi, identitas startup |
+| Tagline fungsional | **Create anything with AI.**            | Materi produk yang menjelaskan kegunaan     |
+
+**Ekosistem (arah jangka panjang, BUKAN scope MVP):** PACE Web (produk saat ini), PACE App,
+PACE Code, PACE Agent. Produk baru tetap mengikuti aturan scope di §1.6 dan dibuka lewat
+roadmap, bukan karena namanya sudah tersedia.
+
+**Nama brand vs nama kode.** _SaCMS_ tetap nama repositori, paket, dan istilah internal di
+seluruh dokumen teknis ini. Penggantian teks UI, logo, domain, dan email pengirim menjadi
+PACE AI adalah pekerjaan tersendiri yang tercatat di [BACKLOG](./BACKLOG.md), tidak dikerjakan
+diam-diam di tengah fase.
+
+Palet visual brand (hitam bold + oranye) tetap mengikuti [04](./04-DESIGN-SYSTEM.md).
+
 ## 1.1 Satu Kalimat
 
 > SaCMS adalah platform di mana pengguna non-teknis mengetik satu prompt bahasa Indonesia,
@@ -86,18 +129,18 @@ Referensi keputusan: [ADR-001](./adr/ADR-001-v0-sebagai-ai-engine.md).
 > Ini daftar paling penting di dokumen ini. Setiap jam yang dipakai di sini adalah
 > jam yang dicuri dari F-01..F-15.
 
-| Ditunda                                                | Alasan                                                     | Target                                                 |
-| ------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------ |
-| Workspace / Organization / multi-tenant tim            | Menambah 1 layer izin di **setiap** query                  | v1.1 ([ADR-006](./adr/ADR-006-mvp-tanpa-workspace.md)) |
-| Pembayaran otomatis (Midtrans/Stripe)                  | Plan bisa di-set manual oleh Super Admin dulu              | v1.1                                                   |
-| CMS bawaan SaCMS (content type builder, media library) | Ini produk terpisah dengan bobot sendiri                   | v2.0                                                   |
-| MCP server SaCMS                                       | Butuh CMS dulu                                             | v2.0                                                   |
-| Editor kode / file tree                                | Bertentangan dengan "user tidak sentuh kode"               | v2.0                                                   |
-| Kolaborasi realtime, komentar, presence                | Tidak ada tim di MVP                                       | v2.0                                                   |
-| White-label / custom branding per user                 | Belum ada permintaan berbayar                              | v2.0                                                   |
-| Marketplace template                                   | Template prompt bawaan sudah cukup                         | v1.2                                                   |
-| Mobile app                                             | PWA responsif cukup                                        | —                                                      |
-| i18n multi-bahasa                                      | Bahasa Indonesia saja, tapi **arsitektur siap** (lihat 05) | v1.2                                                   |
+| Ditunda                                                                          | Alasan                                                     | Target                                                 |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| Workspace / Organization / multi-tenant tim                                      | Menambah 1 layer izin di **setiap** query                  | v1.1 ([ADR-006](./adr/ADR-006-mvp-tanpa-workspace.md)) |
+| Pembayaran otomatis (Midtrans — [ADR-010](./adr/ADR-010-pembayaran-midtrans.md)) | Plan bisa di-set manual oleh Super Admin dulu              | v1.1                                                   |
+| CMS bawaan SaCMS (content type builder, media library)                           | Ini produk terpisah dengan bobot sendiri                   | v2.0                                                   |
+| MCP server SaCMS                                                                 | Butuh CMS dulu                                             | v2.0                                                   |
+| Editor kode / file tree                                                          | Bertentangan dengan "user tidak sentuh kode"               | v2.0                                                   |
+| Kolaborasi realtime, komentar, presence                                          | Tidak ada tim di MVP                                       | v2.0                                                   |
+| White-label / custom branding per user                                           | Belum ada permintaan berbayar                              | v2.0                                                   |
+| Marketplace template                                                             | Template prompt bawaan sudah cukup                         | v1.2                                                   |
+| Mobile app                                                                       | PWA responsif cukup                                        | —                                                      |
+| i18n multi-bahasa                                                                | Bahasa Indonesia saja, tapi **arsitektur siap** (lihat 05) | v1.2                                                   |
 
 ## 1.7 Prinsip Desain yang Mengikat
 

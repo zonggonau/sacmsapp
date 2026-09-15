@@ -143,7 +143,9 @@ tidak membuktikan apa pun tentang kelayakan produk.
 
 Saat tiba waktunya:
 
-- Penyedia: **Midtrans** (paling sesuai untuk Indonesia — QRIS, VA, e-wallet, kartu).
+- Penyedia: **Midtrans** (paling sesuai untuk Indonesia — QRIS, VA, e-wallet, kartu) —
+  diputuskan di [ADR-010](./adr/ADR-010-pembayaran-midtrans.md). Integrasi hanya lewat
+  `lib/midtrans/`; status transaksi dibaca ulang dari API, webhook hanya pemicu.
 - Tabel baru: `Subscription`, `Invoice`, `PaymentEvent`.
 - Webhook Midtrans diverifikasi dengan _signature key_, diproses **idempoten** berdasarkan
   `order_id`.

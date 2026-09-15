@@ -21,6 +21,18 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 
 ## Belum Ditinjau
 
+### Terapkan brand PACE AI di produk (UI, logo, domain, email)
+
+- **Ditemukan saat:** Fase 7, 2026-09-15
+- **Masalah nyata yang diselesaikan:** identitas brand sudah ditetapkan di
+  [01 §1.0](./01-VISI-DAN-SCOPE.md) — **PACE AI**, _Born in Papua. Built for the World._ —
+  tetapi layar, metadata halaman, email transaksional, dan domain masih menampilkan "SaCMS".
+  Pengguna dan penguji beta akan melihat dua nama berbeda.
+- **Perkiraan usaha:** 0,5–1 hari untuk teks UI, metadata, email, halaman legal, dan uji E2E;
+  logo & domain bergantung pada aset dan pembelian domain.
+- **Target versi usulan:** **sebelum go-live** (Fase 7) bila pemilik memutuskan brand tampil
+  sejak peluncuran — nama kode `sacms` di repositori tidak perlu diganti.
+
 ### Hapus project harus menurunkan website yang sudah tayang
 
 - **Ditemukan saat:** Fase 4, 2026-09-15
@@ -110,7 +122,8 @@ Ini yang sudah diputuskan sejak perancangan awal
 ### v1.1
 
 - Workspace & kolaborasi tim — jalur migrasi di [ADR-006](./adr/ADR-006-mvp-tanpa-workspace.md)
-- Pembayaran otomatis (Midtrans) — rencana di [11 §11.7](./11-QUOTA-DAN-BILLING.md)
+- Pembayaran otomatis (Midtrans) — rencana di [11 §11.7](./11-QUOTA-DAN-BILLING.md),
+  penyedia dikunci [ADR-010](./adr/ADR-010-pembayaran-midtrans.md)
 - UI untuk peran `ADMIN` (staf pendukung) — batasan di [10 §10.11](./10-SUPER-ADMIN.md)
 - 2FA wajib untuk `SUPER_ADMIN`
 

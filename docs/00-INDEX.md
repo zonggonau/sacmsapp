@@ -1,7 +1,10 @@
 # SaCMS — Master Index Dokumen Perancangan
 
-> **SaCMS (Smart Content Management System)** — AI Website Builder Platform.
-> Prompt → Generate → Preview → Edit → Deploy → Live.
+> **PACE AI — Papua Artificial Creation Engine.** _Born in Papua. Built for the World._
+>
+> **SaCMS (Smart Content Management System)** — nama kode platform AI Website Builder di
+> bawah brand PACE AI. Prompt → Generate → Preview → Edit → Deploy → Live.
+> Identitas brand lengkap: [01 §1.0](./01-VISI-DAN-SCOPE.md).
 
 **Versi dokumen:** 1.0
 **Tanggal:** 2026-09-14
@@ -53,6 +56,7 @@
 | [007](./adr/ADR-007-prisma-driver-adapter.md)       | Driver adapter Prisma 7 (`@prisma/adapter-pg`)           | Accepted  |
 | [008](./adr/ADR-008-terbit-lewat-v0-deployments.md) | Menerbitkan website lewat v0 deployments                 | Accepted  |
 | [009](./adr/ADR-009-csp-nonce-render-dinamis.md)    | CSP nonce membuat seluruh halaman dirender dinamis       | Diusulkan |
+| [010](./adr/ADR-010-pembayaran-midtrans.md)         | Pembayaran otomatis lewat Midtrans (v1.1)                | Accepted  |
 
 ---
 
