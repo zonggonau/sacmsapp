@@ -15,16 +15,16 @@ export const metadata: Metadata = {
 
 /**
  * Halaman harga — docs/14 §14.9: "Halaman harga sesuai dengan tabel Plan".
- * Membaca tabel Plan, bukan angka yang ditulis ulang di sini. ISR 1 jam:
- * perubahan paket oleh Super Admin tampil paling lambat satu jam kemudian.
+ * Membaca tabel Plan, bukan angka yang ditulis ulang di sini.
+ *
+ * Dirender dinamis (bukan ISR) karena CSP nonce mewajibkan render per
+ * permintaan — ADR-009. Perubahan paket oleh Super Admin langsung tampil.
  */
-export const revalidate = 3600;
-
 async function loadPlans() {
   try {
     return (await planService.list()).filter((p) => p.isPublic);
   } catch (error) {
-    // Build tanpa database (mis. CI) tidak boleh gagal; ISR mengisi ulang saat produksi.
+    // Database bermasalah tidak boleh membuat halaman harga error total.
     logger.warn("pricing.plans_unavailable", {
       reason: error instanceof Error ? error.message : "tidak diketahui",
     });

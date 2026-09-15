@@ -106,6 +106,18 @@ export const test = base.extend({
     await context.setExtraHTTPHeaders({ "x-forwarded-for": randomIp() });
     await provide(context);
   },
+
+  // Setiap uji sekaligus memeriksa CSP (docs/12 §12.3): pelanggaran apa pun
+  // di konsol peramban menggagalkan uji, supaya kebijakan yang terlalu ketat
+  // (fitur rusak) maupun sumber baru yang belum didaftarkan langsung ketahuan.
+  page: async ({ page }, provide) => {
+    const violations: string[] = [];
+    page.on("console", (msg) => {
+      if (/Content Security Policy/i.test(msg.text())) violations.push(msg.text());
+    });
+    await provide(page);
+    expect(violations, "Pelanggaran CSP di konsol peramban").toEqual([]);
+  },
 });
 
 export { expect };

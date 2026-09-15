@@ -5,7 +5,8 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 
 /**
  * Header keamanan dasar — lihat docs/12-KEAMANAN.md §12.3.
- * CSP dengan nonce ditambahkan di Fase 7, setelah seluruh sumber skrip diketahui.
+ * CSP TIDAK dipasang di sini: nonce harus baru per permintaan, jadi CSP dibuat
+ * di src/proxy.ts (Fase 7).
  */
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },

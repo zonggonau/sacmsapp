@@ -81,12 +81,30 @@ const securityHeaders = [
 ];
 ```
 
-CSP ditambahkan di **Fase 7** memakai nonce, setelah seluruh sumber skrip diketahui.
+CSP dipasang di **Fase 7** memakai nonce, setelah seluruh sumber skrip diketahui.
 Menambahkannya terlalu awal menyebabkan tim terbiasa melonggarkannya setiap kali ada
 yang rusak — dan pada akhirnya CSP-nya tidak berarti apa-apa.
 
-Pengecualian penting: rute pratinjau iframe **tidak** boleh `X-Frame-Options: DENY`.
-Pratinjau memuat domain `*.vercel.app` milik pengguna, bukan halaman SaCMS.
+CSP dibuat di `src/proxy.ts` (bukan `next.config.ts`) karena nonce harus baru di setiap
+permintaan. Layout akar membaca `x-nonce` dan meneruskannya ke skrip tema; akibatnya
+**seluruh halaman dirender dinamis** — harga yang pantas untuk nonce yang bermakna.
+
+| Direktif          | Nilai                                                         | Alasan                                                               |
+| ----------------- | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `script-src`      | `'self' 'nonce-…' 'strict-dynamic'` (+`'unsafe-eval'` di dev) | Hanya skrip ber-nonce dan yang dimuatnya                             |
+| `style-src`       | `'self' 'unsafe-inline'`                                      | Atribut `style` hasil SSR tidak bisa diberi nonce; skrip tetap ketat |
+| `img-src`         | `'self' data: blob: https:`                                   | Avatar Google, gambar situs pengguna                                 |
+| `connect-src`     | `'self'` + origin Sentry dari `NEXT_PUBLIC_SENTRY_DSN`        | Server Action & pelaporan error                                      |
+| `frame-src`       | `https://*.vusercontent.net https://*.vercel.app` (+`data:`)  | Pratinjau v0 & situs terbit; `data:` hanya saat `V0_MOCK`            |
+| `frame-ancestors` | `'none'`                                                      | SaCMS tidak boleh dibingkai situs lain                               |
+| lainnya           | `object-src 'none'; base-uri 'self'; form-action 'self'`      | Tutup vektor injeksi klasik                                          |
+
+`upgrade-insecure-requests` hanya dipasang bila `NEXT_PUBLIC_APP_URL` memakai https.
+Setiap uji E2E gagal bila konsol peramban mencatat pelanggaran CSP — sumber baru wajib
+ditambahkan ke tabel ini di PR yang sama.
+
+`X-Frame-Options: DENY` tetap berlaku untuk halaman SaCMS. Pratinjau di dalam iframe
+memuat domain milik v0/pengguna, bukan halaman SaCMS, sehingga tidak terpengaruh.
 
 ## 12.4 Aturan Penanganan Input
 

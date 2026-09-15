@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Versi pnpm diambil dari "packageManager" di package.json. Menulis
+      # `version:` di sini membuat action gagal ("Multiple versions of pnpm").
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
@@ -63,9 +63,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Versi pnpm diambil dari "packageManager" di package.json. Menulis
+      # `version:` di sini membuat action gagal ("Multiple versions of pnpm").
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
@@ -120,9 +120,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Versi pnpm diambil dari "packageManager" di package.json. Menulis
+      # `version:` di sini membuat action gagal ("Multiple versions of pnpm").
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:

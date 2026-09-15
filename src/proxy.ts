@@ -13,6 +13,9 @@ import { getSessionCookie } from "better-auth/cookies";
  * (lib/auth-guard.ts), middleware Server Action, dan klausa where query.
  *
  * Jangan pernah menambahkan keputusan keamanan yang HANYA ada di sini.
+ *
+ * Berkas ini juga memasang Content Security Policy dengan nonce per permintaan
+ * — docs/12-KEAMANAN.md §12.3.
  */
 
 // robots.txt & sitemap.xml tidak tertangkap pengecualian ekstensi di matcher —
@@ -30,26 +33,69 @@ const PUBLIC_PREFIXES = [
 ];
 const AUTH_PAGES = ["/masuk", "/daftar", "/lupa-sandi", "/atur-sandi"];
 
+/** Origin ingest Sentry sisi browser, diturunkan dari DSN publik. */
+function sentryOrigin(): string | null {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return null;
+  try {
+    return new URL(dsn).origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Kebijakan CSP — setiap sumber di sini punya alasan tertulis di docs/12 §12.3.
+ * Menambah sumber = memperbarui dokumen itu di PR yang sama.
+ */
+function buildCsp(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development";
+  const sentry = sentryOrigin();
+  // Pratinjau tiruan (V0_MOCK) berupa URL data:, bukan domain v0.
+  const allowDataFrame = process.env.V0_MOCK !== "false";
+  const isHttps = (process.env.NEXT_PUBLIC_APP_URL ?? "").startsWith("https://");
+
+  return [
+    "default-src 'self'",
+    // 'strict-dynamic': skrip yang dimuat skrip ber-nonce ikut dipercaya,
+    // sehingga chunk Next.js tidak perlu didaftarkan satu per satu.
+    // 'unsafe-eval' HANYA di development (React memakainya untuk jejak error).
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    // 'unsafe-inline' untuk gaya: atribut style hasil SSR (lebar pratinjau,
+    // Radix, Sonner) tidak bisa diberi nonce. Risiko injeksi gaya jauh lebih
+    // kecil daripada skrip, dan skrip tetap dikunci ketat.
+    "style-src 'self' 'unsafe-inline'",
+    // Avatar Google dan gambar dari situs pengguna.
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src 'self'${sentry ? ` ${sentry}` : ""}`,
+    // Pratinjau v0 (*.vusercontent.net) dan situs terbit (*.vercel.app).
+    `frame-src https://*.vusercontent.net https://*.vercel.app${allowDataFrame ? " data:" : ""}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    ...(isHttps ? ["upgrade-insecure-requests"] : []),
+  ].join("; ");
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const hasSessionCookie = Boolean(getSessionCookie(req, { cookiePrefix: "sacms" }));
 
   // Sudah masuk tapi membuka halaman autentikasi -> ke dashboard
-  if (AUTH_PAGES.some((p) => pathname.startsWith(p))) {
-    return hasSessionCookie
-      ? NextResponse.redirect(new URL("/dashboard", req.url))
-      : NextResponse.next();
+  if (AUTH_PAGES.some((p) => pathname.startsWith(p)) && hasSessionCookie) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   const isPublic =
+    AUTH_PAGES.some((p) => pathname.startsWith(p)) ||
     PUBLIC_PATHS.includes(pathname) ||
     PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 
-  if (isPublic) return NextResponse.next();
-
   // Halaman terlindungi tanpa cookie -> ke halaman masuk, ingat tujuannya
-  if (!hasSessionCookie) {
+  if (!isPublic && !hasSessionCookie) {
     const url = new URL("/masuk", req.url);
     // Sertakan query string: tanpa ini pengguna yang membuka tautan berfilter
     // (mis. /projects?q=intan&status=LIVE) kehilangan filternya setelah masuk.
@@ -57,7 +103,19 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // Nonce baru untuk setiap permintaan. Next.js membacanya dari header CSP
+  // permintaan dan menempelkannya ke skrip framework secara otomatis; layout
+  // akar membaca `x-nonce` untuk skrip tema.
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = buildCsp(nonce);
+
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set("Content-Security-Policy", csp);
+  return res;
 }
 
 export const config = {

@@ -41,17 +41,18 @@
 
 ## Architecture Decision Records
 
-| ADR                                                 | Keputusan                                                | Status   |
-| --------------------------------------------------- | -------------------------------------------------------- | -------- |
-| [000](./adr/ADR-000-template.md)                    | Template ADR                                             | —        |
-| [001](./adr/ADR-001-v0-sebagai-ai-engine.md)        | v0 Platform API sebagai AI engine (bukan bangun sendiri) | Accepted |
-| [002](./adr/ADR-002-better-auth.md)                 | Better Auth untuk autentikasi                            | Accepted |
-| [003](./adr/ADR-003-postgres-prisma.md)             | PostgreSQL + Prisma ORM                                  | Accepted |
-| [004](./adr/ADR-004-server-actions-first.md)        | Server Actions sebagai mutasi utama, bukan REST          | Accepted |
-| [005](./adr/ADR-005-build-job-polling.md)           | Build job table + polling (bukan queue eksternal) di MVP | Accepted |
-| [006](./adr/ADR-006-mvp-tanpa-workspace.md)         | MVP tanpa Workspace/Organization                         | Accepted |
-| [007](./adr/ADR-007-prisma-driver-adapter.md)       | Driver adapter Prisma 7 (`@prisma/adapter-pg`)           | Accepted |
-| [008](./adr/ADR-008-terbit-lewat-v0-deployments.md) | Menerbitkan website lewat v0 deployments                 | Accepted |
+| ADR                                                 | Keputusan                                                | Status    |
+| --------------------------------------------------- | -------------------------------------------------------- | --------- |
+| [000](./adr/ADR-000-template.md)                    | Template ADR                                             | —         |
+| [001](./adr/ADR-001-v0-sebagai-ai-engine.md)        | v0 Platform API sebagai AI engine (bukan bangun sendiri) | Accepted  |
+| [002](./adr/ADR-002-better-auth.md)                 | Better Auth untuk autentikasi                            | Accepted  |
+| [003](./adr/ADR-003-postgres-prisma.md)             | PostgreSQL + Prisma ORM                                  | Accepted  |
+| [004](./adr/ADR-004-server-actions-first.md)        | Server Actions sebagai mutasi utama, bukan REST          | Accepted  |
+| [005](./adr/ADR-005-build-job-polling.md)           | Build job table + polling (bukan queue eksternal) di MVP | Accepted  |
+| [006](./adr/ADR-006-mvp-tanpa-workspace.md)         | MVP tanpa Workspace/Organization                         | Accepted  |
+| [007](./adr/ADR-007-prisma-driver-adapter.md)       | Driver adapter Prisma 7 (`@prisma/adapter-pg`)           | Accepted  |
+| [008](./adr/ADR-008-terbit-lewat-v0-deployments.md) | Menerbitkan website lewat v0 deployments                 | Accepted  |
+| [009](./adr/ADR-009-csp-nonce-render-dinamis.md)    | CSP nonce membuat seluruh halaman dirender dinamis       | Diusulkan |
 
 ---
 

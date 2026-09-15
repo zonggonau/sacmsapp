@@ -175,14 +175,14 @@ Aturan yang mengikat:
 
 ## 2.7 Strategi Rendering
 
-| Segmen                 | Strategi                                      | Alasan                                   |
-| ---------------------- | --------------------------------------------- | ---------------------------------------- |
-| `(marketing)`          | Static + ISR                                  | Cepat, bisa di-cache CDN, baik untuk SEO |
-| `(auth)`               | Dynamic                                       | Butuh CSRF & cookie                      |
-| `(app)` daftar project | Dynamic + streaming (`Suspense`)              | Data per user, shell tampil duluan       |
-| `(app)` builder        | Dynamic + Client Component untuk chat/preview | Sangat interaktif                        |
-| `(admin)`              | Dynamic, tanpa cache                          | Data operasional harus selalu segar      |
-| Aset publik            | CDN Vercel                                    | —                                        |
+| Segmen                 | Strategi                                      | Alasan                              |
+| ---------------------- | --------------------------------------------- | ----------------------------------- |
+| `(marketing)`          | Dynamic (CSP nonce — ADR-009, diusulkan)      | Nonce wajib render per permintaan   |
+| `(auth)`               | Dynamic                                       | Butuh CSRF & cookie                 |
+| `(app)` daftar project | Dynamic + streaming (`Suspense`)              | Data per user, shell tampil duluan  |
+| `(app)` builder        | Dynamic + Client Component untuk chat/preview | Sangat interaktif                   |
+| `(admin)`              | Dynamic, tanpa cache                          | Data operasional harus selalu segar |
+| Aset publik            | CDN Vercel                                    | —                                   |
 
 ## 2.8 Yang Terjadi Saat Gagal
 

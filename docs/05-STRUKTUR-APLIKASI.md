@@ -10,7 +10,7 @@ src/app/
 ├── error.tsx                       # error boundary global
 ├── manifest.ts  robots.ts  sitemap.ts
 │
-├── (marketing)/                    # GRUP 1 — publik, static/ISR
+├── (marketing)/                    # GRUP 1 — publik, dinamis (CSP nonce, ADR-009)
 │   ├── layout.tsx                  # header publik + footer
 │   ├── page.tsx                    # landing: hero + input prompt besar
 │   ├── harga/page.tsx
@@ -96,7 +96,7 @@ aturan aksesnya sendiri.
 
 | Grup          | URL                           | Layout                       | Guard                      | Rendering            |
 | ------------- | ----------------------------- | ---------------------------- | -------------------------- | -------------------- |
-| `(marketing)` | `/`, `/harga`                 | Header publik + footer       | Tidak ada                  | Static + ISR         |
+| `(marketing)` | `/`, `/harga`                 | Header publik + footer       | Tidak ada                  | Dynamic (ADR-009)    |
 | `(auth)`      | `/masuk`, `/daftar`           | Kartu terpusat, tanpa nav    | Tolak jika **sudah** login | Dynamic              |
 | `(app)`       | `/dashboard`, `/projects/...` | Sidebar + topbar             | `requireUser()`            | Dynamic              |
 | `(admin)`     | `/admin/...`                  | Shell admin (visual berbeda) | `requireSuperAdmin()`      | Dynamic, tanpa cache |

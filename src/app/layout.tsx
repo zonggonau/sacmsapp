@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,14 +33,20 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Nonce CSP dari proxy — docs/12 §12.3. Membaca headers() membuat seluruh
+  // halaman dirender dinamis; itu syarat nonce (nonce statis = tidak berarti).
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     // suppressHydrationWarning WAJIB — tanpa ini next-themes memicu error hidrasi.
     <html lang="id" suppressHydrationWarning>
       <body className={cn(geistSans.variable, geistMono.variable, "font-sans")}>
         <ThemeProvider
+          // Skrip inline next-themes (cegah kedip tema) wajib ber-nonce.
+          nonce={nonce}
           attribute="class"
           defaultTheme="dark"
           enableSystem
