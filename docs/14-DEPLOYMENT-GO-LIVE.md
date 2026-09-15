@@ -111,29 +111,36 @@ Skrip menolak memasang bila: `DATABASE_URL` menunjuk localhost, `BETTER_AUTH_URL
 on: [pull_request, push]
 
 jobs:
-  quality:
+  quality: # lint, format, typecheck, prisma validate, build (env pengganti, tanpa koneksi)
     steps:
       - pnpm install --frozen-lockfile
-      - pnpm lint
-      - pnpm typecheck
-      - pnpm prisma validate
-      - pnpm test # vitest
+      - pnpm lint && pnpm format:check && pnpm typecheck
       - pnpm build
 
-  e2e:
-    needs: quality
-    env:
-      V0_MOCK: "true"
+  unit: # Postgres sekali pakai, vendor tiruan
     steps:
-      - pnpm prisma migrate deploy # database uji sementara
-      - pnpm prisma db seed
-      - pnpm exec playwright test
+      - pnpm db:deploy && pnpm db:seed
+      - pnpm test:coverage # vitest, gagal bila coverage service < 70%
+
+  e2e: # Postgres + emulator Upstash (SRH), next start, V0_MOCK & VERCEL_MOCK
+    steps:
+      - pnpm db:deploy && pnpm db:seed
+      - pnpm build
+      - pnpm test:e2e # 5 alur kritis + pemeriksaan pelanggaran CSP
 
   security:
     steps:
-      - gitleaks detect --no-git
+      - gitleaks
       - pnpm audit --audit-level=high
 ```
+
+Catatan penting:
+
+- `pnpm/action-setup` **tanpa** `version:` — versi diambil dari `packageManager` di
+  `package.json`. Menulis keduanya membuat seluruh job gagal sebelum langkah pertama.
+- `next build` memuat modul rute API saat mengumpulkan data halaman; `lib/db` dan
+  `lib/ratelimit` menolak dimuat tanpa `DATABASE_URL`/Upstash. Job `quality` karena itu
+  memberi nilai pengganti (tidak ada koneksi yang dibuka saat build).
 
 Merge ke `main` diblokir bila salah satu job merah. Tidak ada pengecualian, termasuk
 "cuma perbaikan kecil".

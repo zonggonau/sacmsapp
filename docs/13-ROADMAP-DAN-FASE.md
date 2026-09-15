@@ -255,10 +255,10 @@ Pekerjaan:
 
 1. Landing page `(marketing)` + halaman harga + Syarat & Privasi
 2. Uji E2E Playwright — 5 alur kritis (§13.3) — _`pnpm test:e2e`, folder `e2e/`, job `e2e` di CI (Postgres + emulator Upstash SRH, `next start`). Hijau lokal 4/4 berkas uji (alur 2 & 3 satu berkas). Menemukan & memperbaiki bug: sesi yang dicabut memicu putaran pengalihan tanpa akhir → `/api/sesi-berakhir` membersihkan cookie_
-3. Uji unit service layer ≥ 70%
+3. Uji unit service layer ≥ 70% — _`pnpm test:coverage` (Vitest, folder `tests/`), 41 uji terhadap PostgreSQL sungguhan dengan vendor tiruan; coverage service **80,9% statement / 83% baris**; job `unit` di CI dengan ambang 70%_
 4. Audit aksesibilitas (kontras, keyboard, screen reader, `prefers-reduced-motion`)
 5. Kinerja: Lighthouse ≥ 90, LCP < 2,5 dtk, CLS < 0,1
-6. CSP dengan nonce
+6. CSP dengan nonce — _dipasang di `src/proxy.ts` ([12 §12.3](./12-KEAMANAN.md)); 28/28 skrip ber-nonce; E2E gagal bila ada pelanggaran CSP. Membuat seluruh halaman dinamis → [ADR-009](./adr/ADR-009-csp-nonce-render-dinamis.md) **menunggu persetujuan**_
 7. Uji beban: 50 build bersamaan
 8. **Uji pemulihan database dari cadangan** — bukan sekadar memastikan cadangan ada
 9. SSE menggantikan polling (opsional)

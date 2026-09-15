@@ -49,6 +49,15 @@ jobs:
           # CI tidak memegang rahasia production — validasi env dilewati
           # HANYA untuk build. Jangan pernah dipakai di runtime.
           SKIP_ENV_VALIDATION: "true"
+          # Nilai pengganti: `next build` memuat modul rute API saat mengumpulkan
+          # data halaman, dan lib/db serta lib/ratelimit menolak dimuat tanpa
+          # nilai ini. Tidak ada koneksi yang dibuka saat build.
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+          UPSTASH_REDIS_REST_URL: http://localhost:8079
+          UPSTASH_REDIS_REST_TOKEN: pengganti-build
+          BETTER_AUTH_SECRET: pengganti-build-bukan-rahasia-0123456789abcdef
+          BETTER_AUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
 
   security:
     name: Secret scan · Audit
@@ -77,6 +86,47 @@ jobs:
 
       - name: Audit
         run: pnpm audit --audit-level=high
+
+  unit:
+    name: Uji service · coverage ≥ 70%
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # docs/03 §3.7 — service diuji terhadap PostgreSQL sungguhan, vendor tiruan.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sacms
+          POSTGRES_PASSWORD: sacms
+          POSTGRES_DB: sacms_unit
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sacms" --health-interval 5s --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sacms:sacms@localhost:5432/sacms_unit
+      BETTER_AUTH_SECRET: rahasia-uji-unit-bukan-production-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      # Versi pnpm diambil dari "packageManager" di package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrasi & seed
+        run: pnpm db:deploy && pnpm db:seed
+
+      - name: Uji + coverage
+        run: pnpm test:coverage
 
   e2e:
     name: E2E · 5 alur kritis
