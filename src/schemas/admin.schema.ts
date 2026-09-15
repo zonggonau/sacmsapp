@@ -114,6 +114,14 @@ export const restoreRulesSchema = z.object({
   version: z.coerce.number().int().min(1),
 });
 
+export const dailyCostThresholdSchema = z.object({
+  valueIdr: z.coerce
+    .number({ message: "Isi angka rupiah" })
+    .int("Harus bilangan bulat")
+    .min(0, "Tidak boleh negatif")
+    .max(1_000_000_000, "Maksimal Rp 1.000.000.000"),
+});
+
 /* ---------- Filter halaman (dibaca dari searchParams) ---------- */
 
 const optionalText = z

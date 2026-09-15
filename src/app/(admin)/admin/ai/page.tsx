@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/features/admin/admin-ui";
+import { CostThresholdForm } from "@/components/features/admin/cost-threshold-form";
 import { SettingSwitch } from "@/components/features/admin/setting-switch";
 import {
   Card,
@@ -16,7 +17,10 @@ import * as systemService from "@/services/system.service";
 export const metadata: Metadata = { title: "AI & Model" };
 
 export default async function AdminAiPage() {
-  const settings = await systemService.getSettings();
+  const [settings, threshold] = await Promise.all([
+    systemService.getSettings(),
+    systemService.getDailyCostThreshold(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -42,6 +46,7 @@ export default async function AdminAiPage() {
               action: "Nyalakan Kill Switch",
             }}
           />
+          <CostThresholdForm valueIdr={threshold} />
         </CardContent>
       </Card>
 

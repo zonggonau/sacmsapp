@@ -11,6 +11,7 @@ import { authActionClient } from "@/lib/safe-action";
 import {
   adminJobIdSchema,
   adminRollbackSchema,
+  dailyCostThresholdSchema,
   changePlanSchema,
   changeRoleSchema,
   defaultModelSchema,
@@ -301,4 +302,29 @@ export const adminRestoreRules = authActionClient
     });
     revalidateAdmin();
     return { ok: true, audit };
+  });
+
+/* ============================================================
+ *  AMBANG BIAYA & PEMANTAUAN — docs/10 §10.3, §10.7; docs/12 §12.8
+ * ============================================================ */
+
+export const adminSetDailyCostThreshold = authActionClient
+  .metadata({ actionName: "admin.setting.cost_threshold", ...SUPER_ADMIN })
+  .inputSchema(dailyCostThresholdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const audit = await systemService.setDailyCostThreshold({
+      valueIdr: parsedInput.valueIdr,
+      actorId: ctx.user.id,
+    });
+    revalidateAdmin();
+    return { ok: true, audit };
+  });
+
+export const adminSendSentryTest = authActionClient
+  .metadata({ actionName: "admin.monitoring.sentry_test", ...SUPER_ADMIN })
+  .action(async ({ ctx }) => {
+    const { sent, ...audit } = await systemService.sendMonitoringTest({
+      actorId: ctx.user.id,
+    });
+    return { ok: true, sent, audit };
   });

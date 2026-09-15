@@ -27,6 +27,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "smoke": "tsx scripts/smoke.ts",
     "postinstall": "prisma generate",
     "prepare": "husky"
   },

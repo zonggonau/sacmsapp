@@ -137,6 +137,9 @@ adalah cara cepat kehilangan pelanggan.
 
 ## 10.7 `/admin/ai` — Kendali Mesin
 
+> **Fase 7:** **ambang biaya harian** kini bisa diubah dari `/admin/ai` (dan ditautkan dari ringkasan
+> `/admin`, sesuai §10.3 "Ubah ambang"); perubahan tercatat di audit. 0 = kill switch otomatis nonaktif.
+
 > **Berubah oleh [ADR-011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md):** editor system prompt dan
 > pilihan model default dihapus dari panel. Semua build memakai `v0-auto` tanpa system prompt
 > SaCMS; panel hanya menampilkan kill switch dan ringkasan kebijakan. `BuildJob.sentMessage` dan

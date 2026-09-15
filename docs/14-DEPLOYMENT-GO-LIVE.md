@@ -171,15 +171,21 @@ dan skema baru berjalan bersamaan.
 
 ## 14.6 Uji Smoke Production (otomatis setelah deploy)
 
-- [ ] `GET /` mengembalikan 200
-- [ ] `GET /masuk` mengembalikan 200
-- [ ] `GET /api/auth/session` merespons
-- [ ] Koneksi database sehat (endpoint `/api/health`)
-- [ ] Redis merespons
-- [ ] `/admin` tanpa sesi → redirect, bukan 500
-- [ ] Sentry menerima event uji
+- [x] `GET /` mengembalikan 200
+- [x] `GET /masuk` mengembalikan 200
+- [x] `GET /api/auth/get-session` merespons
+- [x] Koneksi database sehat (endpoint `/api/health`)
+- [x] Redis merespons (bagian dari `/api/health`)
+- [x] `/admin` tanpa sesi → redirect, bukan 500
+- [ ] Sentry menerima event uji — _tombol "Kirim event uji Sentry" di `/admin/sistem`; butuh `SENTRY_DSN`_
 
 Gagal salah satu → rollback otomatis.
+
+**Status (Fase 7):** pemeriksaan di atas dijalankan `pnpm smoke <URL>` (`scripts/smoke.ts`), dan
+otomatis oleh `.github/workflows/smoke.yml` setiap Vercel melaporkan deployment Production berhasil
+(event `deployment_status`), atau manual lewat _Run workflow_. Lulus di server dev lokal 2026-09-16.
+**Rollback otomatis belum dipasang:** butuh token Vercel sebagai secret GitHub; sampai itu, gagal smoke
+berarti Instant Rollback manual (§14.7).
 
 ## 14.7 Rollback
 

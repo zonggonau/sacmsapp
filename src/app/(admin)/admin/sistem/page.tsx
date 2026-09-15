@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/features/admin/admin-ui";
+import { SentryTestButton } from "@/components/features/admin/sentry-test-button";
 import { SettingSwitch } from "@/components/features/admin/setting-switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -82,6 +83,19 @@ export default async function AdminSystemPage() {
               </li>
             ))}
           </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Pemantauan</CardTitle>
+          <CardDescription>
+            Uji bahwa Sentry menerima event (docs/12 §12.8). Kesehatan layanan dapat
+            dipantau di <span className="font-mono">/api/health</span>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SentryTestButton />
         </CardContent>
       </Card>
     </div>

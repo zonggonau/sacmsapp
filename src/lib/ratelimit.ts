@@ -139,3 +139,19 @@ export async function checkRateLimit(
     return { success: !strictKeys.includes(key), remaining: 0 };
   }
 }
+
+/* ---------- Pemeriksaan kesehatan — docs/14 §14.6 ---------- */
+
+/** "ok" bila Redis menjawab, "tidak-dikonfigurasi" di development tanpa Upstash. */
+export async function pingRedis(): Promise<"ok" | "tidak-dikonfigurasi" | "gagal"> {
+  if (!redis) return "tidak-dikonfigurasi";
+  try {
+    await redis.ping();
+    return "ok";
+  } catch (error) {
+    logger.error("health.redis_failed", {
+      reason: error instanceof Error ? error.message : "tidak diketahui",
+    });
+    return "gagal";
+  }
+}

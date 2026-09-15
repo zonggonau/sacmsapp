@@ -23,13 +23,15 @@ import { angka, rupiah, tanggal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import * as overviewService from "@/services/admin-overview.service";
 import * as costService from "@/services/cost.service";
+import * as systemService from "@/services/system.service";
 
 export const metadata: Metadata = { title: "Ringkasan Sistem" };
 
 export default async function AdminOverviewPage() {
-  const [o, cost] = await Promise.all([
+  const [o, cost, threshold] = await Promise.all([
     overviewService.getOverview(),
     costService.getCostMetrics(30),
+    systemService.getDailyCostThreshold(),
   ]);
 
   return (
@@ -96,7 +98,12 @@ export default async function AdminOverviewPage() {
         <CardHeader>
           <CardTitle className="text-base">Biaya vendor · 30 hari</CardTitle>
           <CardDescription>
-            Dari rekonsiliasi harian laporan v0 (docs/11 §11.8).
+            Dari rekonsiliasi harian laporan v0 (docs/11 §11.8). Ambang biaya harian:{" "}
+            {threshold > 0 ? rupiah(threshold) : "nonaktif"} ·{" "}
+            <Link href="/admin/ai" className="text-primary-text hover:underline">
+              Ubah ambang
+            </Link>
+            .
             {cost.unreconciledEvents > 0
               ? ` ${angka(cost.unreconciledEvents)} generate belum punya data biaya — angka bisa lebih rendah dari sebenarnya.`
               : ""}

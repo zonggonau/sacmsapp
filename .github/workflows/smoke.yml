@@ -1,0 +1,39 @@
+name: Smoke production
+
+# docs/14 §14.6 — uji smoke otomatis setelah Vercel melaporkan deployment
+# production berhasil (integrasi GitHub Vercel mengirim event deployment_status).
+# Bisa juga dijalankan manual dengan URL tertentu.
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL production, mis. https://sacms.id"
+        required: true
+
+jobs:
+  smoke:
+    name: Smoke · production
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Versi pnpm diambil dari "packageManager" di package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Jalankan smoke
+        run: pnpm smoke "${{ github.event.inputs.url || github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}"

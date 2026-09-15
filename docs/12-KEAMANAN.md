@@ -192,7 +192,7 @@ maintenance mode langsung di halaman itu:
 - [x] Rate limit aktif di semua jalur autentikasi dan AI — _uji E2E 6× gagal masuk; lokal & CI (Upstash emulator)_
 - [x] Checklist uji akses [07 §7.8](./07-AUTH-DAN-RBAC.md) **lulus seluruhnya** — _Fase 5; status 404 sungguhan Fase 7_
 - [x] Tidak ada `console.log` yang tersisa di kode production — _hanya di `lib/logger.ts`_
-- [ ] Sentry aktif, sampel error terkirim, data sensitif tersamarkan — _`sendDefaultPii: false`; menunggu DSN pemilik_
+- [ ] Sentry aktif, sampel error terkirim, data sensitif tersamarkan — _`sendDefaultPii: false` + penyamaran cookie/header/email di `beforeSend`; tombol "Kirim event uji Sentry" di `/admin/sistem`; menunggu DSN pemilik_
 - [ ] Pencadangan database aktif (Neon PITR) dan **pemulihan sudah diuji sekali**
 - [x] `CRON_SECRET` memproteksi seluruh endpoint cron — _kedelapan route_
 - [x] Webhook Vercel memverifikasi signature — _Fase 4, signature salah → 401_

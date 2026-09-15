@@ -258,3 +258,60 @@ export async function restoreRules(input: {
 
   return appendRuleVersion(validateRules(target.text), input.actorId, target.version);
 }
+
+/* ============================================================
+ *  AMBANG BIAYA HARIAN — docs/10 §10.3 & §10.7, docs/09 §9.11
+ * ============================================================ */
+
+/** Batas atas masuk akal: Rp 1 miliar per hari. 0 = kill switch otomatis nonaktif. */
+const MAX_DAILY_COST_THRESHOLD_IDR = 1_000_000_000;
+
+export async function getDailyCostThreshold(): Promise<number> {
+  const value = await readSetting<unknown>(SETTING_KEYS.aiDailyCostThreshold, 0);
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+export async function setDailyCostThreshold(input: {
+  valueIdr: number;
+  actorId: string;
+}): Promise<AuditTrail> {
+  if (
+    !Number.isInteger(input.valueIdr) ||
+    input.valueIdr < 0 ||
+    input.valueIdr > MAX_DAILY_COST_THRESHOLD_IDR
+  ) {
+    throw new AppError(
+      "VALIDATION",
+      "Ambang harus bilangan bulat rupiah antara 0 dan 1.000.000.000. Isi 0 untuk menonaktifkan kill switch otomatis.",
+    );
+  }
+
+  const before = await getDailyCostThreshold();
+  await writeSetting(SETTING_KEYS.aiDailyCostThreshold, input.valueIdr, input.actorId);
+  logger.warn("system.cost_threshold_changed", { before, after: input.valueIdr });
+
+  return {
+    targetType: "SystemSetting",
+    targetId: SETTING_KEYS.aiDailyCostThreshold,
+    before: { valueIdr: before },
+    after: { valueIdr: input.valueIdr },
+  };
+}
+
+/* ============================================================
+ *  UJI PEMANTAUAN — docs/12 §12.8 "sampel error terkirim"
+ * ============================================================ */
+
+export async function sendMonitoringTest(input: {
+  actorId: string;
+}): Promise<AuditTrail & { sent: boolean }> {
+  const { sendTestEvent } = await import("@/lib/monitoring");
+  const sent = sendTestEvent();
+  return {
+    sent,
+    targetType: "SystemSetting",
+    targetId: "monitoring.sentry",
+    after: { sent, actorId: input.actorId },
+  };
+}
