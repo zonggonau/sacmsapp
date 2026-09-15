@@ -424,13 +424,26 @@ const mockClient: VercelClient = {
  * lagi memaksa tiruan — itulah yang dulu membuat "deploy sukses" palsu tercatat
  * tanpa ada yang sadar.
  */
-const USE_MOCK = env.VERCEL_MOCK || isMockEngine;
+/**
+ * Vercel tiruan HANYA bila v0 juga tiruan (ADR-008).
+ *
+ * v0 nyata benar-benar menerbitkan ke Vercel. Bila klien Vercel tetap tiruan,
+ * SaCMS tidak pernah melihat build yang sudah selesai dan deployment tertahan
+ * di BUILDING. Karena itu `VERCEL_MOCK=true` diabaikan saat v0 nyata.
+ */
+const USE_MOCK = isMockEngine;
+
+if (!isMockEngine && process.env.VERCEL_MOCK === "true") {
+  logger.warn("vercel.mock_ignored", {
+    hint: "VERCEL_MOCK=true diabaikan karena V0_MOCK=false: v0 nyata menerbitkan ke Vercel sungguhan.",
+  });
+}
 
 export const vercelClient: VercelClient = USE_MOCK ? mockClient : realClient;
 
 if (USE_MOCK) {
   logger.warn("vercel.mock_mode", {
     hint: "Vercel tiruan aktif — tidak ada website yang benar-benar diterbitkan.",
-    reason: env.VERCEL_MOCK ? "VERCEL_MOCK=true" : "V0_MOCK=true",
+    reason: "V0_MOCK=true",
   });
 }
