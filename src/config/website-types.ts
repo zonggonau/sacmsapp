@@ -23,9 +23,9 @@ import type { WebsiteType } from "@/types/db";
  * dimiliki sebuah situs pemerintah atau sekolah. SaCMS yang tahu: pengguna
  * menulis satu kalimat, AI menerima spesifikasi lengkap.
  *
- * `requirements` digabung dengan prompt pengguna saat menyusun instruksi untuk
- * AI di Fase 3. Mengubah daftar ini mengubah hasil generate — perlakukan
- * sebagai perubahan produk, bukan sekadar teks.
+ * `requirements` menjadi isi contoh prompt yang diisikan ke formulir project
+ * baru (promptTemplate). Sejak ADR-011 daftar ini tidak lagi dikirim ke v0 di
+ * belakang layar — pengguna melihat dan boleh mengubah semuanya.
  */
 export interface WebsiteTypeConfig {
   value: WebsiteType;
@@ -251,4 +251,52 @@ export function getWebsiteType(value: WebsiteType): WebsiteTypeConfig {
   const found = BY_VALUE.get(value);
   // CUSTOM selalu ada di daftar, jadi ini tidak pernah undefined.
   return found ?? WEBSITE_TYPES[WEBSITE_TYPES.length - 1]!;
+}
+
+/** Pokok kalimat contoh prompt. Bagian yang diganti pengguna ada di [kurung siku]. */
+const PROMPT_SUBJECT: Record<WebsiteType, string> = {
+  GOVERNMENT: "website resmi [nama pemerintah daerah, desa, atau dinas]",
+  SCHOOL: "website [nama sekolah atau kampus]",
+  COMPANY: "website profil [nama perusahaan] yang bergerak di bidang [bidang usaha]",
+  ECOMMERCE: "toko online [nama toko] yang menjual [jenis produk]",
+  HOSPITAL: "website [nama rumah sakit, klinik, atau puskesmas]",
+  HOTEL: "website [nama hotel atau penginapan] di [kota]",
+  RESTAURANT: "website [nama restoran atau kafe] di [kota]",
+  PORTFOLIO: "website portofolio [nama Anda], seorang [profesi]",
+  SAAS: "landing page aplikasi [nama aplikasi] untuk [target pengguna]",
+  LANDING: "landing page untuk [nama acara atau kampanye]",
+  BLOG: "portal berita atau blog [nama situs] tentang [topik]",
+  CUSTOM: "website [jelaskan jenis website] untuk [siapa pengunjungnya]",
+};
+
+/**
+ * Contoh prompt yang langsung diisikan ke formulir saat pengguna memilih jenis
+ * website. Hanya BANTUAN MENULIS: pengguna bebas mengubahnya, dan yang dikirim
+ * ke v0 tetap teks akhir di formulir apa adanya (ADR-011).
+ */
+export function promptTemplate(value: WebsiteType): string {
+  const closing = "Gunakan bahasa Indonesia dan pastikan tampilan rapi di ponsel.";
+
+  if (value === "CUSTOM") {
+    return [
+      `Buat ${PROMPT_SUBJECT.CUSTOM}.`,
+      "",
+      "Halaman yang dibutuhkan:",
+      "- [halaman pertama]",
+      "- [halaman kedua]",
+      "",
+      "Pengunjung harus bisa: [apa yang bisa dilakukan pengunjung].",
+      "",
+      closing,
+    ].join("\n");
+  }
+
+  return [
+    `Buat ${PROMPT_SUBJECT[value]}.`,
+    "",
+    "Halaman dan fitur yang dibutuhkan:",
+    ...getWebsiteType(value).requirements.map((r) => `- ${r}`),
+    "",
+    closing,
+  ].join("\n");
 }

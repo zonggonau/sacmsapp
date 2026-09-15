@@ -82,6 +82,8 @@ const tasks: Record<string, (args: Args) => Promise<unknown>> = {
     return null;
   },
 
+  countProjects: (args) => db.project.count({ where: { userId: str(args.userId) } }),
+
   countVersions: (args) =>
     db.projectVersion.count({ where: { projectId: str(args.projectId) } }),
 

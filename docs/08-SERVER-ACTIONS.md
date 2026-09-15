@@ -316,19 +316,29 @@ Aturan form:
 
 ### `project.actions.ts`
 
-| Action             | Input                          | Efek                                            | Kuota                |
-| ------------------ | ------------------------------ | ----------------------------------------------- | -------------------- |
-| `createProject`    | `{name?, websiteType, prompt}` | Project + BuildJob + 10 step, jalankan pipeline | 1 project + 1 kredit |
-| `renameProject`    | `{projectId, name}`            | Ubah nama & slug                                | –                    |
-| `archiveProject`   | `{projectId}`                  | `status=ARCHIVED`                               | –                    |
-| `deleteProject`    | `{projectId, confirmName}`     | Soft delete (ketik nama untuk konfirmasi)       | –                    |
-| `duplicateProject` | `{projectId}`                  | Salin sebagai draf baru                         | 1 project            |
+| Action             | Input                                        | Efek                                            | Kuota                |
+| ------------------ | -------------------------------------------- | ----------------------------------------------- | -------------------- |
+| `createProject`    | `{name, websiteType, prompt, referenceUrl?}` | Project + BuildJob + 10 step, jalankan pipeline | 1 project + 1 kredit |
+| `renameProject`    | `{projectId, name}`                          | Ubah nama & slug                                | –                    |
+| `archiveProject`   | `{projectId}`                                | `status=ARCHIVED`                               | –                    |
+| `deleteProject`    | `{projectId, confirmName}`                   | Soft delete (ketik nama untuk konfirmasi)       | –                    |
+| `duplicateProject` | `{projectId}`                                | Salin sebagai draf baru                         | 1 project            |
 
-> **`name` opsional.** Prinsip produk [01 §1.7](./01-VISI-DAN-SCOPE.md) berbunyi "kalau
-> sebuah kebutuhan bisa diselesaikan dengan prompt, jangan buat form". Nama diturunkan
-> dari jenis website dan tanggal bila kosong (mis. "Website Pemerintahan — 14 Sep 2026"),
-> dan bisa diganti kapan saja di pengaturan project. Satu field lebih sedikit di layar
-> pertama berarti lebih banyak pengguna menyelesaikannya.
+> **`name` wajib** (keputusan pemilik sistem, 2026-09-16). Nama yang diturunkan otomatis dari
+> jenis website dan tanggal membuat daftar project sulit dibedakan, sehingga formulir
+> mewajibkannya (3–100 karakter).
+>
+> **Memilih jenis website mengisi contoh prompt** (`promptTemplate` di
+> `src/config/website-types.ts`, disusun dari `requirements` tipe itu) yang bisa diubah
+> pengguna. Teks yang sudah diubah tidak ditimpa; tombol "Isi contoh prompt" tersedia bila
+> pengguna ingin menggantinya.
+>
+> **`referenceUrl` opsional** — website acuan (mis. `www.websitecontoh.com`). Dinormalisasi
+> menjadi `https://…`; localhost, alamat IP, kredensial di URL, dan skema selain http(s)
+> ditolak. Disimpan di `Project.referenceUrl` dan ditambahkan sebagai baris
+> `Website referensi: …` pada pesan build awal
+> ([ADR-011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md), catatan tambahan). Salinan project
+> ikut membawanya.
 >
 > Selama Fase 2 `createProject` **belum** membuat BuildJob — AI masuk di Fase 3. Action
 > mengarahkan ke halaman ringkasan project, bukan ke builder.

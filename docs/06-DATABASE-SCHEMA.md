@@ -284,6 +284,7 @@ model Project {
   status      ProjectStatus @default(DRAFT)
 
   initialPrompt String       @db.Text   // prompt asli user, disimpan apa adanya
+  referenceUrl  String?                 // website acuan opsional dari formulir project baru
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

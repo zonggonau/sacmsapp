@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { WEBSITE_TYPES, getWebsiteType } from "@/config/website-types";
+import { WEBSITE_TYPES, getWebsiteType, promptTemplate } from "@/config/website-types";
 import { BlockedTooltip } from "@/components/features/quota/blocked-tooltip";
 import { angka } from "@/lib/format";
 import { formAction } from "@/lib/form-action";
@@ -38,6 +38,11 @@ export function CreateProjectForm({
   quota?: CreateProjectQuota | null;
 }) {
   const [selected, setSelected] = useState<WebsiteType>("GOVERNMENT");
+  const [prompt, setPrompt] = useState("");
+  // Contoh prompt terakhir yang diisikan otomatis. Selama teks di formulir masih
+  // sama persis dengannya, memilih jenis lain boleh menggantinya; teks yang
+  // sudah diubah pengguna tidak pernah ditimpa diam-diam (docs/08 §8.6).
+  const [autoFilled, setAutoFilled] = useState<string | null>(null);
 
   const { execute, result, isPending } = useAction(createProject, {
     onError: ({ error }) => {
@@ -48,6 +53,19 @@ export function CreateProjectForm({
 
   const errors = result.validationErrors;
   const active = getWebsiteType(selected);
+  const untouched = prompt.trim() === "" || prompt === autoFilled;
+  const offerTemplate = !untouched && prompt !== promptTemplate(selected);
+
+  function fillTemplate(value: WebsiteType) {
+    const template = promptTemplate(value);
+    setPrompt(template);
+    setAutoFilled(template);
+  }
+
+  function chooseType(value: WebsiteType) {
+    setSelected(value);
+    if (untouched) fillTemplate(value);
+  }
 
   return (
     <form action={formAction(execute)} className="space-y-6">
@@ -77,7 +95,10 @@ export function CreateProjectForm({
                   name="websiteType"
                   value={type.value}
                   checked={selected === type.value}
-                  onChange={() => setSelected(type.value)}
+                  // onChange untuk keyboard; onClick supaya kartu yang sudah
+                  // terpilih tetap bisa mengisi contoh prompt saat diklik.
+                  onChange={() => chooseType(type.value)}
+                  onClick={() => chooseType(type.value)}
                   className="sr-only"
                 />
                 <Icon
@@ -105,11 +126,46 @@ export function CreateProjectForm({
       </fieldset>
 
       <div className="space-y-2">
-        <Label htmlFor="prompt">Ceritakan website yang Anda inginkan</Label>
+        <Label htmlFor="name">Nama project</Label>
+        <Input
+          id="name"
+          name="name"
+          required
+          maxLength={100}
+          placeholder="Contoh: Website SMA Negeri 1 Jayapura"
+          aria-invalid={Boolean(errors?.name)}
+          aria-describedby="name-error"
+        />
+        {errors?.name?._errors?.[0] ? (
+          <p id="name-error" className="text-destructive text-sm">
+            {errors.name._errors[0]}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label htmlFor="prompt">Ceritakan website yang Anda inginkan</Label>
+          {offerTemplate ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => fillTemplate(selected)}
+            >
+              <Sparkles className="size-3.5" />
+              Isi contoh prompt {active.label}
+            </Button>
+          ) : null}
+        </div>
         <Textarea
           id="prompt"
           name="prompt"
-          rows={compact ? 5 : 7}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={compact ? 7 : 10}
+          maxLength={4000}
           placeholder={active.placeholder}
           required
           aria-invalid={Boolean(errors?.prompt)}
@@ -121,27 +177,38 @@ export function CreateProjectForm({
           </p>
         ) : null}
         <p id="prompt-hint" className="text-muted-foreground text-xs">
-          Semakin jelas halaman dan isi yang Anda sebut, semakin tepat hasilnya.
+          {autoFilled !== null && untouched
+            ? "Ganti teks dalam [kurung siku] dengan data Anda, lalu tambah atau hapus bagian sesuai kebutuhan."
+            : "Pilih jenis website untuk mengisi contoh prompt, atau tulis sendiri. Semakin jelas halaman dan isi yang Anda sebut, semakin tepat hasilnya."}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="name">
-          Nama project{" "}
+        <Label htmlFor="referenceUrl">
+          Website referensi{" "}
           <span className="text-muted-foreground font-normal">(opsional)</span>
         </Label>
         <Input
-          id="name"
-          name="name"
-          placeholder={`Kosongkan untuk "Website ${active.label} — hari ini"`}
-          aria-invalid={Boolean(errors?.name)}
-          aria-describedby="name-error"
+          id="referenceUrl"
+          name="referenceUrl"
+          type="text"
+          inputMode="url"
+          autoComplete="url"
+          spellCheck={false}
+          maxLength={2000}
+          placeholder="Contoh: www.websitecontoh.com"
+          aria-invalid={Boolean(errors?.referenceUrl)}
+          aria-describedby="reference-error reference-hint"
         />
-        {errors?.name?._errors?.[0] ? (
-          <p id="name-error" className="text-destructive text-sm">
-            {errors.name._errors[0]}
+        {errors?.referenceUrl?._errors?.[0] ? (
+          <p id="reference-error" className="text-destructive text-sm">
+            {errors.referenceUrl._errors[0]}
           </p>
         ) : null}
+        <p id="reference-hint" className="text-muted-foreground text-xs">
+          AI memakai website ini sebagai acuan tampilan dan susunan halaman. Gunakan
+          konten, foto, dan logo milik Anda sendiri.
+        </p>
       </div>
 
       <div className="space-y-2">

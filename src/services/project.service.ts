@@ -1,5 +1,4 @@
 import { DELETE_CONFIRM_PHRASE } from "@/config/project";
-import { getWebsiteType } from "@/config/website-types";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import type { CreateProjectInput } from "@/schemas/project.schema";
@@ -216,17 +215,6 @@ async function uniqueSlug(userId: string, base: string): Promise<string> {
   return `${root}-${Date.now()}`;
 }
 
-/** Nama turunan bila pengguna tidak mengisinya (docs/01 §1.7: prompt-first). */
-function deriveName(websiteType: WebsiteType): string {
-  const label = getWebsiteType(websiteType).label;
-  const date = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date());
-  return `Website ${label} — ${date}`;
-}
-
 export async function create({
   userId,
   input,
@@ -235,7 +223,7 @@ export async function create({
   input: CreateProjectInput;
 }): Promise<ProjectListItem> {
   const websiteType = input.websiteType as WebsiteType;
-  const name = input.name?.trim() ? input.name.trim() : deriveName(websiteType);
+  const name = input.name;
   const slug = await uniqueSlug(userId, name);
 
   // Batas jumlah website paket (docs/11 §11.3). Pemeriksaan & pembuatan dalam
@@ -250,6 +238,7 @@ export async function create({
         slug,
         websiteType,
         initialPrompt: input.prompt,
+        referenceUrl: input.referenceUrl ?? null,
         status: "DRAFT",
       },
       select: LIST_SELECT,
@@ -396,6 +385,7 @@ export async function duplicate({
       description: true,
       websiteType: true,
       initialPrompt: true,
+      referenceUrl: true,
     },
   });
   if (!source) throw new AppError("NOT_FOUND", "Project tidak ditemukan.");
@@ -416,6 +406,7 @@ export async function duplicate({
         description: source.description,
         websiteType: source.websiteType,
         initialPrompt: source.initialPrompt,
+        referenceUrl: source.referenceUrl,
         status: "DRAFT",
       },
       select: LIST_SELECT,

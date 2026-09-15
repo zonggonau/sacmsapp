@@ -67,6 +67,15 @@ export interface CreateJobInput {
  * langsung menampilkan seluruh daftar dengan status PENDING. Pengguna melihat
  * apa yang akan terjadi, bukan daftar yang tumbuh perlahan.
  */
+/**
+ * Website referensi dari formulir project baru ditambahkan sebagai baris
+ * terakhir pesan build awal — sama seperti pengguna v0.app menempelkan tautan
+ * di akhir prompt-nya (ADR-011, catatan tambahan 2026-09-16).
+ */
+export function withReferenceUrl(prompt: string, referenceUrl: string | null): string {
+  return referenceUrl ? `${prompt}\n\nWebsite referensi: ${referenceUrl}` : prompt;
+}
+
 export async function createJob(input: CreateJobInput): Promise<{ jobId: string }> {
   if (await systemService.isKillSwitchOn()) {
     throw new AppError(
@@ -252,6 +261,7 @@ export async function run(jobId: string): Promise<void> {
     include: {
       project: {
         select: {
+          referenceUrl: true,
           id: true,
           name: true,
           websiteType: true,
@@ -365,7 +375,11 @@ export async function run(jobId: string): Promise<void> {
         // ADR-011: prompt pengguna dikirim APA ADANYA, tanpa system prompt,
         // spesifikasi, atau template SaCMS — hasil harus sama dengan v0.app.
         // Satu-satunya perlakuan: karakter tak terlihat dibuang & panjang dibatasi.
-        const message = plan.sanitizedPrompt;
+        // Build awal menambah baris website referensi bila pengguna mengisinya.
+        const message = withReferenceUrl(
+          plan.sanitizedPrompt,
+          job.kind === "INITIAL_GENERATE" ? project.referenceUrl : null,
+        );
 
         // Disimpan untuk investigasi Super Admin (docs/10 §10.5).
         await db.buildJob.update({

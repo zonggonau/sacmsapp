@@ -68,3 +68,19 @@ dari v0.app.
   berbahasa Indonesia.
 - v0 menyediakan API untuk menyalin skills akun v0.app, sehingga pilihan "skills tim" bisa
   diterapkan tanpa nama manual.
+
+## Catatan Tambahan — 2026-09-16: Website Referensi
+
+Pemilik sistem menambahkan kolom **website referensi** (opsional) di formulir project baru. Bila
+diisi, pesan build awal adalah prompt pengguna apa adanya ditambah satu baris:
+
+```text
+Website referensi: https://www.websitecontoh.com/
+```
+
+Ini sama dengan pengguna v0.app yang menempelkan tautan di akhir prompt-nya; tidak ada `system`,
+spesifikasi, atau instruksi SaCMS lain yang ditambahkan. Pesan edit tidak membawa baris ini, dan
+`sentMessage` mencatat pesan lengkap yang benar-benar dikirim.
+
+Contoh prompt per jenis website di formulir (`promptTemplate`) juga **bukan** template tersembunyi:
+teks itu tampil di formulir, bisa diubah, dan yang dikirim tetap teks akhir pengguna.

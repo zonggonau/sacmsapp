@@ -56,18 +56,18 @@ job lama. Ini menjaga riwayat tetap jujur.
 Disimpan di `src/config/build-steps.ts`. Urutan dan label **tidak** boleh diubah tanpa
 memperbarui dokumen ini.
 
-| #   | `key`        | Label yang dilihat pengguna   | Yang sebenarnya terjadi                                            | ~Durasi    |
-| --- | ------------ | ----------------------------- | ------------------------------------------------------------------ | ---------- |
-| 1   | `UNDERSTAND` | Memahami kebutuhan Anda       | Normalisasi prompt, deteksi tipe website, ekstraksi fitur          | 2 dtk      |
-| 2   | `PLAN`       | Menyusun rencana halaman      | Bentuk spesifikasi internal (JSON): halaman, fitur, entitas konten | 3 dtk      |
-| 3   | `PROVISION`  | Menyiapkan ruang kerja        | Buat / gunakan ulang v0 Project, simpan `v0ProjectId`              | 3 dtk      |
-| 4   | `COMPOSE`    | Menyiapkan instruksi untuk AI | Rakit system prompt + prompt pengguna dalam pembatas               | 1 dtk      |
-| 5   | `GENERATE`   | Membuat halaman dan komponen  | Panggil v0 (chat baru / pesan lanjutan). **Langkah terlama.**      | 40–150 dtk |
-| 6   | `VALIDATE`   | Memeriksa hasil               | Pastikan ada versi, demo URL hidup, tidak kosong                   | 5 dtk      |
-| 7   | `PERSIST`    | Menyimpan versi               | Tulis `ProjectVersion`, `AiMessage`, perbarui `Project`            | 2 dtk      |
-| 8   | `PREVIEW`    | Menyiapkan pratinjau          | Pastikan demo URL dapat dibuka                                     | 5 dtk      |
-| 9   | `DEPLOY`     | Menerbitkan ke internet       | Buat deployment Vercel (**hanya** jika target production)          | 30–90 dtk  |
-| 10  | `FINALIZE`   | Merapikan                     | Perbarui status, catat pemakaian, kirim notifikasi                 | 2 dtk      |
+| #   | `key`        | Label yang dilihat pengguna   | Yang sebenarnya terjadi                                                               | ~Durasi    |
+| --- | ------------ | ----------------------------- | ------------------------------------------------------------------------------------- | ---------- |
+| 1   | `UNDERSTAND` | Memahami kebutuhan Anda       | Normalisasi prompt, deteksi tipe website, ekstraksi fitur                             | 2 dtk      |
+| 2   | `PLAN`       | Menyusun rencana halaman      | Bentuk spesifikasi internal (JSON): halaman, fitur, entitas konten                    | 3 dtk      |
+| 3   | `PROVISION`  | Menyiapkan ruang kerja        | Buat / gunakan ulang v0 Project, simpan `v0ProjectId`                                 | 3 dtk      |
+| 4   | `COMPOSE`    | Menyiapkan instruksi untuk AI | Prompt pengguna apa adanya (ADR-011); build awal + baris website referensi bila diisi | 1 dtk      |
+| 5   | `GENERATE`   | Membuat halaman dan komponen  | Panggil v0 (chat baru / pesan lanjutan). **Langkah terlama.**                         | 40–150 dtk |
+| 6   | `VALIDATE`   | Memeriksa hasil               | Pastikan ada versi, demo URL hidup, tidak kosong                                      | 5 dtk      |
+| 7   | `PERSIST`    | Menyimpan versi               | Tulis `ProjectVersion`, `AiMessage`, perbarui `Project`                               | 2 dtk      |
+| 8   | `PREVIEW`    | Menyiapkan pratinjau          | Pastikan demo URL dapat dibuka                                                        | 5 dtk      |
+| 9   | `DEPLOY`     | Menerbitkan ke internet       | Buat deployment Vercel (**hanya** jika target production)                             | 30–90 dtk  |
+| 10  | `FINALIZE`   | Merapikan                     | Perbarui status, catat pemakaian, kirim notifikasi                                    | 2 dtk      |
 
 Untuk `EDIT_GENERATE`, langkah 3 dilewati (`SKIPPED`) karena project v0 sudah ada.
 Untuk `DEPLOY` murni, hanya langkah 9 dan 10 yang berjalan.

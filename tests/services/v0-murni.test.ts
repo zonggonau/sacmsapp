@@ -49,4 +49,36 @@ describe("mengikuti perilaku bawaan v0", () => {
     expect(jobEdit.systemPrompt).toBeNull();
     expect(jobEdit.model).toBe(V0_APP_MODEL);
   });
+
+  it("build awal menyertakan website referensi, pesan edit tidak", async () => {
+    const u = await f.user("referensi", { planSlug: "free" });
+    const p = await f.project(u.id, "referensi", {
+      referenceUrl: "https://www.websitecontoh.com/",
+    });
+    const prompt = "Buat website kafe dengan menu dan lokasi";
+
+    const awal = await build.createJob({
+      projectId: p.id,
+      userId: u.id,
+      kind: "INITIAL_GENERATE",
+      prompt,
+    });
+    await build.run(awal.jobId);
+    const jobAwal = await db.buildJob.findUniqueOrThrow({ where: { id: awal.jobId } });
+    expect(jobAwal.sentMessage).toBe(
+      `${prompt}\n\nWebsite referensi: https://www.websitecontoh.com/`,
+    );
+
+    await db.user.update({ where: { id: u.id }, data: { creditsUsed: 0 } });
+    const promptEdit = "Ganti warna utama menjadi hijau";
+    const edit = await build.createJob({
+      projectId: p.id,
+      userId: u.id,
+      kind: "EDIT_GENERATE",
+      prompt: promptEdit,
+    });
+    await build.run(edit.jobId);
+    const jobEdit = await db.buildJob.findUniqueOrThrow({ where: { id: edit.jobId } });
+    expect(jobEdit.sentMessage).toBe(promptEdit);
+  });
 });
