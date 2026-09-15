@@ -77,7 +77,7 @@
 ◐ FASE 4 — Deploy & Domain        [ UJI NYATA LULUS — 1 butir tersisa: domain ACTIVE (butuh domain uji) ]
 ✓ FASE 5 — Super Admin            [ SELESAI — 60 asertasi HTTP + 13 service ]
 ✓ FASE 6 — Quota & Billing        [ SELESAI — 38 asertasi service + uji HTTP ]
-▶ FASE 7 — Hardening & Go-Live    [ BERIKUTNYA — wajib tuntaskan pengecualian Fase 4 ]
+▶ FASE 7 — Hardening & Go-Live    [ BERJALAN — marketing, E2E+CI hijau, unit 81%, CSP nonce ]
 ```
 
 > Update blok ini setiap kali sebuah fase selesai. Fase berikutnya **tidak dibuka**

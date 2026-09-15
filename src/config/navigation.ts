@@ -8,6 +8,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Siren,
   User,
   Users,
 } from "lucide-react";
@@ -45,4 +46,5 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "AI & Model", href: "/admin/ai", icon: Bot },
   { label: "Sistem", href: "/admin/sistem", icon: Settings },
   { label: "Audit Log", href: "/admin/audit", icon: ScrollText },
+  { label: "Runbook Insiden", href: "/admin/insiden", icon: Siren },
 ];

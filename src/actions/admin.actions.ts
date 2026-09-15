@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger";
 import { authActionClient } from "@/lib/safe-action";
 import {
   adminJobIdSchema,
+  adminRollbackSchema,
   changePlanSchema,
   changeRoleSchema,
   defaultModelSchema,
@@ -23,9 +24,11 @@ import {
   userIdSchema,
 } from "@/schemas/admin.schema";
 import * as adminBuild from "@/services/admin-build.service";
+import * as adminProject from "@/services/admin-project.service";
 import * as adminUser from "@/services/admin-user.service";
 import * as auditService from "@/services/audit.service";
 import * as buildService from "@/services/build.service";
+import * as deployService from "@/services/deploy.service";
 import * as planService from "@/services/plan.service";
 import * as systemService from "@/services/system.service";
 
@@ -103,6 +106,15 @@ export const adminUpdateUserRole = authActionClient
   .inputSchema(changeRoleSchema)
   .action(async ({ parsedInput, ctx }) => {
     const audit = await adminUser.changeRole({ ...parsedInput, actorId: ctx.user.id });
+    revalidateAdmin();
+    return { ok: true, self: parsedInput.userId === ctx.user.id, audit };
+  });
+
+export const adminRevokeSessions = authActionClient
+  .metadata({ actionName: "admin.user.sessions_revoke", ...SUPER_ADMIN })
+  .inputSchema(userIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const audit = await adminUser.revokeSessions(parsedInput);
     revalidateAdmin();
     return { ok: true, self: parsedInput.userId === ctx.user.id, audit };
   });
@@ -207,6 +219,23 @@ export const adminRetryBuild = authActionClient
     revalidateAdmin();
     revalidatePath(`/projects/${projectId}/builder`);
     return { ok: true, jobId: newJobId, audit };
+  });
+
+/* ============================================================
+ *  PENERBITAN — runbook "hasil AI merusak situs" (docs/12 §12.7)
+ * ============================================================ */
+
+export const adminRollbackDeployment = authActionClient
+  .metadata({ actionName: "admin.deploy.rollback", ...SUPER_ADMIN })
+  .inputSchema(adminRollbackSchema)
+  .action(async ({ parsedInput }) => {
+    const { deploymentId, ...audit } = await adminProject.rollbackAsAdmin(parsedInput);
+
+    after(() => deployService.start(deploymentId));
+
+    revalidateAdmin();
+    revalidatePath(`/projects/${parsedInput.projectId}`, "layout");
+    return { ok: true, deploymentId, audit };
   });
 
 /* ============================================================

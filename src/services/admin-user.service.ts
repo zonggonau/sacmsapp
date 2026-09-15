@@ -371,6 +371,21 @@ export async function reactivate(input: { userId: string }): Promise<AuditTrail>
   return userTrail(target.id, { status: "SUSPENDED" }, { status: "ACTIVE" });
 }
 
+/**
+ * Runbook insiden "akun disusupi" — docs/12 §12.7.
+ *
+ * Mencabut semua sesi TANPA menangguhkan: pemilik akun yang sah bisa langsung
+ * masuk lagi setelah mengganti sandi, sementara penyusup kehilangan sesinya.
+ */
+export async function revokeSessions(input: { userId: string }): Promise<AuditTrail> {
+  const target = await loadTarget(input.userId);
+  const { count } = await db.session.deleteMany({ where: { userId: target.id } });
+
+  logger.warn("admin.user.sessions_revoked", { userId: target.id, count });
+
+  return userTrail(target.id, { activeSessions: count }, { activeSessions: 0 });
+}
+
 export async function changeRole(input: {
   actorId: string;
   userId: string;

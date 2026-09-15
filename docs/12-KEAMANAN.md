@@ -168,6 +168,17 @@ setiap pemanggil mengingatnya.
 Setiap kendali di atas **harus bisa dijalankan dari `/admin`** tanpa akses terminal.
 Panel yang tidak bisa dipakai saat krisis adalah panel yang gagal.
 
+Runbook lengkap per skenario ada di **`/admin/insiden`** (Fase 7), dengan kill switch dan
+maintenance mode langsung di halaman itu:
+
+| Skenario                        | Kendali di `/admin`                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------ |
+| Kunci v0 bocor                  | Kill switch; status integrasi di `/admin/sistem` (rotasi kunci di dasbor vendor)     |
+| Kredit terkuras tak wajar       | Kill switch; batalkan build di `/admin/build`; Tangguhkan Akun                       |
+| Akun Super Admin disusupi       | **Cabut Semua Sesi** (tanpa menangguhkan) di detail pengguna; audit per pelaku       |
+| Kebocoran data                  | Maintenance mode; ekspor CSV audit; saring audit                                     |
+| Hasil AI merusak situs pengguna | **Kembalikan ke versi ini** di detail project admin (terbit ulang atas nama pemilik) |
+
 ## 12.8 Checklist Sebelum Go-Live
 
 - [ ] Semua rahasia di Vercel, tidak ada satu pun di repositori

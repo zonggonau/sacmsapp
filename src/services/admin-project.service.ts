@@ -1,11 +1,47 @@
 import { db } from "@/lib/db";
+import { AppError } from "@/lib/errors";
+import type { AuditTrail } from "@/services/audit.service";
+import * as deployService from "@/services/deploy.service";
 import type { ProjectStatus } from "@/types/db";
 
 /**
  * Semua project lintas pengguna — docs/10 §10.5.
  *
- * Baca saja. Detail menampilkan pengenal vendor yang tidak dilihat pengguna.
+ * Detail menampilkan pengenal vendor yang tidak dilihat pengguna. Satu-satunya
+ * tindakan tulis adalah rollback darurat (runbook docs/12 §12.7).
  */
+
+/**
+ * Runbook "hasil AI merusak situs pengguna" — docs/12 §12.7.
+ *
+ * Menerbitkan ulang versi yang pernah berhasil ATAS NAMA pemilik project, lewat
+ * jalur deploy yang sama (ADR-008). Semua penjagaan request() tetap berlaku.
+ */
+export async function rollbackAsAdmin(input: {
+  projectId: string;
+  deploymentId: string;
+}): Promise<AuditTrail & { deploymentId: string }> {
+  const project = await db.project.findFirst({
+    where: { id: input.projectId, deletedAt: null },
+    select: { id: true, userId: true },
+  });
+  if (!project) {
+    throw new AppError("NOT_FOUND", "Project tidak ditemukan atau sudah dihapus.");
+  }
+
+  const { deploymentId } = await deployService.rollback({
+    projectId: project.id,
+    userId: project.userId,
+    deploymentId: input.deploymentId,
+  });
+
+  return {
+    deploymentId,
+    targetType: "Project",
+    targetId: project.id,
+    after: { rollbackTo: input.deploymentId, newDeploymentId: deploymentId },
+  };
+}
 
 const PAGE_SIZE = 30;
 

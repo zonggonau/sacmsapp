@@ -11,6 +11,7 @@ import {
   adminImpersonateUser,
   adminReactivateUser,
   adminResetUserUsage,
+  adminRevokeSessions,
   adminSetUserQuota,
   adminSuspendUser,
   adminUpdateUserPlan,
@@ -78,6 +79,7 @@ export function UserAdminActions({
         <SuspendDialog user={user} disabled={isSelf} />
       )}
       <ChangeRoleDialog user={user} isSelf={isSelf} />
+      <RevokeSessionsDialog user={user} isSelf={isSelf} />
       <ImpersonateDialog
         user={user}
         disabled={isSelf || user.role !== "USER" || suspended}
@@ -418,6 +420,43 @@ function ChangeRoleDialog({ user, isSelf }: { user: TargetUser; isSelf: boolean 
         <Submit
           pending={isPending}
           label="Simpan Peran"
+          onCancel={() => setOpen(false)}
+        />
+      </form>
+    </ActionDialog>
+  );
+}
+
+function RevokeSessionsDialog({ user, isSelf }: { user: TargetUser; isSelf: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const { execute, isPending } = useAction(adminRevokeSessions, {
+    onSuccess: () => {
+      setOpen(false);
+      toast.success("Semua sesi dicabut. Pengguna harus masuk lagi.");
+      if (isSelf) router.push("/masuk");
+    },
+    onError: showError,
+  });
+
+  return (
+    <ActionDialog
+      trigger="Cabut Semua Sesi"
+      title={`Cabut semua sesi ${user.name}?`}
+      description={
+        isSelf
+          ? "Semua sesi Anda sendiri, termasuk yang sedang dipakai, akan berakhir dan Anda harus masuk lagi. Pakai ini bila akun Anda dicurigai disusupi."
+          : "Semua perangkat yang sedang masuk dikeluarkan saat ini juga. Akun TIDAK ditangguhkan: pemilik sah bisa masuk lagi setelah mengganti sandi."
+      }
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <form action={formAction(execute)}>
+        <input type="hidden" name="userId" value={user.id} />
+        <Submit
+          pending={isPending}
+          label="Cabut Semua Sesi"
+          destructive
           onCancel={() => setOpen(false)}
         />
       </form>

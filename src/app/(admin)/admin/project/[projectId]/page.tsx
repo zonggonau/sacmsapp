@@ -12,6 +12,7 @@ import {
   Td,
   Th,
 } from "@/components/features/admin/admin-ui";
+import { AdminRollbackButton } from "@/components/features/admin/admin-rollback-button";
 import { CopyButton } from "@/components/features/admin/copy-button";
 import { ProjectStatusBadge } from "@/components/features/project/project-status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,9 @@ export default async function AdminProjectDetailPage({
   const { projectId } = await params;
   const p = await adminProject.getDetail(projectId);
   if (!p) notFound();
+
+  // Deployment terbaru yang berhasil = yang sedang tayang (daftar urut terbaru).
+  const liveDeploymentId = p.deployments.find((d) => d.status === "READY")?.id;
 
   return (
     <div className="space-y-6">
@@ -214,11 +218,25 @@ export default async function AdminProjectDetailPage({
             {p.deployments.map((d) => (
               <li key={d.id} className="space-y-1 px-4 py-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs">{d.status}</span>
+                  <span className="font-mono text-xs">
+                    {d.status}
+                    {d.id === liveDeploymentId ? (
+                      <Badge variant="success" className="ml-2">
+                        tayang
+                      </Badge>
+                    ) : null}
+                  </span>
                   <span className="text-muted-foreground text-xs">
                     {tanggalWaktu(d.createdAt)}
                   </span>
                 </div>
+                {d.status === "READY" && d.id !== liveDeploymentId && !p.deletedAt ? (
+                  <AdminRollbackButton
+                    projectId={p.id}
+                    deploymentId={d.id}
+                    createdAtLabel={tanggalWaktu(d.createdAt)}
+                  />
+                ) : null}
                 {d.vercelDeploymentId ? (
                   <p className="text-muted-foreground font-mono text-xs break-all">
                     {d.vercelDeploymentId}

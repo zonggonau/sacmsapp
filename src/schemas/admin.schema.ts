@@ -65,6 +65,11 @@ export const deleteUserSchema = z.object({
 
 export const adminJobIdSchema = z.object({ jobId: id("ID build") });
 
+export const adminRollbackSchema = z.object({
+  projectId: id("ID project"),
+  deploymentId: id("ID deployment"),
+});
+
 export const planSchema = z.object({
   id: z.string().min(1).optional(),
   slug: z

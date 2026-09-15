@@ -267,12 +267,12 @@ Pekerjaan:
 
 **Definition of Done:**
 
-- [ ] 5 alur E2E hijau di CI
+- [x] 5 alur E2E hijau di CI — _commit `770f862`: keempat job CI (quality, unit, e2e, security) hijau_
 - [ ] Lighthouse ≥ 90 di landing dan dashboard
 - [ ] Checklist keamanan lulus seluruhnya
 - [ ] Pemulihan database terbukti berhasil
 - [ ] 5 penguji beta berhasil membuat website live **tanpa bantuan**
-- [ ] Runbook insiden tertulis dan dapat dijalankan dari `/admin`
+- [x] Runbook insiden tertulis dan dapat dijalankan dari `/admin` — _`/admin/insiden`: lima skenario [12 §12.7](./12-KEAMANAN.md) dengan kendali langsung; tambahan Cabut Semua Sesi & rollback admin, diuji `tests/services/runbook.test.ts`_
 
 ## 13.3 Lima Alur E2E Wajib
 

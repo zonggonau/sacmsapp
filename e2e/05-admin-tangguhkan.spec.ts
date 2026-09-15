@@ -62,4 +62,9 @@ test("super admin menangguhkan pengguna yang lalu tidak bisa masuk", async ({
 
   await page.goto(`/admin/audit?targetId=${target.id}`);
   await expect(page.getByText("admin.user.suspend")).toBeVisible();
+
+  // Runbook insiden dapat dibuka dari panel (docs/12 §12.7, DoD Fase 7).
+  await page.goto("/admin/insiden");
+  await expect(page.getByRole("heading", { name: "Runbook Insiden" })).toBeVisible();
+  await expect(page.getByText("5. Hasil AI merusak situs pengguna")).toBeVisible();
 });
