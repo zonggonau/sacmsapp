@@ -77,5 +77,80 @@ jobs:
 
       - name: Audit
         run: pnpm audit --audit-level=high
-# Uji unit (vitest) dan E2E (Playwright) ditambahkan di Fase 3 dan Fase 7.
-# Lihat docs/14-DEPLOYMENT-GO-LIVE.md §14.4.
+
+  e2e:
+    name: E2E · 5 alur kritis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # docs/13 §13.3 — seluruhnya dengan mesin tiruan: cepat, deterministik,
+    # tidak membakar kredit v0 dan tidak menerbitkan apa pun ke Vercel.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sacms
+          POSTGRES_PASSWORD: sacms
+          POSTGRES_DB: sacms_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sacms" --health-interval 5s --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+      # Emulator REST Upstash — ratelimit menolak start production tanpa Upstash.
+      srh:
+        image: hiett/serverless-redis-http:latest
+        env:
+          SRH_MODE: env
+          SRH_TOKEN: token-uji-e2e
+          SRH_CONNECTION_STRING: redis://redis:6379
+        ports: ["8079:80"]
+    env:
+      # Nilai-nilai ini HANYA untuk database & emulator sekali pakai di runner.
+      NODE_ENV: production
+      DATABASE_URL: postgresql://sacms:sacms@localhost:5432/sacms_e2e
+      BETTER_AUTH_SECRET: rahasia-uji-e2e-bukan-production-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      V0_MOCK: "true"
+      VERCEL_MOCK: "true"
+      UPSTASH_REDIS_REST_URL: http://localhost:8079
+      UPSTASH_REDIS_REST_TOKEN: token-uji-e2e
+      MAIL_OUTBOX_DIR: ${{ github.workspace }}/e2e/.outbox
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrasi & seed
+        run: pnpm db:deploy && pnpm db:seed
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pasang Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Jalankan E2E
+        run: pnpm test:e2e
+
+      - name: Unggah laporan saat gagal
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+# Uji unit (vitest) ditambahkan di Fase 7. Lihat docs/14-DEPLOYMENT-GO-LIVE.md §14.4.

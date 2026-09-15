@@ -34,7 +34,10 @@ export const getSession = cache(async () => {
 export async function requireUser() {
   const session = await getSession();
 
-  if (!session) redirect("/masuk");
+  // Bukan langsung ke /masuk: cookie sesi yang sudah dicabut masih ada, dan
+  // proxy akan memantulkannya kembali ke sini tanpa akhir. Rute ini
+  // membersihkan cookie itu dulu.
+  if (!session) redirect("/api/sesi-berakhir");
   if (session.user.status === "SUSPENDED") redirect("/akun-ditangguhkan");
 
   return session.user;

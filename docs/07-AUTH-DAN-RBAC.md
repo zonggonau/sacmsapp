@@ -194,12 +194,18 @@ import { auth } from "@/lib/auth";
 
 // cache() -> satu permintaan HTTP = satu query sesi, meski dipanggil di banyak layout
 export const getSession = cache(async () => {
-  return auth.api.getSession({ headers: await headers() });
+  return auth.api.getSession({
+    headers: await headers(),
+    query: { disableCookieCache: true }, // lihat §7.6 — status harus segar
+  });
 });
 
 export async function requireUser() {
   const session = await getSession();
-  if (!session) redirect("/masuk");
+  // Bukan langsung /masuk: cookie sesi yang sudah dicabut masih ada, dan lapis 1
+  // memantulkan /masuk kembali ke halaman ini tanpa akhir (ditemukan uji E2E
+  // Fase 7). /api/sesi-berakhir menghapus cookie itu lalu mengalihkan ke /masuk.
+  if (!session) redirect("/api/sesi-berakhir");
   if (session.user.status === "SUSPENDED") redirect("/akun-ditangguhkan");
   return session.user;
 }

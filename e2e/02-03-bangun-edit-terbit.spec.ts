@@ -1,0 +1,63 @@
+import { createUser, dbTask, expect, signInViaForm, test } from "./support/fixtures";
+
+/**
+ * docs/13 §13.3
+ *   alur 2: Buat project → generate → pratinjau tampil
+ *   alur 3: Edit lewat prompt → versi baru → terbitkan → URL publik hidup
+ *
+ * Dengan mesin tiruan, alamat publik berakhiran `.invalid` dan tidak bisa
+ * dibuka; yang diuji adalah alurnya sampai deployment READY dan project LIVE.
+ * Uji nyata terhadap v0/Vercel dijalankan manual sebelum rilis (docs/13 §13.3).
+ */
+test("buat project, pratinjau tampil, edit lewat chat, lalu terbitkan", async ({
+  page,
+}) => {
+  const user = await createUser({ label: "bangun" });
+  await signInViaForm(page, user.email);
+  await expect(page).toHaveURL(/\/dashboard/);
+
+  // ---- alur 2 ----
+  await page.goto("/projects/baru");
+  await page
+    .getByLabel("Ceritakan website yang Anda inginkan")
+    .fill("Website sekolah dasar negeri dengan profil, berita, dan kontak. Uji E2E.");
+  await page.getByLabel(/Nama project/).fill("Sekolah E2E");
+  await page.getByRole("button", { name: "Buat Project" }).click();
+
+  await expect(page).toHaveURL(/\/projects\/[^/]+\/builder/);
+  const projectId = page.url().split("/projects/")[1]!.split("/")[0]!;
+
+  await expect(page.getByTitle("Pratinjau Sekolah E2E")).toBeVisible({
+    timeout: 90_000,
+  });
+
+  // ---- alur 3: edit ----
+  const chat = page.getByLabel("Permintaan perubahan");
+  await chat.fill("Tambahkan halaman galeri kegiatan siswa dengan foto terbaru.");
+  await page.getByRole("button", { name: "Kirim permintaan" }).click();
+
+  await expect
+    .poll(() => dbTask<number>("countVersions", { projectId }), {
+      timeout: 90_000,
+      intervals: [3_000],
+    })
+    .toBe(2);
+
+  // ---- alur 3: terbitkan ----
+  await page.goto(`/projects/${projectId}/deployment`);
+  await page.getByRole("button", { name: "Terbitkan" }).click();
+
+  await expect(page.getByText("Sedang tayang", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(page.getByText(/Alamat ini bisa dibuka siapa saja/)).toBeVisible();
+
+  const project = await dbTask<{ status: string; productionUrl: string | null }>(
+    "getProject",
+    {
+      id: projectId,
+    },
+  );
+  expect(project.status).toBe("LIVE");
+  expect(project.productionUrl).toMatch(/^https:\/\//);
+});

@@ -32,7 +32,37 @@ interface SendArgs {
   devHint?: string;
 }
 
+/**
+ * Kotak keluar berkas untuk uji E2E (docs/13 §13.3 alur 1).
+ *
+ * Aktif HANYA bila `MAIL_OUTBOX_DIR` diisi eksplisit — dan saat aktif, email
+ * TIDAK dikirim lewat Resend sama sekali, supaya uji tidak membanjiri kotak
+ * masuk sungguhan. Playwright membaca tautan verifikasi dari sini. Variabel ini
+ * tidak boleh diisi di Vercel.
+ */
+const outboxDir = process.env.MAIL_OUTBOX_DIR;
+
+async function writeOutbox(
+  dir: string,
+  entry: { to: string; subject: string; devHint?: string | undefined },
+) {
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  await mkdir(dir, { recursive: true });
+  const safeName = entry.to.replace(/[^a-z0-9@._-]/gi, "_");
+  await writeFile(
+    join(dir, `${Date.now()}-${safeName}.json`),
+    JSON.stringify({ ...entry, createdAt: new Date().toISOString() }),
+  );
+}
+
 async function send({ to, subject, html, devHint }: SendArgs) {
+  if (outboxDir) {
+    await writeOutbox(outboxDir, { to, subject, devHint });
+    logger.info("mail.outbox", { subject });
+    return;
+  }
+
   if (!resend) {
     logger.warn("mail.mock", {
       hint: "RESEND_API_KEY kosong — email tidak dikirim.",

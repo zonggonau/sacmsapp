@@ -254,7 +254,7 @@ saat biaya harian melewati ambang.
 Pekerjaan:
 
 1. Landing page `(marketing)` + halaman harga + Syarat & Privasi
-2. Uji E2E Playwright — 5 alur kritis (§13.3)
+2. Uji E2E Playwright — 5 alur kritis (§13.3) — _`pnpm test:e2e`, folder `e2e/`, job `e2e` di CI (Postgres + emulator Upstash SRH, `next start`). Hijau lokal 4/4 berkas uji (alur 2 & 3 satu berkas). Menemukan & memperbaiki bug: sesi yang dicabut memicu putaran pengalihan tanpa akhir → `/api/sesi-berakhir` membersihkan cookie_
 3. Uji unit service layer ≥ 70%
 4. Audit aksesibilitas (kontras, keyboard, screen reader, `prefers-reduced-motion`)
 5. Kinerja: Lighthouse ≥ 90, LCP < 2,5 dtk, CLS < 0,1

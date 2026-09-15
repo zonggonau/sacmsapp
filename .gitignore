@@ -19,6 +19,7 @@ next-env.d.ts
 /coverage
 /test-results
 /playwright-report
+/e2e/.outbox
 /scratch
 verify-*.ts
 
