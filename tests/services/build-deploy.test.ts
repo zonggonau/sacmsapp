@@ -44,7 +44,7 @@ describe("siklus build", () => {
     const status = await build.getStatus({ jobId, userId: u.id });
     expect(status?.status).toBe("SUCCEEDED");
     expect(status?.progress).toBe(100);
-    expect(status?.steps.length).toBeGreaterThan(0);
+    expect(status?.steps).toHaveLength(10); // docs/09: 10 langkah build
     expect((await build.getLatestJob(p.id, u.id))?.jobId).toBe(jobId);
 
     const saved = await db.project.findUniqueOrThrow({ where: { id: p.id } });

@@ -82,6 +82,12 @@ export interface DeployPageData {
   nextVersionNumber: number | null;
   /** Alasan tombol Terbitkan tidak bisa dipakai; null bila bisa. */
   blocker: string | null;
+  /**
+   * Versi aktif sudah sama dengan yang sedang tayang. Tombol Terbitkan tidak
+   * berguna, tetapi rollback ke versi lain tetap boleh — karena itu terpisah
+   * dari `blocker`.
+   */
+  alreadyLive: string | null;
 }
 
 /* ============================================================
@@ -589,6 +595,7 @@ export async function getPageData(
       id: true,
       status: true,
       v0ChatId: true,
+      currentVersionId: true,
       currentVersion: { select: { number: true } },
       versions: { orderBy: { number: "desc" }, take: 1, select: { number: true } },
     },
@@ -643,7 +650,13 @@ export async function getPageData(
             ? "Penerbitan sedang berjalan."
             : null;
 
+  const alreadyLive =
+    live?.versionId && live.versionId === project.currentVersionId
+      ? `Versi ${nextVersionNumber} sudah tayang. Buat perubahan di Builder untuk menerbitkan versi baru.`
+      : null;
+
   return {
+    alreadyLive,
     deployments,
     active: activeRow
       ? {
@@ -724,4 +737,48 @@ export async function syncFromWebhook(input: {
 
   await refresh(deployment.id);
   return true;
+}
+
+/* ============================================================
+ *  MENURUNKAN WEBSITE — hapus project / hapus pengguna
+ * ============================================================ */
+
+/**
+ * Menurunkan website yang tayang: melepas custom domain lalu menghapus project
+ * Vercel-nya. Dipanggil SEBELUM project/pengguna ditandai terhapus, karena
+ * dialog hapus menjanjikan "website tidak akan bisa diakses lagi".
+ *
+ * Bila vendor gagal, penghapusan dibatalkan dengan pesan jelas — lebih baik
+ * project tetap ada daripada website yatim yang terus tayang tanpa pemilik.
+ */
+export async function takeDown(projectId: string): Promise<{ tookDown: boolean }> {
+  const project = await db.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, vercelProjectId: true, domains: { select: { name: true } } },
+  });
+  if (!project?.vercelProjectId) return { tookDown: false };
+
+  try {
+    for (const domain of project.domains) {
+      await vercelClient.removeDomain(project.vercelProjectId, domain.name);
+    }
+    await vercelClient.deleteProject(project.vercelProjectId);
+  } catch (error) {
+    logger.error("deploy.takedown_failed", { projectId, reason: describe(error) });
+    throw new AppError(
+      "DEPLOY_FAILED",
+      "Website yang sedang tayang gagal diturunkan, jadi project belum dihapus. Coba lagi dalam beberapa menit.",
+    );
+  }
+
+  await db.$transaction([
+    db.domain.deleteMany({ where: { projectId: project.id } }),
+    db.project.update({
+      where: { id: project.id },
+      data: { productionUrl: null, vercelProjectId: null },
+    }),
+  ]);
+
+  logger.info("deploy.taken_down", { projectId, domains: project.domains.length });
+  return { tookDown: true };
 }

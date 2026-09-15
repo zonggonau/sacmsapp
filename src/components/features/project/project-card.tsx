@@ -10,7 +10,11 @@ import type { ProjectListItem } from "@/services/project.service";
 export function ProjectCard({ project }: { project: ProjectListItem }) {
   const type = getWebsiteType(project.websiteType);
   const Icon = type.icon;
-  const liveUrl = project.productionUrl ?? project.previewUrl;
+  // Hanya alamat yang benar-benar terbit. URL pratinjau bukan alamat publik:
+  // di v0 ia berumur pendek, dan di mode tiruan berupa data URL puluhan ribu
+  // karakter yang dulu membuat kartu melebar belasan ribu piksel.
+  const liveUrl = project.productionUrl;
+  const hasPreview = Boolean(project.previewUrl);
 
   return (
     <Card className="group hover:border-border-strong flex flex-col transition-colors">
@@ -48,7 +52,9 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
             <ExternalLink className="size-3 shrink-0" />
           </a>
         ) : (
-          <p className="text-muted-foreground text-xs">Belum diterbitkan</p>
+          <p className="text-muted-foreground text-xs">
+            {hasPreview ? "Pratinjau siap · belum diterbitkan" : "Belum diterbitkan"}
+          </p>
         )}
       </CardContent>
 

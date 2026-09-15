@@ -58,6 +58,9 @@ export const auth = betterAuth({
     minPasswordLength: 10,
     maxPasswordLength: 128,
     requireEmailVerification: true,
+    // Setelah sandi diatur ulang lewat email, semua sesi lama dicabut: siapa pun
+    // yang memegang sesi curian ikut keluar (docs/07 §7.6, DoD Fase 1).
+    revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
       await sendResetPasswordEmail({ to: user.email, name: user.name, url });
     },

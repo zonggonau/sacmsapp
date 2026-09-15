@@ -1,6 +1,9 @@
+/** Skeleton meniru bentuk akhir (docs/05 §5.5). Bukan loading.tsx: batas Suspense
+ * tingkat rute membuat respons mulai dialirkan sebelum pemeriksaan kepemilikan,
+ * sehingga project milik orang lain membalas 200, bukan 404. */
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function DeploymentLoading() {
+export function DeploymentSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Memuat deployment">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { getImpersonator, isAdminRole, requireUser } from "@/lib/auth-guard";
+import * as notificationService from "@/services/notification.service";
 import * as quotaService from "@/services/quota.service";
 import * as systemService from "@/services/system.service";
 
@@ -14,10 +15,11 @@ import * as systemService from "@/services/system.service";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
 
-  const [impersonator, maintenance, credits] = await Promise.all([
+  const [impersonator, maintenance, credits, unreadNotifications] = await Promise.all([
     getImpersonator(),
     systemService.isMaintenanceMode(),
     quotaService.getCreditSummary(user.id),
+    notificationService.countUnread(user.id),
   ]);
 
   // Maintenance: pengguna biasa dialihkan; admin tetap bisa bekerja, termasuk
@@ -40,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           : null
       }
       credits={credits}
+      unreadNotifications={unreadNotifications}
     >
       {children}
     </AppShell>

@@ -527,7 +527,7 @@ function DeleteDialog({ user, disabled }: { user: TargetUser; disabled: boolean 
     <ActionDialog
       trigger="Hapus Permanen"
       title="Hapus pengguna ini secara permanen?"
-      description="Akun, sesi, dan seluruh project-nya dihapus dan tidak bisa dipulihkan. Audit log dan catatan pemakaian tetap tinggal. Website yang sudah tayang di Vercel TIDAK otomatis diturunkan."
+      description="Akun, sesi, dan seluruh project-nya dihapus dan tidak bisa dipulihkan. Audit log dan catatan pemakaian tetap tinggal. Website yang sudah tayang ikut diturunkan dan custom domain-nya dilepas."
       open={open}
       onOpenChange={(o) => {
         setOpen(o);

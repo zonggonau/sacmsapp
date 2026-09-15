@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,10 +13,14 @@ import { requireUser } from "@/lib/auth-guard";
 import { loadProject } from "@/lib/project-loader";
 import * as domainService from "@/services/domain.service";
 
+import { DomainSkeleton } from "./skeleton";
+
 export const metadata: Metadata = {
   title: "Custom Domain",
   robots: { index: false, follow: false },
 };
+
+type Project = NonNullable<Awaited<ReturnType<typeof loadProject>>>;
 
 export default async function ProjectDomainPage({
   params,
@@ -25,11 +30,19 @@ export default async function ProjectDomainPage({
   const { projectId } = await params;
   const user = await requireUser();
 
-  const [project, domains] = await Promise.all([
-    loadProject(projectId, user.id),
-    domainService.list(projectId, user.id),
-  ]);
+  // Kepemilikan diperiksa SEBELUM batas Suspense → status 404 sungguhan.
+  const project = await loadProject(projectId, user.id);
   if (!project) notFound();
+
+  return (
+    <Suspense fallback={<DomainSkeleton />}>
+      <DomainData project={project} userId={user.id} />
+    </Suspense>
+  );
+}
+
+async function DomainData({ project, userId }: { project: Project; userId: string }) {
+  const domains = await domainService.list(project.id, userId);
 
   const pending = domains.some((d) => d.status !== "ACTIVE");
 

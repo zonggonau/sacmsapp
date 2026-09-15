@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import type { CreateProjectInput } from "@/schemas/project.schema";
 import type { ProjectStatus, WebsiteType } from "@/types/db";
 import * as buildService from "@/services/build.service";
+import * as deployService from "@/services/deploy.service";
 import * as quotaService from "@/services/quota.service";
 
 /**
@@ -361,6 +362,10 @@ export async function softDelete({
       "Nama yang Anda ketik tidak sama dengan nama project.",
     );
   }
+
+  // Janji dialog: website yang sudah terbit tidak bisa diakses lagi. Diturunkan
+  // dulu; bila vendor gagal, project tidak ditandai terhapus.
+  await deployService.takeDown(project.id);
 
   await db.project.update({
     where: { id: projectId },

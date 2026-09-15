@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExternalLink, Globe } from "lucide-react";
@@ -17,10 +18,14 @@ import { sejak, urlRingkas } from "@/lib/format";
 import { loadProject } from "@/lib/project-loader";
 import * as deployService from "@/services/deploy.service";
 
+import { DeploymentSkeleton } from "./skeleton";
+
 export const metadata: Metadata = {
   title: "Deployment",
   robots: { index: false, follow: false },
 };
+
+type Project = NonNullable<Awaited<ReturnType<typeof loadProject>>>;
 
 export default async function ProjectDeploymentPage({
   params,
@@ -30,11 +35,26 @@ export default async function ProjectDeploymentPage({
   const { projectId } = await params;
   const user = await requireUser();
 
-  const [project, data] = await Promise.all([
-    loadProject(projectId, user.id),
-    deployService.getPageData(projectId, user.id),
-  ]);
-  if (!project || !data) notFound();
+  // Kepemilikan diperiksa SEBELUM batas Suspense → status 404 sungguhan.
+  const project = await loadProject(projectId, user.id);
+  if (!project) notFound();
+
+  return (
+    <Suspense fallback={<DeploymentSkeleton />}>
+      <DeploymentData project={project} userId={user.id} />
+    </Suspense>
+  );
+}
+
+async function DeploymentData({
+  project,
+  userId,
+}: {
+  project: Project;
+  userId: string;
+}) {
+  const data = await deployService.getPageData(project.id, userId);
+  if (!data) notFound();
 
   return (
     <div className="space-y-6">
@@ -49,7 +69,7 @@ export default async function ProjectDeploymentPage({
         <DeployButton
           projectId={project.id}
           versionNumber={data.nextVersionNumber}
-          blocker={data.blocker}
+          blocker={data.blocker ?? data.alreadyLive}
         />
       </div>
 

@@ -88,6 +88,11 @@ export interface VercelClient {
   removeDomain(projectId: string, domain: string): Promise<void>;
   /** Sertifikat HTTPS sudah terbit dan domain menjawab. */
   checkHttps(domain: string): Promise<boolean>;
+  /**
+   * Menghapus project Vercel beserta seluruh deployment-nya — website berhenti
+   * tayang. Tidak melempar bila project memang sudah tidak ada.
+   */
+  deleteProject(projectId: string): Promise<void>;
 }
 
 /* ============================================================
@@ -273,6 +278,15 @@ const realClient: VercelClient = {
     };
   },
 
+  async deleteProject(projectId) {
+    try {
+      await vercelFetch(`/v9/projects/${enc(projectId)}`, { method: "DELETE" });
+    } catch (error) {
+      if (isNotFound(error)) return;
+      throw error;
+    }
+  },
+
   async removeDomain(projectId, domain) {
     try {
       await vercelFetch(`/v9/projects/${enc(projectId)}/domains/${enc(domain)}`, {
@@ -389,6 +403,10 @@ const mockClient: VercelClient = {
 
   async removeDomain(_projectId, domain) {
     logger.info("vercel.mock.remove_domain", { domain });
+  },
+
+  async deleteProject(projectId) {
+    logger.info("vercel.mock.delete_project", { projectId });
   },
 
   async checkHttps(domain) {

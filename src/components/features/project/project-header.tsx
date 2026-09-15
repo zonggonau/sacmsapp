@@ -39,7 +39,8 @@ export function ProjectHeader({ project }: { project: HeaderProject }) {
 
   const type = getWebsiteType(project.websiteType);
   const Icon = type.icon;
-  const liveUrl = project.productionUrl ?? project.previewUrl;
+  // Hanya alamat terbit — URL pratinjau bukan alamat publik (lihat project-card).
+  const liveUrl = project.productionUrl;
 
   return (
     <div className="border-border space-y-4 border-b pb-0">
@@ -72,10 +73,10 @@ export function ProjectHeader({ project }: { project: HeaderProject }) {
         </div>
 
         {liveUrl ? (
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="max-w-full">
             <a href={liveUrl} target="_blank" rel="noreferrer noopener">
-              {urlRingkas(liveUrl)}
-              <ExternalLink className="size-3.5" />
+              <span className="truncate">{urlRingkas(liveUrl)}</span>
+              <ExternalLink className="size-3.5 shrink-0" />
             </a>
           </Button>
         ) : null}

@@ -109,11 +109,17 @@ export default async function ProjectOverviewPage({
                 <ExternalLink className="size-3 shrink-0" />
               </a>
             ) : null}
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/projects/${project.id}/deployment`}>
-                {project.productionUrl ? "Kelola Deployment" : "Terbitkan Website"}
-              </Link>
-            </Button>
+            {project.productionUrl || project.versionCount > 0 ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/projects/${project.id}/deployment`}>
+                  {project.productionUrl ? "Kelola Deployment" : "Terbitkan Website"}
+                </Link>
+              </Button>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                Bangun website di Builder terlebih dahulu, lalu terbitkan dari sini.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -130,7 +136,7 @@ export default async function ProjectOverviewPage({
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Versi</dt>
                 <dd className="text-right font-mono tabular-nums">
-                  {project.versionCount}
+                  {project.versionCount > 0 ? project.versionCount : "Belum ada"}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">

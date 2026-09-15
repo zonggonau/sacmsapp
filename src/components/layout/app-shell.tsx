@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { Bell, ShieldCheck } from "lucide-react";
 
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { NavItem } from "@/components/layout/nav-item";
@@ -61,11 +61,13 @@ export function AppShell({
   user,
   impersonation,
   credits,
+  unreadNotifications = 0,
   children,
 }: {
   user: ShellUser;
   impersonation: Impersonation | null;
   credits: { used: number; limit: number } | null;
+  unreadNotifications?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -132,6 +134,22 @@ export function AppShell({
             <div className="flex-1" />
 
             {credits ? <CreditMeter used={credits.used} limit={credits.limit} /> : null}
+            <Link
+              href="/akun/notifikasi"
+              aria-label={
+                unreadNotifications > 0
+                  ? `Notifikasi, ${unreadNotifications} belum dibaca`
+                  : "Notifikasi"
+              }
+              className="hover:bg-accent relative grid size-9 place-items-center rounded-md"
+            >
+              <Bell className="size-4" />
+              {unreadNotifications > 0 ? (
+                <span className="bg-primary text-primary-foreground absolute top-1 right-1 grid min-w-4 place-items-center rounded-full px-1 text-[10px] leading-4 font-bold">
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </span>
+              ) : null}
+            </Link>
             {user.role === "SUPER_ADMIN" && !impersonation ? (
               <Badge>SUPER ADMIN</Badge>
             ) : null}

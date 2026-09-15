@@ -2,7 +2,9 @@ import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { sendAccountSuspendedEmail } from "@/lib/mail";
+import * as auditService from "@/services/audit.service";
 import type { AuditTrail } from "@/services/audit.service";
+import * as deployService from "@/services/deploy.service";
 import * as quotaService from "@/services/quota.service";
 import type { UserRole, UserStatus } from "@/types/db";
 
@@ -443,6 +445,14 @@ export async function hardDelete(input: {
     );
   }
 
+  // Website pengguna diturunkan SEBELUM akunnya dihapus. Setelah baris project
+  // hilang, pengenal project Vercel ikut hilang dan situsnya menjadi yatim.
+  const published = await db.project.findMany({
+    where: { userId: target.id, vercelProjectId: { not: null } },
+    select: { id: true },
+  });
+  for (const p of published) await deployService.takeDown(p.id);
+
   const summary = await db.$transaction(async (tx) => {
     if (target.role === "SUPER_ADMIN") {
       await assertAnotherActiveSuperAdmin(tx, target.id, "menghapus");
@@ -467,6 +477,45 @@ export async function hardDelete(input: {
     { email: target.email, name: target.name, role: target.role, ...summary },
     { deleted: true },
   );
+}
+
+/**
+ * Cron cleanup — docs/07 §7.5: "audit mulai & selesai".
+ *
+ * `user.impersonate.end` hanya tercatat bila admin menekan tombol kembali.
+ * Sesi impersonasi yang habis sendiri (60 menit) dicatat di sini sebagai
+ * `user.impersonate.expired`, lalu barisnya dihapus agar tidak tercatat dua kali.
+ */
+export async function closeExpiredImpersonations(
+  now: Date = new Date(),
+): Promise<number> {
+  const expired = await db.session.findMany({
+    where: { impersonatedBy: { not: null }, expiresAt: { lt: now } },
+    select: {
+      id: true,
+      userId: true,
+      impersonatedBy: true,
+      createdAt: true,
+      expiresAt: true,
+    },
+  });
+
+  for (const s of expired) {
+    await auditService.record({
+      action: "user.impersonate.expired",
+      actorId: s.impersonatedBy,
+      actorRole: "SUPER_ADMIN",
+      targetType: "User",
+      targetId: s.userId,
+      after: { startedAt: s.createdAt, expiredAt: s.expiresAt },
+    });
+    await db.session.deleteMany({ where: { id: s.id } });
+  }
+
+  if (expired.length > 0) {
+    logger.info("admin.impersonation_expired_closed", { count: expired.length });
+  }
+  return expired.length;
 }
 
 /**

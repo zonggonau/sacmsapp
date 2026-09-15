@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Bell,
   Bot,
   FolderKanban,
   Hammer,
@@ -34,6 +35,7 @@ export const ACCOUNT_NAV: NavItem[] = [
   { label: "Profil", href: "/akun/profil", icon: User },
   { label: "Keamanan", href: "/akun/keamanan", icon: ShieldCheck },
   { label: "Paket", href: "/akun/paket", icon: Package },
+  { label: "Notifikasi", href: "/akun/notifikasi", icon: Bell },
 ];
 
 /** Navigasi panel Super Admin — docs/10 §10.10. */

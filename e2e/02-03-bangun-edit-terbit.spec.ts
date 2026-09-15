@@ -31,6 +31,14 @@ test("buat project, pratinjau tampil, edit lewat chat, lalu terbitkan", async ({
     timeout: 90_000,
   });
 
+  // docs/12 §12.5 & DoD Fase 3: pratinjau terkurung di iframe sandbox tanpa
+  // allow-same-origin, sehingga kode hasil AI tidak bisa membaca sesi SaCMS.
+  const sandbox = await page
+    .getByTitle("Pratinjau Sekolah E2E")
+    .getAttribute("sandbox");
+  expect(sandbox).toContain("allow-scripts");
+  expect(sandbox).not.toContain("allow-same-origin");
+
   // ---- alur 3: edit ----
   const chat = page.getByLabel("Permintaan perubahan");
   await chat.fill("Tambahkan halaman galeri kegiatan siswa dengan foto terbaru.");
