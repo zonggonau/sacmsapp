@@ -82,7 +82,7 @@ export function BuilderChat({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto p-4">
         {optimistic.length === 0 ? (
           <p className="text-muted-foreground py-8 text-center text-sm">
             Belum ada percakapan. Setelah website dibangun, Anda bisa menyempurnakannya
@@ -159,7 +159,7 @@ function Bubble({ message }: { message: ChatMessage }) {
       <div className={cn("max-w-[85%] min-w-0 space-y-1", isUser && "text-right")}>
         <div
           className={cn(
-            "inline-block rounded-lg px-3 py-2 text-left text-sm whitespace-pre-wrap",
+            "inline-block max-w-full rounded-lg px-3 py-2 text-left text-sm wrap-anywhere whitespace-pre-wrap",
             isUser ? "bg-primary-subtle text-foreground" : "bg-muted text-foreground",
           )}
         >

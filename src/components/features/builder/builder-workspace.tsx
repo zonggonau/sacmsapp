@@ -156,7 +156,7 @@ export function BuilderWorkspace({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="border-border bg-background text-muted-foreground rounded border p-3 text-left text-xs leading-relaxed whitespace-pre-wrap">
+                    <p className="border-border bg-background text-muted-foreground rounded border p-3 text-left text-xs leading-relaxed wrap-anywhere whitespace-pre-wrap">
                       {project.initialPrompt}
                     </p>
                     <StartBuildButton

@@ -184,7 +184,9 @@ export function BuildProgress({
 
       {failed || cancelled ? (
         <div className="border-border space-y-3 border-t pt-4">
-          {state.errorMessage ? <p className="text-sm">{state.errorMessage}</p> : null}
+          {state.errorMessage ? (
+            <p className="text-sm wrap-anywhere">{state.errorMessage}</p>
+          ) : null}
           <Button
             size="sm"
             disabled={retry.isPending}

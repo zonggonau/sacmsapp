@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
@@ -21,7 +21,7 @@ export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
  */
 export const getSession = cache(async () => {
   return auth.api.getSession({
-    headers: await headers(),
+    headers: await headersWithCurrentCookies(),
     // Cookie cache Better Auth menyimpan sesi DAN data pengguna (peran, status)
     // selama 5 menit. Dengan cache itu, pengguna yang baru ditangguhkan atau
     // diturunkan perannya tetap lolos sampai 5 menit — melanggar docs/07 §7.6
@@ -30,6 +30,29 @@ export const getSession = cache(async () => {
     query: { disableCookieCache: true },
   });
 });
+
+/**
+ * Header permintaan dengan cookie TERKINI.
+ *
+ * headers() selalu membawa cookie asli permintaan. Bila cookie sesi diganti di
+ * tengah permintaan yang sama — Server Action ganti sandi mencabut semua sesi
+ * lalu menerbitkan sesi baru — render ulang halaman di respons action itu masih
+ * membawa token lama yang sudah dihapus, dan pengguna terlempar keluar dari
+ * perangkat yang justru baru mengganti sandi. cookies() mencerminkan perubahan
+ * tersebut; pada permintaan biasa isinya sama persis dengan header.
+ */
+async function headersWithCurrentCookies() {
+  const [incoming, jar] = await Promise.all([headers(), cookies()]);
+  const merged = new Headers(incoming);
+  const cookie = jar
+    .getAll()
+    .map((c) => c.name + "=" + encodeURIComponent(c.value))
+    .join("; ");
+
+  if (cookie) merged.set("cookie", cookie);
+  else merged.delete("cookie");
+  return merged;
+}
 
 export async function requireUser() {
   const session = await getSession();

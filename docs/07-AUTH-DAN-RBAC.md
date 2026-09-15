@@ -319,13 +319,13 @@ mekanis; kuota adalah batas komersial. Keduanya diperiksa.
 
 ## 7.8 Checklist Uji Keamanan Akses (wajib lulus sebelum Fase 5 ditutup)
 
-- [ ] `USER` membuka `/admin` langsung → 403, bukan halaman kosong
-- [ ] `USER` memanggil Server Action admin lewat DevTools → ditolak
-- [ ] `USER` A membuka `/projects/{id-milik-B}` → 404 (bukan 403; jangan konfirmasi ada)
-- [ ] `USER` A memanggil `deleteProject(id-milik-B)` → ditolak
-- [ ] Kirim `role: "SUPER_ADMIN"` di payload pendaftaran → diabaikan
-- [ ] User `SUSPENDED` dengan cookie lama → ditolak di lapis 2
-- [ ] Super Admin terakhir mencoba menurunkan dirinya → ditolak dengan pesan jelas
-- [ ] Aksi destruktif saat impersonasi → diblokir
-- [ ] Sesi lama setelah ganti sandi → tidak berlaku
-- [ ] Enumerasi email lewat halaman masuk → tidak mungkin (pesan seragam)
+- [x] `USER` membuka `/admin` langsung → 403, bukan halaman kosong — _`e2e/07-akses-rbac.spec.ts`: `/admin`, `/admin/pengguna`, `/admin/audit`, `/admin/sistem` membalas 403 + halaman "Akses ditolak"_
+- [x] `USER` memanggil Server Action admin lewat DevTools → ditolak — _`tests/actions/akses-rbac.test.ts`: action dipanggil langsung, dibalas FORBIDDEN, data tidak berubah, tercatat `admin.access_denied`_
+- [x] `USER` A membuka `/projects/{id-milik-B}` → 404 (bukan 403; jangan konfirmasi ada) — _`e2e/06-dod-fase-1-3.spec.ts`, kelima tab_
+- [x] `USER` A memanggil `deleteProject(id-milik-B)` → ditolak — _`tests/actions/akses-rbac.test.ts` (lapisan action) & `tests/services/project.test.ts` (service)_
+- [x] Kirim `role: "SUPER_ADMIN"` di payload pendaftaran → diabaikan — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] User `SUSPENDED` dengan cookie lama → ditolak di lapis 2 — _`e2e/05-admin-tangguhkan.spec.ts` (sesi dicabut) & `tests/actions/akses-rbac.test.ts` (sesi masih ada, status SUSPENDED ditolak middleware)_
+- [x] Super Admin terakhir mencoba menurunkan dirinya → ditolak dengan pesan jelas — _`tests/actions/super-admin-terakhir.test.ts`_
+- [x] Aksi destruktif saat impersonasi → diblokir — _`tests/actions/akses-rbac.test.ts`: hapus diblokir, ganti nama tetap jalan_
+- [x] Sesi lama setelah ganti sandi → tidak berlaku — _`e2e/07-akses-rbac.spec.ts` (ganti sandi di akun) & `e2e/06` (atur ulang sandi). Uji ini menemukan bug: perangkat yang mengganti sandi ikut keluar; diperbaiki di `lib/auth-guard.ts` (sesi dibaca dari cookie terkini)_
+- [x] Enumerasi email lewat halaman masuk → tidak mungkin (pesan seragam) — _`e2e/07-akses-rbac.spec.ts`: masuk & lupa sandi, email terdaftar vs tidak_

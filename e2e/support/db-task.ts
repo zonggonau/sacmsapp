@@ -66,6 +66,22 @@ const tasks: Record<string, (args: Args) => Promise<unknown>> = {
     return { id: project.id };
   },
 
+  /** Project yang sudah punya pratinjau dan riwayat chat — tanpa memanggil v0. */
+  async seedChat(args) {
+    await db.project.update({
+      where: { id: str(args.projectId) },
+      data: { status: "READY", previewUrl: str(args.previewUrl) },
+    });
+    await db.aiMessage.create({
+      data: {
+        projectId: str(args.projectId),
+        role: "USER",
+        content: str(args.content),
+      },
+    });
+    return null;
+  },
+
   countVersions: (args) =>
     db.projectVersion.count({ where: { projectId: str(args.projectId) } }),
 
