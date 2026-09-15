@@ -71,13 +71,13 @@
 
 ```
 ✓ FASE 0 — Fondasi & Setup        [ SELESAI — database aktif, seed terisi ]
-✓ FASE 1 — Auth & App Shell       [ KODE LENGKAP — 3 butir DoD belum terverifikasi ]
-✓ FASE 2 — Project CRUD           [ SELESAI — 22 asertasi lulus ]
-✓ FASE 3 — AI Builder Core        [ SELESAI — 62 asertasi DoD + uji after() di server nyata ]
+◐ FASE 1 — Auth & App Shell       [ TERUJI E2E — tersisa Google OAuth (butuh kredensial) ]
+✓ FASE 2 — Project CRUD           [ SELESAI — DoD terbukti E2E, 404 sungguhan ]
+◐ FASE 3 — AI Builder Core        [ tersisa: versi lanjutan dengan v0 nyata (butuh kredit) ]
 ◐ FASE 4 — Deploy & Domain        [ UJI NYATA LULUS — 1 butir tersisa: domain ACTIVE (butuh domain uji) ]
 ✓ FASE 5 — Super Admin            [ SELESAI — 60 asertasi HTTP + 13 service ]
 ✓ FASE 6 — Quota & Billing        [ SELESAI — 38 asertasi service + uji HTTP ]
-▶ FASE 7 — Hardening & Go-Live    [ BERJALAN — marketing, E2E+CI hijau, unit 81%, CSP nonce ]
+▶ FASE 7 — Hardening & Go-Live    [ BERJALAN — CI hijau, unit 81%, CSP, runbook, beban & pemulihan lulus ]
 ```
 
 > Update blok ini setiap kali sebuah fase selesai. Fase berikutnya **tidak dibuka**
@@ -124,14 +124,14 @@ Diuji langsung terhadap database, bukan hanya lolos kompilasi:
 
 ### Yang belum terverifikasi
 
-| Butir                                          | Penghalang                                                                                                                         |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Email konfirmasi benar-benar sampai            | Domain pengirim `sacms.id` belum diverifikasi di Resend (403). Untuk development, set `EMAIL_FROM="SaCMS <onboarding@resend.dev>"` |
-| Login Google                                   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi                                                                            |
-| Tampilan visual (nav aktif oranye, dark/light) | Belum diperiksa dengan mata di peramban                                                                                            |
-| Generate & deploy dengan v0 sungguhan          | **LULUS 2026-09-15** — generate 120 dtk, deploy READY ±22 dtk, `uji-nyata-sma-jayapura.vercel.app` HTTP 200 (tim Vercel Pro)       |
-| Custom domain ACTIVE dengan HTTPS sungguhan    | Butuh satu domain uji yang DNS-nya bisa diubah                                                                                     |
-| Tampilan halaman Deployment & Domain           | Belum diperiksa dengan mata (dark/light, 360px)                                                                                    |
+| Butir                                          | Penghalang                                                                                                                   |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Email konfirmasi benar-benar sampai            | **Sandbox Resend LULUS** (`mail.sent`); domain pengirim production masih perlu diverifikasi di Resend                        |
+| Login Google                                   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi                                                                      |
+| Tampilan visual (nav aktif oranye, dark/light) | **LULUS 2026-09-16** — audit tangkapan layar /projects/* desktop gelap & ponsel terang; nav aktif diuji E2E                  |
+| Generate & deploy dengan v0 sungguhan          | **LULUS 2026-09-15** — generate 120 dtk, deploy READY ±22 dtk, `uji-nyata-sma-jayapura.vercel.app` HTTP 200 (tim Vercel Pro) |
+| Custom domain ACTIVE dengan HTTPS sungguhan    | Butuh satu domain uji yang DNS-nya bisa diubah                                                                               |
+| Tampilan halaman Deployment & Domain           | **LULUS 2026-09-16** — audit 360px & desktop, tanpa melebar setelah perbaikan URL pratinjau                                  |
 
 ### Menunggu kredensial pemilik
 

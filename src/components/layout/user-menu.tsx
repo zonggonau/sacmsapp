@@ -54,7 +54,8 @@ export function UserMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Menu akun">
+        {/* Nama aksesibel diawali teks yang terlihat (inisial) — WCAG 2.5.3. */}
+        <Button variant="ghost" size="icon" aria-label={`${initials(name)}, menu akun`}>
           <Avatar className="size-7">
             {image ? <AvatarImage src={image} alt="" /> : null}
             <AvatarFallback className="text-xs">{initials(name)}</AvatarFallback>

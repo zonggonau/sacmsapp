@@ -33,16 +33,6 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 - **Target versi usulan:** **sebelum go-live** (Fase 7) bila pemilik memutuskan brand tampil
   sejak peluncuran — nama kode `sacms` di repositori tidak perlu diganti.
 
-### Hapus project harus menurunkan website yang sudah tayang
-
-- **Ditemukan saat:** Fase 4, 2026-09-15
-- **Masalah nyata yang diselesaikan:** sejak Fase 4 penerbitan sungguhan, menghapus project
-  di SaCMS **tidak** menghapus project Vercel buatan v0 — website dan custom domain-nya tetap
-  bisa diakses. Dialog hapus project (Fase 2) menjanjikan sebaliknya.
-- **Perkiraan usaha:** 0,5–1 hari (putuskan: hapus project v0/Vercel saat purge, atau
-  lepas domain + nonaktifkan saat soft delete; perlu uji nyata)
-- **Target versi usulan:** **wajib sebelum go-live** (Fase 7) — atau lebih awal bila pemilik memutuskan
-
 ### Tangkapan layar panduan DNS per penyedia
 
 - **Ditemukan saat:** Fase 4, 2026-09-15
@@ -73,6 +63,23 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 - **Perkiraan usaha:** 2–3 hari total
 - **Target versi usulan:** biaya → Fase 6; sisanya v1.1
 
+### Sisa tampilan kuota dari docs/11 §11.6
+
+- **Ditemukan saat:** Fase 6, 2026-09-15
+- **Masalah nyata yang diselesaikan:** notifikasi `quota.low` dan `cost.threshold` sudah
+  dibuat di database tetapi belum ada daftar notifikasi di UI; sisa kredit belum tampil di
+  dialog buat project; tombol yang kuotanya habis belum dinonaktifkan dengan tooltip (saat ini
+  ditolak saat diklik dengan pesan + tombol Lihat Paket).
+- **Perkiraan usaha:** 1 hari
+- **Target versi usulan:** Fase 7 atau v1.1
+- **Sebagian selesai 2026-09-16:** halaman `/akun/notifikasi` + lonceng dengan jumlah belum dibaca di topbar. Tersisa: sisa kredit di dialog buat project dan tombol nonaktif + tooltip saat kuota habis → v1.1.
+
+---
+
+## Selesai
+
+> Entri yang sudah dikerjakan tetap dicatat di sini agar jejak keputusannya tidak hilang.
+
 ### Status HTTP 404 untuk project yang tidak dimiliki
 
 - **Ditemukan saat:** Fase 5 (uji 07 §7.8), 2026-09-15
@@ -84,16 +91,18 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
 - **Perkiraan usaha:** 0,5 hari (pindahkan pemeriksaan kepemilikan sebelum boundary, atau
   pisahkan loading daftar project ke route group sendiri; uji ulang builder/deployment/domain)
 - **Target versi usulan:** Fase 7 (hardening)
+- **Selesai 2026-09-16:** daftar project dipindah ke route group `(daftar)` dan tab builder/deployment/domain memeriksa kepemilikan sebelum batas Suspense; kelima tab membalas 404 sungguhan (`e2e/06-dod-fase-1-3.spec.ts`).
 
-### Sisa tampilan kuota dari docs/11 §11.6
+### Hapus project harus menurunkan website yang sudah tayang
 
-- **Ditemukan saat:** Fase 6, 2026-09-15
-- **Masalah nyata yang diselesaikan:** notifikasi `quota.low` dan `cost.threshold` sudah
-  dibuat di database tetapi belum ada daftar notifikasi di UI; sisa kredit belum tampil di
-  dialog buat project; tombol yang kuotanya habis belum dinonaktifkan dengan tooltip (saat ini
-  ditolak saat diklik dengan pesan + tombol Lihat Paket).
-- **Perkiraan usaha:** 1 hari
-- **Target versi usulan:** Fase 7 atau v1.1
+- **Ditemukan saat:** Fase 4, 2026-09-15
+- **Masalah nyata yang diselesaikan:** sejak Fase 4 penerbitan sungguhan, menghapus project
+  di SaCMS **tidak** menghapus project Vercel buatan v0 — website dan custom domain-nya tetap
+  bisa diakses. Dialog hapus project (Fase 2) menjanjikan sebaliknya.
+- **Perkiraan usaha:** 0,5–1 hari (putuskan: hapus project v0/Vercel saat purge, atau
+  lepas domain + nonaktifkan saat soft delete; perlu uji nyata)
+- **Target versi usulan:** **wajib sebelum go-live** (Fase 7) — atau lebih awal bila pemilik memutuskan
+- **Selesai 2026-09-16:** hapus project dan hapus pengguna melepas custom domain lalu menghapus project Vercel sebelum data ditandai terhapus; bila vendor gagal, penghapusan dibatalkan (`deploy.service.takeDown`, uji `tests/services/sisa-fase.test.ts`).
 
 ### Penjadwal cron production
 
@@ -102,6 +111,7 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
   Vercel Hobby hanya mengizinkan cron harian; jadwal per menit membuat deploy ditolak.
 - **Perkiraan usaha:** 2 jam setelah keputusan (Vercel Pro vs penjadwal eksternal)
 - **Target versi usulan:** Fase 7 — wajib sebelum go-live
+- **Selesai 2026-09-16:** tim Vercel Pro; delapan jadwal di `vercel.json` ([14 §14.8](./14-DEPLOYMENT-GO-LIVE.md)).
 
 ### Audit akhir impersonasi yang kedaluwarsa sendiri
 
@@ -111,6 +121,7 @@ Entri tanpa "masalah nyata" adalah keinginan, bukan kebutuhan. Jangan dicatat.
   catatan akhir.
 - **Perkiraan usaha:** 2 jam (cron cleanup mencatat sesi impersonasi yang kedaluwarsa)
 - **Target versi usulan:** Fase 7
+- **Selesai 2026-09-16:** cron `/api/cron/cleanup` mencatat `user.impersonate.expired` sekali lalu menghapus sesinya.
 
 ---
 

@@ -52,12 +52,12 @@ Pekerjaan:
 
 **Definition of Done:**
 
-- [ ] `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` semua lulus
-- [ ] Halaman contoh menampilkan tombol/kartu/badge dengan warna SaCMS yang benar
-- [ ] Toggle dark/light bekerja **tanpa flash** saat muat ulang
-- [ ] `prisma studio` menampilkan seluruh tabel; seed menghasilkan 3 plan + 1 super admin
-- [ ] Staging dapat dibuka publik
-- [ ] CI hijau pada PR
+- [x] `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` semua lulus — _job quality CI `995dc1d`_
+- [x] Halaman contoh menampilkan tombol/kartu/badge dengan warna SaCMS yang benar — _halaman contoh sudah digantikan UI nyata; token oranye & latar gelap terlihat di audit tangkapan layar /projects/\* 2026-09-16_
+- [x] Toggle dark/light bekerja **tanpa flash** saat muat ulang — _kelas tema sudah terpasang saat DOMContentLoaded, sebelum hidrasi (`e2e/06-dod-fase-1-3.spec.ts`)_
+- [x] `prisma studio` menampilkan seluruh tabel; seed menghasilkan 3 plan + 1 super admin — _lihat 00-INDEX "Yang sudah terbukti"; seed juga dijalankan di setiap job CI_
+- [ ] Staging dapat dibuka publik — _menunggu URL staging/production Vercel dari pemilik untuk diverifikasi_
+- [x] CI hijau pada PR — _workflow berjalan pada push & pull_request; keempat job hijau di CI `995dc1d`_
 
 ---
 
@@ -83,15 +83,15 @@ Pekerjaan:
 
 **Definition of Done:**
 
-- [ ] Daftar → terima email → verifikasi → masuk → dashboard, tanpa hambatan
-- [ ] Google OAuth bekerja
-- [ ] Reset sandi bekerja penuh; sesi lama tercabut setelah ganti sandi
-- [ ] `/dashboard` tanpa sesi → redirect ke `/masuk?lanjut=/dashboard`, dan kembali ke tujuan setelah masuk
-- [ ] `/masuk` dengan sesi → redirect ke `/dashboard`
-- [ ] Rate limit terbukti: 6 kali gagal masuk → diblokir
-- [ ] Kirim `role: "SUPER_ADMIN"` saat daftar → **diabaikan** (uji manual, wajib)
-- [ ] Sidebar aktif memakai pola oranye yang benar
-- [ ] Semua teks bahasa Indonesia
+- [x] Daftar → terima email → verifikasi → masuk → dashboard, tanpa hambatan — _E2E alur 1 (kotak keluar berkas); pengiriman nyata lewat Resend tercatat `mail.sent` di server dev_
+- [ ] Google OAuth bekerja — _menunggu `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` dari pemilik; kode sudah menyala otomatis bila keduanya diisi_
+- [x] Reset sandi bekerja penuh; sesi lama tercabut setelah ganti sandi — _`revokeSessionsOnPasswordReset`; `e2e/06-dod-fase-1-3.spec.ts`_
+- [x] `/dashboard` tanpa sesi → redirect ke `/masuk?lanjut=/dashboard`, dan kembali ke tujuan setelah masuk — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] `/masuk` dengan sesi → redirect ke `/dashboard` — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Rate limit terbukti: 6 kali gagal masuk → diblokir — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Kirim `role: "SUPER_ADMIN"` saat daftar → **diabaikan** (uji manual, wajib) — _uji manual Fase 1 (`FIELD_NOT_ALLOWED`) + otomatis di `e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Sidebar aktif memakai pola oranye yang benar — _`aria-current` + `text-primary-text` diperiksa di `e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Semua teks bahasa Indonesia — _audit teks Inggris pada 18 halaman /projects/\* × 2 tampilan: nol temuan_
 
 ---
 
@@ -116,13 +116,13 @@ Pekerjaan:
 
 **Definition of Done:**
 
-- [ ] Buat project dengan prompt tersimpan (status `DRAFT`, belum ada AI)
-- [ ] Dialog dari `/projects` dan halaman penuh dari URL langsung — keduanya bekerja, form-nya satu komponen
-- [ ] Refresh saat dialog terbuka → halaman penuh, bukan 404
-- [ ] Pengguna A membuka project pengguna B → 404
-- [ ] Filter & pencarian tersimpan di URL dan bertahan saat refresh
-- [ ] Empty state, loading state, error state ada di semua daftar
-- [ ] Tombol Back browser berperilaku benar di seluruh alur
+- [x] Buat project dengan prompt tersimpan (status `DRAFT`, belum ada AI) — _`tests/services/project.test.ts`, `quota-billing.test.ts`_
+- [x] Dialog dari `/projects` dan halaman penuh dari URL langsung — keduanya bekerja, form-nya satu komponen — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Refresh saat dialog terbuka → halaman penuh, bukan 404 — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Pengguna A membuka project pengguna B → 404 — _status HTTP 404 sungguhan di kelima tab (`e2e/06-dod-fase-1-3.spec.ts`); sebelumnya 200 karena batas Suspense_
+- [x] Filter & pencarian tersimpan di URL dan bertahan saat refresh — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Empty state, loading state, error state ada di semua daftar — _`projects-empty`, `(daftar)/loading.tsx`, skeleton per tab, `error.tsx`; terlihat di audit halaman_
+- [x] Tombol Back browser berperilaku benar di seluruh alur — _daftar → detail → Back kembali ke daftar dengan filter (`e2e/06-dod-fase-1-3.spec.ts`)_
 
 ---
 
@@ -150,16 +150,16 @@ Pekerjaan:
 
 **Definition of Done:**
 
-- [ ] Dengan `V0_MOCK=true`: seluruh pipeline berjalan, 10 langkah berubah status, progres naik
-- [ ] Dengan v0 nyata: prompt "Buat website sekolah SMA di Jayapura" menghasilkan website yang bisa dilihat
-- [ ] Pesan lanjutan menghasilkan versi baru pada chat v0 yang sama
-- [ ] Progres tidak pernah macet; `GENERATE` menyumbang porsi bobot terbesar
-- [ ] Batalkan build → status `CANCELLED`, kredit kembali
-- [ ] Simulasi kegagalan v0 → retry 3× → `FAILED` + pesan Indonesia + tombol Ulangi
-- [ ] Job melewati timeout → disapu cron → `FAILED` + refund
-- [ ] Pratinjau tampil di iframe `sandbox`
-- [ ] Prompt berisi "abaikan instruksi sebelumnya" tidak mengubah perilaku sistem
-- [ ] Tidak ada import `v0-sdk` di luar `lib/v0/`
+- [x] Dengan `V0_MOCK=true`: seluruh pipeline berjalan, 10 langkah berubah status, progres naik — _`build-deploy.test.ts`: 10 langkah, progres 100; E2E alur 2_
+- [x] Dengan v0 nyata: prompt "Buat website sekolah SMA di Jayapura" menghasilkan website yang bisa dilihat — _uji nyata 2026-09-15: `uji-nyata-sma-jayapura.vercel.app` HTTP 200_
+- [ ] Pesan lanjutan menghasilkan versi baru pada chat v0 yang sama — _terbukti dengan mesin tiruan (chat sama, versi 2); uji nyata menunggu kredit v0 akun terisi_
+- [x] Progres tidak pernah macet; `GENERATE` menyumbang porsi bobot terbesar — _bobot GENERATE 45 dari 100 (`config/build-steps.ts`); job nyangkut disapu cron & job antre dijalankan `run-queued` (`build-deploy.test.ts`)_
+- [x] Batalkan build → status `CANCELLED`, kredit kembali — _`build-deploy.test.ts`, `quota-billing.test.ts`_
+- [x] Simulasi kegagalan v0 → retry 3× → `FAILED` + pesan Indonesia + tombol Ulangi — _uji Fase 3 (00-INDEX) + audit halaman: pesan Indonesia & tombol "Coba Lagi"_
+- [x] Job melewati timeout → disapu cron → `FAILED` + refund — _`build-deploy.test.ts`_
+- [x] Pratinjau tampil di iframe `sandbox` — _E2E alur 2 memeriksa `allow-scripts` tanpa `allow-same-origin`_
+- [x] Prompt berisi "abaikan instruksi sebelumnya" tidak mengubah perilaku sistem — _pembatas + penanda pola berbahaya (uji Fase 3, 00-INDEX)_
+- [x] Tidak ada import `v0-sdk` di luar `lib/v0/` — _ditegakkan aturan ESLint; job quality hijau_
 
 ---
 
@@ -257,10 +257,10 @@ Pekerjaan:
 2. Uji E2E Playwright — 5 alur kritis (§13.3) — _`pnpm test:e2e`, folder `e2e/`, job `e2e` di CI (Postgres + emulator Upstash SRH, `next start`). Hijau lokal 4/4 berkas uji (alur 2 & 3 satu berkas). Menemukan & memperbaiki bug: sesi yang dicabut memicu putaran pengalihan tanpa akhir → `/api/sesi-berakhir` membersihkan cookie_
 3. Uji unit service layer ≥ 70% — _`pnpm test:coverage` (Vitest, folder `tests/`), 41 uji terhadap PostgreSQL sungguhan dengan vendor tiruan; coverage service **80,9% statement / 83% baris**; job `unit` di CI dengan ambang 70%_
 4. Audit aksesibilitas (kontras, keyboard, screen reader, `prefers-reduced-motion`)
-5. Kinerja: Lighthouse ≥ 90, LCP < 2,5 dtk, CLS < 0,1
+5. Kinerja: Lighthouse ≥ 90, LCP < 2,5 dtk, CLS < 0,1 — _2026-09-16, build production lokal (Lighthouse 12, kategori kinerja/aksesibilitas/praktik terbaik/SEO): landing ponsel 94/100/100/100, desktop 100/100/100/100; dashboard ponsel 90/100/100/63, desktop 100/100/100/63. CLS 0 di semua. LCP desktop 0,7–0,8 dtk; **LCP ponsel (simulasi CPU lambat) 3,1 dtk landing & 3,6 dtk dashboard — belum < 2,5 dtk**. SEO dashboard 63 disengaja: halaman pribadi ber-`noindex`. Perbaikan dari audit: favicon, nama aksesibel logo & menu akun, token `destructive-text` untuk kontras badge_
 6. CSP dengan nonce — _dipasang di `src/proxy.ts` ([12 §12.3](./12-KEAMANAN.md)); 28/28 skrip ber-nonce; E2E gagal bila ada pelanggaran CSP. Membuat seluruh halaman dinamis → [ADR-009](./adr/ADR-009-csp-nonce-render-dinamis.md) **menunggu persetujuan**_
-7. Uji beban: 50 build bersamaan
-8. **Uji pemulihan database dari cadangan** — bukan sekadar memastikan cadangan ada
+7. Uji beban: 50 build bersamaan — _2026-09-16 (mesin tiruan, jeda 200 ms): 50/50 `SUCCEEDED`, job dibuat dalam 230 ms, seluruh pipeline 1,7 dtk, kredit tepat 1 per pengguna, 50 versi, 0 galat_
+8. **Uji pemulihan database dari cadangan** — bukan sekadar memastikan cadangan ada — _2026-09-16, PostgreSQL 18 lokal: `pg_dump -Fc` (84 KB, 446 ms) → database baru → `pg_restore` (707 ms); 17 tabel, 624 baris, 3 migrasi identik. Prosedur terbukti; uji PITR Neon production dilakukan pemilik saat production dibuat_
 9. SSE menggantikan polling (opsional)
 10. Seluruh checklist [12 §12.8](./12-KEAMANAN.md) dan [14](./14-DEPLOYMENT-GO-LIVE.md)
 11. Uji beta dengan 5 pengguna nyata non-teknis
@@ -268,9 +268,9 @@ Pekerjaan:
 **Definition of Done:**
 
 - [x] 5 alur E2E hijau di CI — _commit `770f862`: keempat job CI (quality, unit, e2e, security) hijau_
-- [ ] Lighthouse ≥ 90 di landing dan dashboard
+- [ ] Lighthouse ≥ 90 di landing dan dashboard — _kinerja, aksesibilitas, praktik terbaik ≥ 90 di keduanya (lihat butir 5); tersisa LCP ponsel > 2,5 dtk. SEO dashboard sengaja rendah (`noindex`)_
 - [ ] Checklist keamanan lulus seluruhnya
-- [ ] Pemulihan database terbukti berhasil
+- [ ] Pemulihan database terbukti berhasil — _prosedur lulus di lokal (lihat butir 8); menunggu uji PITR pada Neon production_
 - [ ] 5 penguji beta berhasil membuat website live **tanpa bantuan**
 - [x] Runbook insiden tertulis dan dapat dijalankan dari `/admin` — _`/admin/insiden`: lima skenario [12 §12.7](./12-KEAMANAN.md) dengan kendali langsung; tambahan Cabut Semua Sesi & rollback admin, diuji `tests/services/runbook.test.ts`_
 

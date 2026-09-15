@@ -35,6 +35,8 @@
   --accent-foreground: oklch(0.145 0 0);
 
   --destructive: oklch(0.577 0.245 27.3);
+  /* Teks merah di atas permukaan terang: lulus AA 4.5:1 (docs/04 §4.2). */
+  --destructive-text: oklch(0.505 0.213 27.5);
   --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.627 0.17 149);
   --warning: oklch(0.705 0.17 70);
@@ -75,6 +77,8 @@
   --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.637 0.208 25.3);
+  /* Teks merah di atas permukaan gelap: merah terang agar lulus AA 4.5:1. */
+  --destructive-text: oklch(0.808 0.114 19.6);
   --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.723 0.181 148);
   --warning: oklch(0.769 0.165 70);
@@ -112,6 +116,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-text: var(--destructive-text);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);

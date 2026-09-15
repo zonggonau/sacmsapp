@@ -30,12 +30,13 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-dvh flex-col">
       <header className="border-border bg-background/85 sticky top-0 z-20 border-b backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 rounded-md"
-            aria-label="Beranda SaCMS"
-          >
-            <span className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-xs font-bold">
+          <Link href="/" className="flex items-center gap-2.5 rounded-md">
+            {/* Lencana dekoratif: disembunyikan dari pembaca layar supaya nama tautan
+                sama dengan teks yang terlihat ("SaCMS") — WCAG 2.5.3. */}
+            <span
+              aria-hidden="true"
+              className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-xs font-bold"
+            >
               S
             </span>
             <span className="text-base font-bold tracking-tight">SaCMS</span>

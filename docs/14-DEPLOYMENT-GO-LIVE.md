@@ -195,9 +195,9 @@ skema. Ini alasan sesungguhnya aturan tiga langkah di [06 §6.6](./06-DATABASE-S
 | `*/10 * * * *` | `/api/cron/verify-domains`   | Periksa domain `PENDING_DNS` / `VERIFYING` yang ditambahkan dalam 24 jam terakhir                               |
 | `*/5 * * * *`  | `/api/cron/sync-deployments` | Mulai deployment `QUEUED` yang tertinggal; samakan `BUILDING` dengan Vercel (timeout 20 menit)                  |
 | `0 * * * *`    | `/api/cron/refund-stale`     | Refund `UsageEvent` `RESERVED` > 30 menit                                                                       |
-| `0 2 * * *`    | `/api/cron/reconcile-costs`  | Isi `vendorCostIdr` dari laporan v0                                                                             |
-| `0 3 * * *`    | `/api/cron/reset-periods`    | Reset kuota pengguna yang periodenya habis                                                                      |
-| `0 4 * * *`    | `/api/cron/cleanup`          | Hapus sesi kedaluwarsa, log lama                                                                                |
+| `0 19 * * *`   | `/api/cron/reconcile-costs`  | Isi `vendorCostIdr` dari laporan v0 (02.00 WIB)                                                                 |
+| `0 20 * * *`   | `/api/cron/reset-periods`    | Reset kuota pengguna yang periodenya habis (03.00 WIB)                                                          |
+| `15 * * * *`   | `/api/cron/cleanup`          | Catat `user.impersonate.expired` untuk sesi impersonasi yang habis sendiri, lalu hapus sesinya                  |
 
 Webhook Vercel didaftarkan di dashboard tim Vercel: URL `/api/webhooks/vercel`, event
 `deployment.*`, secret yang sama dengan `VERCEL_WEBHOOK_SECRET`. Webhook mempercepat
@@ -214,16 +214,10 @@ if (auth !== `Bearer ${env.CRON_SECRET}`) {
 
 Tanpa ini, siapa pun dapat memicu reset kuota seluruh pengguna.
 
-**Status implementasi (Fase 6):** `refund-stale`, `reset-periods`, dan `reconcile-costs` kini
-ada, bersama `sweep-stuck-jobs`, `run-queued`, `verify-domains`, `sync-deployments`.
-`cleanup` belum dibuat (Fase 7).
-
-**Penjadwalan belum dipasang (`vercel.json` sengaja tidak ada).** Paket Vercel Hobby hanya
-mengizinkan cron **sekali sehari**; mendaftarkan jadwal per menit/5 menit di atas membuat
-deploy **ditolak**. Keputusan penjadwal (Vercel Pro, atau penjadwal eksternal yang memanggil
-endpoint dengan `Authorization: Bearer $CRON_SECRET`) diambil di Fase 7. Sampai itu:
-polling UI + `after()` tetap menjalankan build dan deploy; yang tertunda hanya jaring
-pengaman latar (penyapu, reset periode, rekonsiliasi biaya).
+**Status implementasi (Fase 7):** kedelapan endpoint ada dan terjadwal di `vercel.json`
+(jadwal dalam UTC). Penjadwal memakai **cron Vercel di tim Pro** — paket Hobby hanya
+mengizinkan cron harian dan menolak jadwal per menit. Setiap endpoint menolak permintaan
+tanpa `Authorization: Bearer $CRON_SECRET`, jadi `CRON_SECRET` wajib terisi di Vercel.
 
 ## 14.9 Checklist Go-Live
 

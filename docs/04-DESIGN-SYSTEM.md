@@ -38,16 +38,19 @@ Hex adalah sumber kebenaran. Nilai OKLCH adalah padanan (dibulatkan) yang dipaka
 
 Diuji dengan rasio kontras WCAG 2.1:
 
-| Kombinasi                   | Rasio     | Status                              | Konsekuensi                                                   |
-| --------------------------- | --------- | ----------------------------------- | ------------------------------------------------------------- |
-| `#FF6B00` di atas `#000000` | **7.3:1** | Lulus AAA (teks besar), AA (normal) | Aman untuk teks & ikon oranye di dark mode                    |
-| `#FF6B00` di atas `#FFFFFF` | **2.9:1** | **GAGAL**                           | **Jangan pernah** pakai oranye-500 sebagai teks di light mode |
-| `#FFFFFF` di atas `#FF6B00` | **2.9:1** | **GAGAL**                           | **Jangan pernah** pakai teks putih di atas tombol oranye      |
-| `#000000` di atas `#FF6B00` | **7.3:1** | Lulus AAA                           | **Teks tombol oranye WAJIB hitam**                            |
-| `#C24A00` di atas `#FFFFFF` | **4.9:1** | Lulus AA                            | Pakai `brand-700` untuk teks oranye di light mode             |
-| `#FFFFFF` di atas `#000000` | **21:1**  | Lulus AAA                           | —                                                             |
-| `#A1A1A1` di atas `#000000` | **8.0:1** | Lulus AAA                           | Teks sekunder dark mode                                       |
-| `#737373` di atas `#FFFFFF` | **4.7:1** | Lulus AA                            | Teks sekunder light mode                                      |
+| Kombinasi                                                        | Rasio       | Status                              | Konsekuensi                                                   |
+| ---------------------------------------------------------------- | ----------- | ----------------------------------- | ------------------------------------------------------------- |
+| `#FF6B00` di atas `#000000`                                      | **7.3:1**   | Lulus AAA (teks besar), AA (normal) | Aman untuk teks & ikon oranye di dark mode                    |
+| `#FF6B00` di atas `#FFFFFF`                                      | **2.9:1**   | **GAGAL**                           | **Jangan pernah** pakai oranye-500 sebagai teks di light mode |
+| `#FFFFFF` di atas `#FF6B00`                                      | **2.9:1**   | **GAGAL**                           | **Jangan pernah** pakai teks putih di atas tombol oranye      |
+| `#000000` di atas `#FF6B00`                                      | **7.3:1**   | Lulus AAA                           | **Teks tombol oranye WAJIB hitam**                            |
+| `#C24A00` di atas `#FFFFFF`                                      | **4.9:1**   | Lulus AA                            | Pakai `brand-700` untuk teks oranye di light mode             |
+| `#FFFFFF` di atas `#000000`                                      | **21:1**    | Lulus AAA                           | —                                                             |
+| `#A1A1A1` di atas `#000000`                                      | **8.0:1**   | Lulus AAA                           | Teks sekunder dark mode                                       |
+| `#737373` di atas `#FFFFFF`                                      | **4.7:1**   | Lulus AA                            | Teks sekunder light mode                                      |
+| `destructive` di atas badge gelap                                | **< 4.5:1** | **GAGAL** (Lighthouse, Fase 7)      | Jangan pakai `text-destructive` untuk teks kecil di dark mode |
+| `destructive-text` (`oklch(0.808 0.114 19.6)`) di atas `#212121` | **≥ 7:1**   | Lulus AA                            | Teks merah di dark mode — badge `danger`, pesan galat         |
+| `destructive-text` (`oklch(0.505 0.213 27.5)`) di atas `#FFFFFF` | **≥ 6:1**   | Lulus AA                            | Teks merah di light mode                                      |
 
 > **Aturan tegas: `--primary-foreground` adalah HITAM di kedua tema.**
 > Ini bukan selera — teks putih di atas oranye gagal aksesibilitas. Hitam di atas oranye
@@ -303,7 +306,7 @@ const badgeVariants = cva(
         outline: "border-border text-foreground",
         success: "border-transparent bg-success/15 text-success",
         warning: "border-transparent bg-warning/15 text-warning",
-        danger: "border-transparent bg-destructive/15 text-destructive",
+        danger: "border-transparent bg-destructive/15 text-destructive-text",
         neutral: "border-transparent bg-muted text-muted-foreground",
       },
     },
