@@ -80,9 +80,13 @@ export function DeleteAccountDialog({ email }: { email: string }) {
           </DialogHeader>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmEmail">
-              Ketik <span className="text-foreground font-semibold">{email}</span> untuk
-              konfirmasi
+            {/* Email ditaruh di barisnya sendiri: alamat panjang membuat label
+                satu baris terbelah dan sulit dibaca. */}
+            <Label htmlFor="confirmEmail" className="block space-y-1">
+              <span className="block">Ketik email akun ini untuk konfirmasi:</span>
+              <span className="text-foreground block font-mono text-xs break-all">
+                {email}
+              </span>
             </Label>
             <Input
               id="confirmEmail"
