@@ -251,7 +251,8 @@ model Plan {
   name     String
   description String?
 
-  priceMonthly Int  @default(0) // rupiah utuh
+  priceYearly  Int  @default(0) // ADR-012: harga Paket Project per TAHUN
+  priceMonthly Int  @default(0) // rupiah utuh; dihapus di langkah terakhir migrasi
   isPublic     Boolean @default(true)
   sortOrder    Int     @default(0)
 
@@ -260,12 +261,17 @@ model Plan {
   monthlyCredits    Int  @default(30)
   maxCustomDomains  Int  @default(0)
   maxDeploysPerDay  Int  @default(3)
+  // Batas wajar per project per bulan (ADR-012 §1): melewatinya memberi
+  // peringatan, TIDAK mematikan situs.
+  fairTransferGb    Int  @default(50)
+  fairFunctionCalls Int  @default(500000)
   allowedModels     String[] @default(["v0-mini"])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users         User[]
+  subscriptions WebsiteSubscription[]
 
   @@map("plan")
 }
@@ -502,6 +508,72 @@ model Domain {
 //  USAGE, AUDIT, SISTEM
 // ============================================================
 
+// --- ADR-012: Paket Project & dompet kredit -----------------
+
+enum SubscriptionStatus {
+  ACTIVE
+  GRACE      // lewat endsAt, situs MASIH tayang
+  EXPIRED    // tenggang habis, situs diturunkan
+  CANCELLED
+}
+
+enum CreditLotSource {
+  TOPUP
+  WELCOME
+  ADMIN
+}
+
+// Satu baris per project; perpanjangan memajukan endsAt, riwayatnya di audit log.
+model WebsiteSubscription {
+  id     String             @id @default(cuid())
+  status SubscriptionStatus @default(ACTIVE)
+
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  startsAt DateTime @default(now())
+  endsAt   DateTime
+
+  activatedById String?   // Super Admin yang mengaktifkan (bayar manual)
+  activatedBy   User?     @relation("SubscriptionActivator", fields: [activatedById], references: [id], onDelete: SetNull)
+  paymentRef    String?   // nomor bukti transfer / faktur
+  remindedAt    DateTime? // pengingat terakhir dari cron
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, endsAt])
+  @@map("website_subscription")
+}
+
+// Dompet kredit per AKUN. Pemakaian mengambil lot yang paling dulu kedaluwarsa.
+model CreditLot {
+  id     String          @id @default(cuid())
+  source CreditLotSource
+
+  amount    Int  // jumlah saat dibeli, untuk riwayat
+  remaining Int  // sisa; inilah yang dipotong FIFO
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt  DateTime  // 12 bulan sejak dibeli (ADR-012)
+  paymentRef String?
+  note       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usageEvents UsageEvent[]
+
+  @@index([userId, expiresAt])
+  @@index([userId, remaining])
+  @@map("credit_lot")
+}
+
 model UsageEvent {
   id    String     @id @default(cuid())
   kind  UsageKind
@@ -515,6 +587,10 @@ model UsageEvent {
   projectId  String?
   buildJobId String?
   buildJob   BuildJob? @relation(fields: [buildJobId], references: [id])
+
+  // ADR-012: lot kredit asal, supaya refund kembali ke lot yang sama.
+  creditLotId String?
+  creditLot   CreditLot? @relation(fields: [creditLotId], references: [id], onDelete: SetNull)
 
   // Biaya nyata dari vendor, diisi saat rekonsiliasi. Rupiah utuh.
   vendorCostIdr Int?

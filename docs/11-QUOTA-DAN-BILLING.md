@@ -1,7 +1,7 @@
 # 11 — Kuota, Kredit & Paket
 
-> **Usulan perubahan model — [ADR-012](./adr/ADR-012-langganan-per-website-dan-dompet-kredit.md) (diusulkan
-> 2026-09-16):** paket per akun dengan kredit bulanan diganti dua hal terpisah:
+> **Perubahan model DISETUJUI — [ADR-012](./adr/ADR-012-langganan-per-website-dan-dompet-kredit.md)
+> (2026-09-16), sedang dikerjakan bertahap (docs/06 §6.6: tambah dulu, hapus terakhir):** paket per akun dengan kredit bulanan diganti dua hal terpisah:
 >
 > - **Paket Project** — dibayar **per project per tahun** (UMKM Rp 3 juta, Pemda Rp 12 juta), karena setiap
 >   website yang tayang memakai hosting, bandwidth, function Vercel, domain, dan dukungan. Database Neon dan

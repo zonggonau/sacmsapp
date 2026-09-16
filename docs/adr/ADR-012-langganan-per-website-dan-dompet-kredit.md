@@ -1,7 +1,9 @@
 # ADR-012 — Paket per Project & Dompet Kredit AI per Akun
 
-**Status:** Diusulkan — menunggu persetujuan pemilik sistem
+**Status:** Accepted
 **Tanggal:** 2026-09-16
+**Disetujui:** pemilik sistem (2026-09-16)
+**Pembayaran:** tetap manual oleh Super Admin; Midtrans tetap v1.1 ([ADR-010](./ADR-010-pembayaran-midtrans.md))
 **Menggantikan (bila disetujui):** [11 §11.1, §11.2, §11.5](../11-QUOTA-DAN-BILLING.md) (paket per akun
 dengan kredit bulanan)
 **Terkait:** [ADR-003](./ADR-003-postgres-prisma.md), [ADR-010](./ADR-010-pembayaran-midtrans.md),

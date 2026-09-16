@@ -102,6 +102,21 @@ enum MessageRole {
   SYSTEM
 }
 
+/// ADR-012: status langganan Paket Project per website.
+enum SubscriptionStatus {
+  ACTIVE
+  GRACE
+  EXPIRED
+  CANCELLED
+}
+
+/// ADR-012: asal kredit di dompet akun.
+enum CreditLotSource {
+  TOPUP
+  WELCOME
+  ADMIN
+}
+
 enum UsageKind {
   AI_GENERATE
   AI_EDIT
@@ -120,10 +135,10 @@ enum UsageState {
 // ============================================================
 
 model User {
-  id            String     @id @default(cuid())
+  id            String  @id @default(cuid())
   name          String
-  email         String     @unique
-  emailVerified Boolean    @default(false)
+  email         String  @unique
+  emailVerified Boolean @default(false)
   image         String?
 
   // --- kolom SaCMS ---
@@ -153,12 +168,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions      Session[]
-  accounts      Account[]
-  projects      Project[]
-  usageEvents   UsageEvent[]
-  auditLogs     AuditLog[]     @relation("AuditActor")
-  notifications Notification[]
+  sessions               Session[]
+  accounts               Account[]
+  projects               Project[]
+  usageEvents            UsageEvent[]
+  auditLogs              AuditLog[]            @relation("AuditActor")
+  notifications          Notification[]
+  creditLots             CreditLot[]
+  activatedSubscriptions WebsiteSubscription[] @relation("SubscriptionActivator")
 
   @@index([role])
   @@index([status])
@@ -234,22 +251,30 @@ model Plan {
   name        String
   description String?
 
+  /// ADR-012: harga Paket Project per TAHUN. `priceMonthly` masih dipertahankan
+  /// sampai langkah terakhir migrasi (docs/06 §6.6 aturan 4).
+  priceYearly  Int     @default(0)
   priceMonthly Int     @default(0)
   isPublic     Boolean @default(true)
   sortOrder    Int     @default(0)
 
   // Batas — diubah Super Admin lewat UI, tanpa deploy ulang
-  maxProjects      Int      @default(1)
-  monthlyCredits   Int      @default(30)
-  maxCustomDomains Int      @default(0)
-  maxDeploysPerDay Int      @default(3)
+  maxProjects       Int      @default(1)
+  monthlyCredits    Int      @default(30)
+  maxCustomDomains  Int      @default(0)
+  maxDeploysPerDay  Int      @default(3)
+  /// Batas wajar per project per bulan — ADR-012 §1. Melewatinya memberi
+  /// peringatan, TIDAK mematikan situs.
+  fairTransferGb    Int      @default(50)
+  fairFunctionCalls Int      @default(500000)
   // Id model valid ada di src/config/ai-models.ts (diverifikasi dari v0-sdk)
-  allowedModels    String[] @default(["v0-mini"])
+  allowedModels     String[] @default(["v0-mini"])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users         User[]
+  subscriptions WebsiteSubscription[]
 
   @@map("plan")
 }
@@ -267,7 +292,7 @@ model Project {
   websiteType WebsiteType   @default(CUSTOM)
   status      ProjectStatus @default(DRAFT)
 
-  initialPrompt String @db.Text
+  initialPrompt String  @db.Text
   /// Website acuan opsional dari formulir project baru — ikut dikirim pada build awal.
   referenceUrl  String?
 
@@ -292,11 +317,12 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  versions    ProjectVersion[] @relation("ProjectVersions")
-  messages    AiMessage[]
-  buildJobs   BuildJob[]
-  deployments Deployment[]
-  domains     Domain[]
+  versions     ProjectVersion[]     @relation("ProjectVersions")
+  messages     AiMessage[]
+  buildJobs    BuildJob[]
+  deployments  Deployment[]
+  domains      Domain[]
+  subscription WebsiteSubscription?
 
   @@unique([userId, slug])
   @@index([userId, status])
@@ -371,7 +397,7 @@ model BuildJob {
   errorCode    String?
   errorMessage String?
   // Untuk Super Admin — boleh mentah
-  rawError String? @db.Text
+  rawError     String? @db.Text
 
   // Apa yang BENAR-BENAR dikirim ke v0, untuk investigasi Super Admin
   // (docs/10 §10.5). Tidak pernah dikembalikan ke pengguna.
@@ -482,6 +508,64 @@ model Domain {
 //  USAGE, AUDIT, SISTEM
 // ============================================================
 
+/// Langganan Paket Project — satu baris per project, diperpanjang dengan
+/// memajukan `endsAt` (ADR-012). Riwayat perpanjangan ada di audit log.
+model WebsiteSubscription {
+  id     String             @id @default(cuid())
+  status SubscriptionStatus @default(ACTIVE)
+
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  startsAt DateTime @default(now())
+  endsAt   DateTime
+
+  /// Super Admin yang mengaktifkan setelah pembayaran manual (Midtrans v1.1).
+  activatedById String?
+  activatedBy   User?   @relation("SubscriptionActivator", fields: [activatedById], references: [id], onDelete: SetNull)
+  /// Nomor bukti transfer atau faktur manual.
+  paymentRef    String?
+
+  /// Pengingat terakhir yang dikirim cron, supaya tidak mengirim dua kali.
+  remindedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, endsAt])
+  @@map("website_subscription")
+}
+
+/// Dompet kredit AI per AKUN (ADR-012). Kredit masuk sebagai lot; pemakaian
+/// mengambil dari lot yang paling dulu kedaluwarsa (FIFO).
+model CreditLot {
+  id     String          @id @default(cuid())
+  source CreditLotSource
+
+  /// `amount` dipertahankan untuk riwayat pembelian; FIFO memotong `remaining`.
+  amount    Int
+  remaining Int
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt  DateTime
+  paymentRef String?
+  note       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usageEvents UsageEvent[]
+
+  @@index([userId, expiresAt])
+  @@index([userId, remaining])
+  @@map("credit_lot")
+}
+
 model UsageEvent {
   id    String     @id @default(cuid())
   kind  UsageKind
@@ -495,6 +579,10 @@ model UsageEvent {
   projectId  String?
   buildJobId String?
   buildJob   BuildJob? @relation(fields: [buildJobId], references: [id])
+
+  /// ADR-012: lot kredit asal, supaya refund kembali ke lot yang sama.
+  creditLotId String?
+  creditLot   CreditLot? @relation(fields: [creditLotId], references: [id], onDelete: SetNull)
 
   // Biaya nyata dari vendor, diisi saat rekonsiliasi. Rupiah utuh.
   vendorCostIdr Int?
