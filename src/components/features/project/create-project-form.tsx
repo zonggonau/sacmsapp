@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils";
 import type { WebsiteType } from "@/types/db";
 
 /**
- * SATU komponen form, dipakai oleh halaman penuh `/projects/baru` DAN dialog
- * `@modal/(.)baru`. Menduplikasi form ke dua tempat adalah cara pasti membuat
- * keduanya berbeda perlahan-lahan (docs/05 §5.4).
+ * SATU komponen form untuk membuat project, dipakai halaman `/projects/baru`.
+ * Bila nanti ada jalur lain untuk membuat project, pakai komponen ini juga:
+ * menduplikasi form adalah cara pasti membuat keduanya berbeda perlahan-lahan
+ * (docs/05 §5.4, ADR-013).
  */
 export interface CreateProjectQuota {
   creditsLeft: number;

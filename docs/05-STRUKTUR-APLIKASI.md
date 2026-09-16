@@ -37,10 +37,9 @@ src/app/
 │   │   ├── layout.tsx              # header daftar + tombol "Project Baru"
 │   │   ├── page.tsx                # grid kartu project
 │   │   ├── loading.tsx
-│   │   ├── @modal/                 # PARALLEL ROUTE
-│   │   │   ├── default.tsx         # null
-│   │   │   └── (.)baru/page.tsx    # INTERCEPTING: dialog "Project Baru"
-│   │   ├── baru/page.tsx           # halaman penuh (akses langsung/refresh)
+│   │   ├── baru/                   # halaman penuh "Project Baru"
+│   │   │   ├── page.tsx
+│   │   │   └── loading.tsx
 │   │   │
 │   │   └── [projectId]/
 │   │       ├── layout.tsx          # NESTED: ambil project, cek pemilik, tab nav
@@ -171,41 +170,30 @@ export default async function ProjectLayout({
 > **Next.js 16:** `params` dan `searchParams` adalah `Promise` dan wajib di-`await`.
 > Begitu juga `cookies()`, `headers()`, dan `draftMode()`.
 
-## 5.4 Parallel + Intercepting Routes — Dialog "Project Baru"
+## 5.4 Halaman "Project Baru" — Tanpa Dialog
 
-Tujuan: klik "Project Baru" di `/projects` membuka **dialog** tanpa meninggalkan halaman;
-tapi membuka `/projects/baru` langsung (atau me-refresh) menampilkan **halaman penuh**.
+Membuat project selalu terjadi di **halaman penuh** `/projects/baru`, baik diklik dari
+`/projects`, dibuka dari URL, dibagikan, maupun di-refresh. Satu URL, satu tampilan.
 
 ```
 projects/
-├── layout.tsx          -> menerima props { children, modal }
-├── page.tsx
-├── baru/page.tsx       -> halaman penuh
-└── @modal/
-    ├── default.tsx     -> return null  (WAJIB, kalau tidak akan 404 saat refresh)
-    └── (.)baru/page.tsx-> dialog, memakai komponen form yang sama
+├── layout.tsx          -> hanya meneruskan { children }
+├── (daftar)/page.tsx   -> grid kartu project
+└── baru/
+    ├── page.tsx        -> formulir
+    └── loading.tsx     -> skeleton
 ```
 
-```tsx
-// projects/layout.tsx
-export default function ProjectsLayout({
-  children,
-  modal,
-}: {
-  children: React.ReactNode;
-  modal: React.ReactNode;
-}) {
-  return (
-    <>
-      {children}
-      {modal}
-    </>
-  );
-}
-```
+Dialog lewat parallel + intercepting route (`@modal/(.)baru`) **sudah dihapus** atas
+permintaan pemilik sistem, karena tampilannya berbeda sebelum dan sesudah refresh:
+dialog saat diklik dari daftar, halaman penuh setelah di-refresh. Formulirnya juga
+sudah panjang (jenis website, nama, prompt, website referensi) sehingga lebih nyaman
+dibaca di halaman penuh. Alasan lengkap:
+[ADR-013](./adr/ADR-013-formulir-project-baru-tanpa-dialog.md).
 
-Aturan: **form-nya satu komponen** (`components/features/project/create-project-form.tsx`),
-dipakai oleh halaman penuh dan dialog. Jangan menduplikasi form.
+Aturan yang tetap berlaku: **form-nya satu komponen**
+(`components/features/project/create-project-form.tsx`). Jangan menduplikasi form ke
+tempat lain — termasuk kalau nanti ada kebutuhan membuat project dari layar lain.
 
 ## 5.5 Streaming, Loading, Error
 

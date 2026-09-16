@@ -107,7 +107,7 @@ Pekerjaan:
 3. `schemas/project.schema.ts`
 4. `config/website-types.ts` — 12 tipe dengan `requirements` lengkap ([09 §9.6](./09-AI-BUILDER-PIPELINE.md))
 5. `/projects` — grid kartu + filter/pencarian via `nuqs` + empty state
-6. `/projects/baru` + `@modal/(.)baru` (parallel + intercepting)
+6. `/projects/baru` — halaman penuh ([ADR-013](./adr/ADR-013-formulir-project-baru-tanpa-dialog.md): dialog dihapus)
 7. `/projects/[projectId]/layout.tsx` + tab nav
 8. Halaman ringkasan project
 9. `/projects/[projectId]/pengaturan` — ubah nama, hapus (ketik-untuk-yakin)
@@ -117,8 +117,8 @@ Pekerjaan:
 **Definition of Done:**
 
 - [x] Buat project dengan prompt tersimpan (status `DRAFT`, belum ada AI) — _`tests/services/project.test.ts`, `quota-billing.test.ts`_
-- [x] Dialog dari `/projects` dan halaman penuh dari URL langsung — keduanya bekerja, form-nya satu komponen — _`e2e/06-dod-fase-1-3.spec.ts`_
-- [x] Refresh saat dialog terbuka → halaman penuh, bukan 404 — _`e2e/06-dod-fase-1-3.spec.ts`_
+- [x] Buat project dari `/projects` maupun dari URL langsung — keduanya membuka halaman penuh yang sama dengan satu komponen form — _`e2e/06-dod-fase-1-3.spec.ts`; dialog dihapus atas permintaan pemilik ([ADR-013](./adr/ADR-013-formulir-project-baru-tanpa-dialog.md))_
+- [x] Refresh di `/projects/baru` tetap menampilkan formulir, bukan 404 — _`e2e/06-dod-fase-1-3.spec.ts`_
 - [x] Pengguna A membuka project pengguna B → 404 — _status HTTP 404 sungguhan di kelima tab (`e2e/06-dod-fase-1-3.spec.ts`); sebelumnya 200 karena batas Suspense_
 - [x] Filter & pencarian tersimpan di URL dan bertahan saat refresh — _`e2e/06-dod-fase-1-3.spec.ts`_
 - [x] Empty state, loading state, error state ada di semua daftar — _`projects-empty`, `(daftar)/loading.tsx`, skeleton per tab, `error.tsx`; terlihat di audit halaman_

@@ -1,22 +1,11 @@
 /**
  * Layout daftar project.
  *
- * Menerima dua slot: `children` (halaman biasa) dan `modal` (parallel route
- * @modal). Kombinasi parallel + intercepting route membuat "Project Baru"
- * terbuka sebagai dialog dari /projects, tetapi menjadi halaman penuh bila
- * URL-nya dibuka langsung atau halaman di-refresh. docs/05 §5.4
+ * Hanya meneruskan `children`. "Project Baru" adalah halaman penuh biasa
+ * (`/projects/baru`) — dialog lewat parallel + intercepting route sudah dihapus,
+ * lihat [ADR-013](../../../../docs/adr/ADR-013-formulir-project-baru-tanpa-dialog.md)
+ * dan docs/05 §5.4.
  */
-export default function ProjectsLayout({
-  children,
-  modal,
-}: {
-  children: React.ReactNode;
-  modal: React.ReactNode;
-}) {
-  return (
-    <>
-      {children}
-      {modal}
-    </>
-  );
+export default function ProjectsLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }

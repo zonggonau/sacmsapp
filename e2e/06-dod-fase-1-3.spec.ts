@@ -126,9 +126,7 @@ test.describe("Fase 1 — autentikasi & kerangka", () => {
 });
 
 test.describe("Fase 2 — CRUD project", () => {
-  test("dialog dari daftar, halaman penuh saat refresh, filter di URL, tombol Back", async ({
-    page,
-  }) => {
+  test("halaman project baru, filter di URL, tombol Back", async ({ page }) => {
     const user = await createUser({ label: "crud", planSlug: "pro" });
     const project = await dbTask<{ id: string }>("createProject", {
       userId: user.id,
@@ -138,14 +136,20 @@ test.describe("Fase 2 — CRUD project", () => {
     await signInViaForm(page, user.email);
     await expect(page).toHaveURL(/\/dashboard/);
 
+    // ADR-013: satu URL satu tampilan — selalu halaman penuh, tanpa dialog.
     await page.goto("/projects");
     await page.getByRole("link", { name: "Project Baru" }).click();
     await expect(page).toHaveURL(/\/projects\/baru/);
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Project baru" })).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
 
     await page.reload();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByLabel("Ceritakan website yang Anda inginkan")).toBeVisible();
+
+    // Back dari formulir kembali ke daftar.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/projects(\?|$)/);
 
     await page.goto("/projects");
     await page.getByLabel("Cari project").fill("Senja");

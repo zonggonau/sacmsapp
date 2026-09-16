@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 /**
  * Halaman penuh "Project Baru".
  *
- * Dipakai saat URL dibuka langsung, di-refresh, atau dibagikan. Dari /projects,
- * rute yang sama ditampilkan sebagai dialog lewat @modal/(.)baru — dengan
- * komponen form yang SAMA. docs/05 §5.4
+ * Satu-satunya tampilan untuk membuat project: diklik dari /projects, dibuka
+ * dari URL, dibagikan, atau di-refresh — semuanya halaman ini. Dialog yang
+ * dicegat sudah dihapus (ADR-013). docs/05 §5.4
  */
 export default async function ProjectBaruPage() {
   const user = await requireUser();

@@ -59,6 +59,7 @@
 | [010](./adr/ADR-010-pembayaran-midtrans.md)                     | Pembayaran otomatis lewat Midtrans (v1.1)                | Accepted  |
 | [011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md)                | Ikuti perilaku bawaan v0 — hasil sama dengan v0.app      | Accepted  |
 | [012](./adr/ADR-012-langganan-per-website-dan-dompet-kredit.md) | Paket per project tahunan + kredit AI per akun           | Diusulkan |
+| [013](./adr/ADR-013-formulir-project-baru-tanpa-dialog.md)      | Formulir project baru tanpa dialog (halaman penuh)       | Accepted  |
 
 ---
 
