@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import * as quotaService from "@/services/quota.service";
 import type { ReserveInput } from "@/services/quota.service";
+import type { UsageKind, UsageState } from "@/types/db";
 
 /**
  * Siklus kredit: reserve -> commit / refund. docs/11-QUOTA-DAN-BILLING.md §11.4
@@ -150,4 +151,62 @@ export async function refundStale(olderThanMinutes = 30): Promise<number> {
   }
 
   return stale.length;
+}
+
+/* ============================================================
+ *  BACA — riwayat untuk pengguna (docs/11 §11.6)
+ * ============================================================ */
+
+export interface UsageHistoryItem {
+  id: string;
+  kind: UsageKind;
+  state: UsageState;
+  credits: number;
+  projectId: string | null;
+  /** null bila project sudah dihapus — catatan pemakaiannya tetap ada. */
+  projectName: string | null;
+  model: string | null;
+  createdAt: Date;
+}
+
+/**
+ * Riwayat pemakaian kredit milik satu pengguna.
+ *
+ * `UsageEvent.projectId` sengaja TANPA relasi (docs/06): catatan pemakaian
+ * harus selamat ketika project dihapus. Karena itu nama project diambil lewat
+ * query kedua yang tetap menyertakan `userId` (docs/06 §6.7), dan project yang
+ * sudah hilang tampil tanpa nama alih-alih menghilangkan barisnya.
+ */
+export async function listHistory(
+  userId: string,
+  limit = 30,
+): Promise<UsageHistoryItem[]> {
+  const events = await db.usageEvent.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      kind: true,
+      state: true,
+      credits: true,
+      projectId: true,
+      model: true,
+      createdAt: true,
+    },
+  });
+
+  const ids = [...new Set(events.flatMap((e) => (e.projectId ? [e.projectId] : [])))];
+  const projects = ids.length
+    ? await db.project.findMany({
+        where: { id: { in: ids }, userId },
+        select: { id: true, name: true },
+      })
+    : [];
+  const nameById = new Map(projects.map((p) => [p.id, p.name]));
+
+  return events.map((e) => ({
+    ...e,
+    projectName: e.projectId ? (nameById.get(e.projectId) ?? null) : null,
+  }));
 }

@@ -11,12 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CreditHistory } from "@/components/features/quota/credit-history";
 import { Progress } from "@/components/ui/progress";
 import { requireUser } from "@/lib/auth-guard";
 import { angka, rupiah, tanggal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import * as planService from "@/services/plan.service";
 import * as quotaService from "@/services/quota.service";
+import * as usageService from "@/services/usage.service";
 
 export const metadata: Metadata = {
   title: "Paket & Kuota",
@@ -59,9 +61,10 @@ function Meter({
 /** Kuota terlihat sebelum dibutuhkan — docs/11 §11.6. */
 export default async function PlanPage() {
   const user = await requireUser();
-  const [quota, plans] = await Promise.all([
+  const [quota, plans, history] = await Promise.all([
     quotaService.getQuota(user.id),
     planService.list(),
+    usageService.listHistory(user.id),
   ]);
   if (!quota) notFound();
 
@@ -206,6 +209,20 @@ Paket yang diinginkan: `)}`}
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Menjawab "kredit saya habis untuk apa?" — docs/11 §11.6. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Riwayat pemakaian kredit</CardTitle>
+          <CardDescription>
+            30 catatan terakhir. Build yang gagal mengembalikan kreditnya, dan barisnya
+            tetap ditampilkan agar terlihat.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CreditHistory items={history} />
         </CardContent>
       </Card>
     </div>

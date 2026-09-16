@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ChangePasswordForm } from "@/components/features/account/change-password-form";
+import { DeleteAccountDialog } from "@/components/features/account/delete-account-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -88,6 +89,23 @@ export default async function KeamananPage() {
           <ChangePasswordForm />
         </CardContent>
       </Card>
+
+      {/* Hapus akun sendiri — docs/12 §12.6 (UU PDP). Akun admin tidak boleh
+          hilang lewat jalur mandiri, jadi kartunya tidak ditampilkan. */}
+      {user.role === "USER" ? (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-destructive text-base">Hapus akun</CardTitle>
+            <CardDescription>
+              Menghapus akun juga menghapus semua project dan menurunkan website yang
+              sudah terbit. Sisa kredit hangus. Tindakan ini tidak bisa dibatalkan.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DeleteAccountDialog email={user.email} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

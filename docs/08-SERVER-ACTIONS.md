@@ -377,7 +377,17 @@ dihitung saat **berhasil** saja.
 
 ### `account.actions.ts`
 
-`updateProfile`, `changePassword`, `deleteAccount`, `markNotificationsRead`
+| Action             | actionName            | Input                           | Catatan                                                       |
+| ------------------ | --------------------- | ------------------------------- | ------------------------------------------------------------- |
+| `deleteOwnAccount` | `user.account.delete` | `{confirmEmail, confirmPhrase}` | Hapus akun sendiri (docs/12 §12.6); ditolak untuk peran admin |
+
+`updateProfile` dan `changePassword` masih di `auth.actions.ts` (keduanya memanggil Better
+Auth langsung), `markNotificationsRead` di `notification.actions.ts`.
+
+`user.account.delete` berakhiran `.delete` agar diblokir saat Super Admin menyamar. Action ini
+**tidak** memakai `audit: true`: middleware menulis audit setelah action selesai, saat baris
+penggunanya sudah hilang, jadi `account.service` yang mencatatnya lebih dulu. Setelah berhasil,
+action mengalihkan ke `/api/sesi-berakhir` untuk membersihkan cookie sesi.
 
 ### `admin.actions.ts` — semua `requireRole: "SUPER_ADMIN"`, semua `audit: true`
 

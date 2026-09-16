@@ -133,12 +133,15 @@ Kuota harus terlihat **sebelum** dibutuhkan, bukan saat sudah habis.
 | ------------------- | ---------------------------------------------------------------- |
 | Topbar              | `412 / 500 kredit` — berubah oranye di ≤20%, merah di ≤5%        |
 | `/akun/paket`       | Bar untuk kredit, project, domain, deploy + tanggal reset        |
+| `/akun/paket`       | Riwayat 30 pemakaian terakhir: jenis, project, kredit, status    |
 | Dialog buat project | Sisa kredit di bawah tombol                                      |
 | Batas tercapai      | Dialog dengan penjelasan + tombol "Lihat Paket"                  |
 | Kredit ≤ 20%        | Notifikasi dalam aplikasi (sekali per periode, jangan mengulang) |
 
 **Status (Fase 7):** seluruh tabel di atas terpasang — topbar, `/akun/paket`, sisa kredit di
-bawah tombol Buat Project, notifikasi `quota.low` + halaman `/akun/notifikasi`, dan tombol
+bawah tombol Buat Project, notifikasi `quota.low` + halaman `/akun/notifikasi`, riwayat pemakaian kredit di `/akun/paket`
+(`usageService.listHistory`, termasuk baris REFUNDED agar terlihat bahwa build gagal tidak
+memakan kredit), dan tombol
 Bangun Sekarang / kirim chat / Terbitkan / Buat Project yang nonaktif dengan tooltip saat kuota
 habis (`quotaService.getActionBlockers`). Penegakan sesungguhnya tetap di transaksi.
 

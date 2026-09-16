@@ -155,6 +155,14 @@ asing**:
 Permintaan hapus akun (dan kepatuhan UU PDP Indonesia): satu tindakan dari
 `/akun/keamanan` → hapus project, cabut sesi, anonimkan catatan yang harus dipertahankan.
 
+**Terpasang (2026-09-16).** `accountService.deleteOwnAccount` + `deleteOwnAccount` action:
+dua konfirmasi ketik-untuk-yakin (email akun & kalimat `hapus akun saya`), website yang tayang
+diturunkan lebih dulu, lalu baris `User` dihapus sehingga `Session`, `Account`, `Project`, dan
+`Notification` ikut terhapus (Cascade) sementara `AuditLog.actorId` dan `UsageEvent.userId`
+menjadi null (SetNull) — jejak audit 12 bulan dan catatan pembukuan 24 bulan tetap ada tanpa
+identitas. Akun berperan admin ditolak: penghapusannya lewat Super Admin lain (docs/07 §7.3).
+Diuji di `tests/services/hapus-akun-sendiri.test.ts`.
+
 Aturan log: `lib/logger` memiliki daftar kunci yang disamarkan (`password`, `token`,
 `secret`, `apiKey`, `email`, `prompt`). Penyamaran ada di logger, bukan bergantung pada
 setiap pemanggil mengingatnya.
