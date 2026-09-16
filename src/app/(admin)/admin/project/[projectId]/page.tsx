@@ -164,7 +164,7 @@ export default async function AdminProjectDetailPage({
         </CardContent>
       </Card>
 
-      <section className="space-y-3">
+      <section className="min-w-0 space-y-3">
         <h2 className="text-sm font-semibold">Seluruh versi</h2>
         <DataTable>
           <thead>
@@ -204,7 +204,7 @@ export default async function AdminProjectDetailPage({
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="space-y-3">
+        <section className="min-w-0 space-y-3">
           <h2 className="text-sm font-semibold">Build terakhir</h2>
           <DataTable minWidth="24rem">
             <thead>
@@ -238,7 +238,7 @@ export default async function AdminProjectDetailPage({
           </DataTable>
         </section>
 
-        <section className="space-y-3">
+        <section className="min-w-0 space-y-3">
           <h2 className="text-sm font-semibold">Deployment & domain</h2>
           <ul className="border-border divide-border divide-y rounded-lg border text-sm">
             {p.deployments.length === 0 && p.domains.length === 0 ? (

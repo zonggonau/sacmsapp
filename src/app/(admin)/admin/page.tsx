@@ -137,7 +137,7 @@ export default async function AdminOverviewPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <section className="space-y-2">
+            <section className="min-w-0 space-y-2">
               <h2 className="text-sm font-semibold">Margin per paket</h2>
               <DataTable minWidth="26rem">
                 <thead>
@@ -177,7 +177,7 @@ export default async function AdminOverviewPage() {
               </p>
             </section>
 
-            <section className="space-y-2">
+            <section className="min-w-0 space-y-2">
               <h2 className="text-sm font-semibold">10 pemakai kredit tertinggi</h2>
               <DataTable minWidth="22rem">
                 <thead>

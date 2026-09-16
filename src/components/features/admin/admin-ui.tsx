@@ -98,7 +98,10 @@ export function DataTable({
   minWidth?: string;
 }) {
   return (
-    <div className="border-border overflow-x-auto rounded-lg border">
+    // `min-w-0` WAJIB: tanpa itu wadah ini ikut melebar mengikuti minWidth
+    // tabel saat berada di dalam grid/flex, sehingga SELURUH halaman yang
+    // bergulir menyamping — bukan hanya tabelnya (docs/04, aturan 360px).
+    <div className="border-border min-w-0 overflow-x-auto rounded-lg border">
       <table className="w-full text-left text-sm" style={{ minWidth }}>
         {children}
       </table>
