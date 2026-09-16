@@ -176,7 +176,7 @@ Paket yang diinginkan: `)}`}
                     Paket
                   </th>
                   <th scope="col" className="px-3 py-2 text-right font-medium">
-                    Harga/bln
+                    Harga
                   </th>
                   <th scope="col" className="px-3 py-2 text-right font-medium">
                     Kredit
@@ -203,11 +203,32 @@ Paket yang diinginkan: `)}`}
                         </Badge>
                       ) : null}
                     </td>
+                    {/* ADR-012: Paket Project dibayar per tahun, paket lama per bulan. */}
                     <td className="px-3 py-2.5 text-right tabular-nums">
-                      {rupiah(p.priceMonthly)}
+                      {p.priceYearly > 0 ? (
+                        <>
+                          {rupiah(p.priceYearly)}
+                          <span className="text-muted-foreground text-xs">/tahun</span>
+                        </>
+                      ) : p.priceMonthly > 0 ? (
+                        <>
+                          {rupiah(p.priceMonthly)}
+                          <span className="text-muted-foreground text-xs">/bln</span>
+                        </>
+                      ) : (
+                        "Gratis"
+                      )}
                     </td>
+                    {/* Paket Project tidak punya jatah kredit: kredit dibeli
+                        terpisah ke dompet akun (ADR-012). */}
                     <td className="px-3 py-2.5 text-right font-mono tabular-nums">
-                      {angka(p.monthlyCredits)}
+                      {p.priceYearly > 0 ? (
+                        <span className="text-muted-foreground font-sans text-xs">
+                          top-up
+                        </span>
+                      ) : (
+                        angka(p.monthlyCredits)
+                      )}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono tabular-nums">
                       {angka(p.maxProjects)}

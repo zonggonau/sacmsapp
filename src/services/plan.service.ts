@@ -22,6 +22,8 @@ export async function list() {
       name: true,
       description: true,
       priceMonthly: true,
+      // ADR-012: Paket Project dibayar per tahun; paket lama masih per bulan.
+      priceYearly: true,
       isPublic: true,
       sortOrder: true,
       maxProjects: true,

@@ -43,9 +43,9 @@ export default async function PricingPage() {
           Harga sederhana, tanpa kejutan
         </h1>
         <p className="text-muted-foreground mt-4">
-          1 kredit = 1 kali pembuatan atau perubahan website. Menerbitkan website dan
-          mengembalikan versi lama tidak memakai kredit. Kredit terisi kembali setiap 30
-          hari dan tidak menumpuk.
+          Paket dibayar per website per tahun dan mencakup hosting, domain, penerbitan,
+          serta dukungan. Kredit AI dibeli terpisah: 1 kredit = 1 kali pembuatan atau
+          perubahan website, berlaku 12 bulan, dan bisa dipakai di semua website Anda.
         </p>
       </div>
 
@@ -76,19 +76,33 @@ export default async function PricingPage() {
                     {plan.description}
                   </p>
                 ) : null}
+                {/* ADR-012: Paket Project per tahun; paket lama tetap per bulan. */}
                 <p className="mt-6">
                   <span className="text-3xl font-bold tracking-tight">
-                    {plan.priceMonthly === 0 ? "Gratis" : rupiah(plan.priceMonthly)}
+                    {plan.priceYearly > 0
+                      ? rupiah(plan.priceYearly)
+                      : plan.priceMonthly > 0
+                        ? rupiah(plan.priceMonthly)
+                        : "Gratis"}
                   </span>
-                  {plan.priceMonthly > 0 ? (
+                  {plan.priceYearly > 0 ? (
+                    <span className="text-muted-foreground text-sm">
+                      {" "}
+                      / website / tahun
+                    </span>
+                  ) : plan.priceMonthly > 0 ? (
                     <span className="text-muted-foreground text-sm"> / bulan</span>
                   ) : null}
                 </p>
 
                 <ul className="mt-6 flex-1 space-y-2.5 text-sm">
                   {[
-                    `${angka(plan.maxProjects)} website`,
-                    `${angka(plan.monthlyCredits)} kredit per 30 hari`,
+                    plan.priceYearly > 0
+                      ? "1 website, layanan lengkap"
+                      : `${angka(plan.maxProjects)} website`,
+                    plan.priceYearly > 0
+                      ? "Kredit AI dibeli terpisah (top-up)"
+                      : `${angka(plan.monthlyCredits)} kredit per 30 hari`,
                     `${angka(plan.maxDeploysPerDay)} penerbitan per hari`,
                     plan.maxCustomDomains === 0
                       ? "Alamat vercel.app (tanpa custom domain)"
@@ -110,7 +124,9 @@ export default async function PricingPage() {
                   asChild
                 >
                   <Link href="/daftar">
-                    {plan.priceMonthly === 0 ? "Mulai gratis" : `Pilih ${plan.name}`}
+                    {plan.priceYearly === 0 && plan.priceMonthly === 0
+                      ? "Mulai gratis"
+                      : `Pilih ${plan.name}`}
                   </Link>
                 </Button>
               </div>
@@ -120,9 +136,9 @@ export default async function PricingPage() {
       )}
 
       <p className="text-muted-foreground mx-auto mt-10 max-w-2xl text-center text-sm">
-        Semua pendaftar mulai dari paket gratis. Peningkatan paket saat ini dilakukan
-        oleh tim SaCMS setelah pembayaran; batas baru berlaku seketika. Harga belum
-        termasuk pajak bila berlaku.
+        Akun baru mendapat 5 kredit sambutan untuk mencoba Builder. Pengaktifan paket
+        dan pembelian kredit saat ini dilayani tim SaCMS setelah pembayaran; keduanya
+        berlaku seketika. Harga belum termasuk pajak bila berlaku.
       </p>
     </div>
   );
