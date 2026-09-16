@@ -33,6 +33,9 @@ const PLANS = [
     priceYearly: 0,
     fairTransferGb: 50,
     fairFunctionCalls: 500_000,
+    // ADR-012: paket akun lama tidak diiklankan lagi; yang dijual adalah
+    // Paket Project per website. Pengguna tetap melihat paketnya sendiri.
+    isPublic: false,
     sortOrder: 0,
     maxProjects: 1,
     monthlyCredits: 30,
@@ -49,6 +52,7 @@ const PLANS = [
     priceYearly: 0,
     fairTransferGb: 50,
     fairFunctionCalls: 500_000,
+    isPublic: false,
     sortOrder: 1,
     maxProjects: 10,
     monthlyCredits: 500,
@@ -64,6 +68,7 @@ const PLANS = [
     priceYearly: 0,
     fairTransferGb: 300,
     fairFunctionCalls: 3_000_000,
+    isPublic: false,
     sortOrder: 2,
     maxProjects: 50,
     monthlyCredits: 3_000,

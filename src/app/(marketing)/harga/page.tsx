@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TOPUP_PACKS, WELCOME_CREDITS } from "@/config/billing";
 import { angka, rupiah } from "@/lib/format";
 import { logger } from "@/lib/logger";
 import * as planService from "@/services/plan.service";
@@ -55,7 +56,7 @@ export default async function PricingPage() {
           lagi.
         </p>
       ) : (
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-3xl gap-6 sm:grid-cols-2">
           {plans.map((plan) => {
             const isFeatured = plan.slug === featured;
             return (
@@ -100,9 +101,7 @@ export default async function PricingPage() {
                     plan.priceYearly > 0
                       ? "1 website, layanan lengkap"
                       : `${angka(plan.maxProjects)} website`,
-                    plan.priceYearly > 0
-                      ? "Kredit AI dibeli terpisah (top-up)"
-                      : `${angka(plan.monthlyCredits)} kredit per 30 hari`,
+                    "Kredit AI dibeli terpisah (top-up)",
                     `${angka(plan.maxDeploysPerDay)} penerbitan per hari`,
                     plan.maxCustomDomains === 0
                       ? "Alamat vercel.app (tanpa custom domain)"
@@ -135,10 +134,38 @@ export default async function PricingPage() {
         </div>
       )}
 
+      <div className="mx-auto mt-16 max-w-3xl">
+        <h2 className="text-center text-xl font-semibold tracking-tight">
+          Kredit AI, dibeli saat dibutuhkan
+        </h2>
+        <p className="text-muted-foreground mt-3 text-center text-sm">
+          Kredit dipakai untuk membuat dan mengubah website, berlaku 12 bulan sejak
+          dibeli, dan bisa dipakai di semua website Anda. Menerbitkan website dan
+          mengembalikan versi lama tidak memakai kredit.
+        </p>
+        <ul className="mt-6 grid gap-4 sm:grid-cols-3">
+          {TOPUP_PACKS.map((pack) => (
+            <li
+              key={pack.credits}
+              className="border-border bg-card flex flex-col rounded-lg border p-5"
+            >
+              <span className="text-2xl font-bold tabular-nums">
+                {angka(pack.credits)}
+              </span>
+              <span className="text-muted-foreground text-xs">kredit</span>
+              <span className="mt-2 font-medium">{rupiah(pack.priceIdr)}</span>
+              <span className="text-muted-foreground text-xs">
+                {rupiah(Math.round(pack.priceIdr / pack.credits))} per kredit
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <p className="text-muted-foreground mx-auto mt-10 max-w-2xl text-center text-sm">
-        Akun baru mendapat 5 kredit sambutan untuk mencoba Builder. Pengaktifan paket
-        dan pembelian kredit saat ini dilayani tim SaCMS setelah pembayaran; keduanya
-        berlaku seketika. Harga belum termasuk pajak bila berlaku.
+        Akun baru mendapat {WELCOME_CREDITS} kredit sambutan untuk mencoba Builder.
+        Pengaktifan paket dan pembelian kredit saat ini dilayani tim SaCMS setelah
+        pembayaran; keduanya berlaku seketika. Harga belum termasuk pajak bila berlaku.
       </p>
     </div>
   );
