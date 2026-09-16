@@ -73,6 +73,59 @@ export function fixtures(tag: string) {
     });
   }
 
+  /**
+   * Kredit di dompet akun (ADR-012). Tanpa ini generate ditolak, karena
+   * kredit tidak lagi berasal dari kuota bulanan paket.
+   */
+  function credits(userId: string, amount = 10) {
+    return db.creditLot.create({
+      data: {
+        userId,
+        amount,
+        remaining: amount,
+        source: "ADMIN",
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60_000),
+        note: `${tag}-uji`,
+      },
+    });
+  }
+
+  /**
+   * Dompet yang benar-benar KOSONG.
+   *
+   * `build.createJob` memberi kredit sambutan sekali seumur akun, jadi akun
+   * baru tidak pernah nol. Lot WELCOME yang sudah habis membuat pemberian itu
+   * tidak jalan, sehingga keadaan "kredit habis" bisa diuji.
+   */
+  function drainedWelcome(userId: string) {
+    return db.creditLot.create({
+      data: {
+        userId,
+        amount: 5,
+        remaining: 0,
+        source: "WELCOME",
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60_000),
+        note: `${tag}-habis`,
+      },
+    });
+  }
+
+  /** Paket Project aktif — syarat menerbitkan dan memakai custom domain. */
+  async function subscribe(
+    projectId: string,
+    planSlug: "free" | "pro" | "business" = "pro",
+  ) {
+    const p = await plan(planSlug);
+    return db.websiteSubscription.create({
+      data: {
+        projectId,
+        planId: p.id,
+        status: "ACTIVE",
+        endsAt: new Date(Date.now() + 365 * 24 * 60 * 60_000),
+      },
+    });
+  }
+
   async function cleanup() {
     if (userIds.length === 0) return;
     await db.usageEvent.deleteMany({ where: { userId: { in: userIds } } });
@@ -80,7 +133,16 @@ export function fixtures(tag: string) {
     await db.user.deleteMany({ where: { id: { in: userIds } } });
   }
 
-  return { plan, user, project, deployableProject, cleanup };
+  return {
+    plan,
+    user,
+    project,
+    deployableProject,
+    credits,
+    drainedWelcome,
+    subscribe,
+    cleanup,
+  };
 }
 
 /** Memastikan pemanggilan gagal dengan AppError berkode tertentu. */

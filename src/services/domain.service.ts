@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { vercelClient, VercelApiError } from "@/lib/vercel/client";
 import * as quotaService from "@/services/quota.service";
+import * as subscriptionService from "@/services/subscription.service";
 import type { DomainStatus } from "@/types/db";
 
 /**
@@ -119,7 +120,11 @@ export async function add(input: {
 
   // Batas custom domain paket — diperiksa SEBELUM memasang di Vercel, supaya
   // domain yang ditolak tidak sempat terpasang di vendor (docs/11 §11.3).
-  await db.$transaction((tx) => quotaService.assertCanAddDomain(tx, input.userId));
+  await db.$transaction(async (tx) => {
+    await quotaService.assertCanAddDomain(tx, input.userId);
+    // ADR-012: custom domain ikut Paket Project website ini.
+    await subscriptionService.assertActiveForProject(tx, project.id);
+  });
 
   let remote;
   try {

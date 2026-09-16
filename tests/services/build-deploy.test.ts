@@ -160,6 +160,8 @@ describe("penerbitan", () => {
   it("terbit, rollback, dan menolak penerbitan ganda", async () => {
     const u = await f.user("terbit", { planSlug: "business" });
     const p = await f.deployableProject(u.id, "terbit");
+    // ADR-012: menerbitkan menuntut Paket Project yang aktif.
+    await f.subscribe(p.id, "business");
 
     const { deploymentId } = await deploy.request({ projectId: p.id, userId: u.id });
     await expectAppError(
@@ -223,6 +225,7 @@ describe("custom domain", () => {
   it("menambah, memeriksa, dan melepas domain di paket Business", async () => {
     const u = await f.user("domain", { planSlug: "business" });
     const p = await f.deployableProject(u.id, "domain");
+    await f.subscribe(p.id, "business");
 
     await expectAppError(
       () => domain.add({ projectId: p.id, userId: u.id, domain: `${tag}.com` }),

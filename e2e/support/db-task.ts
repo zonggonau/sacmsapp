@@ -82,6 +82,62 @@ const tasks: Record<string, (args: Args) => Promise<unknown>> = {
     return null;
   },
 
+  /** Kredit di dompet akun — ADR-012. Tanpa ini generate ditolak. */
+  async seedCredits(args) {
+    await db.creditLot.create({
+      data: {
+        userId: str(args.userId),
+        amount: Number(args.amount ?? 10),
+        remaining: Number(args.amount ?? 10),
+        source: "ADMIN",
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60_000),
+        note: "e2e",
+      },
+    });
+    return null;
+  },
+
+  /**
+   * Dompet kosong yang TETAP kosong: lot WELCOME yang sudah habis membuat
+   * kredit sambutan otomatis tidak diberikan lagi (ADR-012).
+   */
+  async drainWallet(args) {
+    const userId = str(args.userId);
+    await db.creditLot.updateMany({ where: { userId }, data: { remaining: 0 } });
+    const welcome = await db.creditLot.findFirst({
+      where: { userId, source: "WELCOME" },
+      select: { id: true },
+    });
+    if (!welcome) {
+      await db.creditLot.create({
+        data: {
+          userId,
+          amount: 5,
+          remaining: 0,
+          source: "WELCOME",
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60_000),
+          note: "e2e-habis",
+        },
+      });
+    }
+    return null;
+  },
+
+  /** Paket Project aktif — syarat menerbitkan (ADR-012). */
+  async seedSubscription(args) {
+    const plan = await db.plan.findUniqueOrThrow({
+      where: { slug: args.planSlug ? str(args.planSlug) : "business" },
+    });
+    const projectId = str(args.projectId);
+    const endsAt = new Date(Date.now() + 365 * 24 * 60 * 60_000);
+    await db.websiteSubscription.upsert({
+      where: { projectId },
+      create: { projectId, planId: plan.id, status: "ACTIVE", endsAt },
+      update: { planId: plan.id, status: "ACTIVE", endsAt },
+    });
+    return null;
+  },
+
   countProjects: (args) => db.project.count({ where: { userId: str(args.userId) } }),
 
   countVersions: (args) =>

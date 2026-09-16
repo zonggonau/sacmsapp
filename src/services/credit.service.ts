@@ -1,4 +1,9 @@
-import { CREDIT_LOT_MONTHS, TOPUP_PAGE, WELCOME_CREDITS } from "@/config/billing";
+import {
+  CREDIT_LOT_MONTHS,
+  LOW_WALLET_CREDITS,
+  TOPUP_PAGE,
+  WELCOME_CREDITS,
+} from "@/config/billing";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { tanggal } from "@/lib/format";
@@ -223,6 +228,29 @@ export async function grantWelcome(userId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * Kredit sambutan untuk pendaftar yang baru dibuat Better Auth, dicari lewat
+ * email karena action daftar tidak memegang id penggunanya.
+ */
+export async function grantWelcomeByEmail(email: string): Promise<boolean> {
+  const user = await db.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (!user) return false;
+  return grantWelcome(user.id);
+}
+
+/**
+ * Penolakan dini tanpa kunci baris — supaya tidak ada project atau job kosong
+ * yang tertinggal saat dompet kosong. Keputusan final tetap di
+ * `reserveFromWalletInTx`, yang mengunci baris pengguna.
+ */
+export async function assertWalletHas(userId: string, credits: number): Promise<void> {
+  const balance = await getBalance(userId);
+  if (balance.total < credits) throw emptyWallet(credits, balance.total);
+}
+
 /* ============================================================
  *  PEMAKAIAN
  * ============================================================ */
@@ -292,10 +320,38 @@ export async function reserveFromWalletInTx(
     select: { id: true },
   });
 
+  const remainingAfter = available - input.credits;
+
+  // Peringatan kredit menipis: sekali per episode, bukan setiap generate.
+  // Model lama memakai periode bulanan; dompet memakai ambang tetap dan
+  // jendela 7 hari agar tidak mengulang setelah top-up kecil (ADR-012).
+  if (remainingAfter <= LOW_WALLET_CREDITS) {
+    const recent = await tx.notification.findFirst({
+      where: {
+        userId: input.userId,
+        type: "quota.low",
+        createdAt: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60_000) },
+      },
+      select: { id: true },
+    });
+
+    if (!recent) {
+      await tx.notification.create({
+        data: {
+          userId: input.userId,
+          type: "quota.low",
+          title: "Kredit AI Anda tinggal sedikit",
+          body: `Sisa ${remainingAfter} kredit. Isi ulang agar pembuatan website tidak terhenti.`,
+          href: TOPUP_PAGE,
+        },
+      });
+    }
+  }
+
   logger.info("credit.reserved", {
     usageEventId: event.id,
     credits: input.credits,
-    sisaSetelahnya: available - input.credits,
+    sisaSetelahnya: remainingAfter,
   });
 
   return event.id;

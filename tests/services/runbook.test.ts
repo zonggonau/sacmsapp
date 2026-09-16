@@ -56,6 +56,8 @@ describe("situs rusak setelah terbit", () => {
   it("admin mengembalikan situs ke versi yang pernah berhasil", async () => {
     const owner = await f.user("pemilik", { planSlug: "business" });
     const p = await f.deployableProject(owner.id, "situs");
+    // ADR-012: menerbitkan menuntut Paket Project aktif.
+    await f.subscribe(p.id, "business");
     const firstVersionId = p.currentVersionId!;
     const good = await publish(p.id, owner.id);
 

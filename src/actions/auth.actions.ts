@@ -18,6 +18,7 @@ import {
   updateProfileSchema,
 } from "@/schemas/auth.schema";
 import * as auditService from "@/services/audit.service";
+import * as creditService from "@/services/credit.service";
 import * as systemService from "@/services/system.service";
 
 /**
@@ -100,6 +101,10 @@ export const signUp = publicActionClient
       ipAddress: ctx.ip,
       userAgent: ctx.userAgent,
     });
+
+    // ADR-012: kredit sambutan supaya pengguna baru bisa langsung mencoba
+    // Builder tanpa menunggu top-up.
+    await creditService.grantWelcomeByEmail(email);
 
     redirect(`/verifikasi-email?email=${encodeURIComponent(email)}`);
   });

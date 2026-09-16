@@ -12,7 +12,6 @@ test("kredit habis: generate ditolak dengan tawaran Lihat Paket", async ({ page 
 
   await signInViaForm(page, user.email);
   await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.getByText(`${limit} / ${limit} kredit`)).toBeVisible();
 
   await page.goto(`/projects/${project.id}/builder`);
 
@@ -21,10 +20,10 @@ test("kredit habis: generate ditolak dengan tawaran Lihat Paket", async ({ page 
   const bangun = page.getByRole("button", { name: "Bangun Sekarang" });
   await expect(bangun).toBeVisible();
   await expect(bangun).toBeDisabled();
-  await expect(page.getByText(/Kredit bulan ini sudah habis/).first()).toBeVisible();
+  await expect(page.getByText(/Kredit AI Anda habis/).first()).toBeVisible();
   expect(await dbTask<number>("countBuildJobs", { projectId: project.id })).toBe(0);
 
   await page.getByRole("link", { name: "Lihat Paket" }).click();
   await expect(page).toHaveURL(/\/akun\/paket/);
-  await expect(page.getByText("Kredit bulan ini")).toBeVisible();
+  await expect(page.getByText("Riwayat pemakaian kredit")).toBeVisible();
 });

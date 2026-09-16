@@ -56,8 +56,8 @@ const createInput = (name: string) =>
 
 describe("kredit AI", () => {
   it("menolak generate saat kredit habis tanpa menyimpan job", async () => {
-    const free = await f.plan("free");
-    const u = await f.user("habis", { creditsUsed: free.monthlyCredits });
+    const u = await f.user("habis");
+    await f.drainedWelcome(u.id);
     const p = await f.project(u.id, "habis");
 
     const error = await expectAppError(
@@ -69,9 +69,9 @@ describe("kredit AI", () => {
           prompt: "x",
         }),
       "QUOTA_EXCEEDED",
-      /Kredit bulan ini sudah habis/,
+      /Kredit AI Anda tidak cukup/,
     );
-    expect(error.userMessage).toContain("Lihat halaman Paket");
+    expect(error.userMessage).toContain("Isi ulang kredit");
     expect(await db.buildJob.count({ where: { projectId: p.id } })).toBe(0);
     expect((await db.project.findUniqueOrThrow({ where: { id: p.id } })).status).toBe(
       "DRAFT",
@@ -86,6 +86,7 @@ describe("kredit AI", () => {
 
   it("mengembalikan kredit saat build gagal", async () => {
     const u = await f.user("gagal");
+    const lot = await f.credits(u.id, 5);
     const p = await f.project(u.id, "gagal");
     // Pemicu kegagalan tiruan hanya diteruskan oleh build EDIT.
     const { jobId } = await build.createJob({
@@ -94,29 +95,28 @@ describe("kredit AI", () => {
       kind: "EDIT_GENERATE",
       prompt: "SIMULASI_GAGAL_KONFIG",
     });
-    expect((await db.user.findUniqueOrThrow({ where: { id: u.id } })).creditsUsed).toBe(
-      1,
-    );
+    expect(
+      (await db.creditLot.findUniqueOrThrow({ where: { id: lot.id } })).remaining,
+    ).toBe(4);
 
     await build.run(jobId);
 
     expect((await db.buildJob.findUniqueOrThrow({ where: { id: jobId } })).status).toBe(
       "FAILED",
     );
-    expect((await db.user.findUniqueOrThrow({ where: { id: u.id } })).creditsUsed).toBe(
-      0,
-    );
+    // Kredit kembali ke lot asalnya, bukan ke penghitung bulanan.
+    expect(
+      (await db.creditLot.findUniqueOrThrow({ where: { id: lot.id } })).remaining,
+    ).toBe(5);
     expect(
       (await db.usageEvent.findFirstOrThrow({ where: { buildJobId: jobId } })).state,
     ).toBe("REFUNDED");
   });
 
   it("hanya satu dari tiga permintaan bersamaan yang mendapat kredit terakhir", async () => {
-    const free = await f.plan("free");
-    const u = await f.user("rebutan", {
-      creditsUsed: free.monthlyCredits - 1,
-      maxProjectsOverride: 5,
-    });
+    const u = await f.user("rebutan", { maxProjectsOverride: 5 });
+    await f.drainedWelcome(u.id);
+    await f.credits(u.id, 1);
     const projects = await Promise.all(
       ["r1", "r2", "r3"].map((n) => f.project(u.id, n)),
     );
@@ -133,9 +133,13 @@ describe("kredit AI", () => {
     );
 
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    expect((await db.user.findUniqueOrThrow({ where: { id: u.id } })).creditsUsed).toBe(
-      free.monthlyCredits,
-    );
+
+    // Kredit terakhir benar-benar terpakai sekali: lot kosong, satu reservasi.
+    const lots = await db.creditLot.findMany({ where: { userId: u.id } });
+    expect(lots.reduce((sum, l) => sum + l.remaining, 0)).toBe(0);
+    expect(
+      await db.usageEvent.count({ where: { userId: u.id, state: "RESERVED" } }),
+    ).toBe(1);
   });
 
   it("refund idempoten dan tidak pernah membuat kredit negatif", async () => {
@@ -199,16 +203,23 @@ describe("kredit AI", () => {
     ).toBe("REFUNDED");
   });
 
-  it("menaikkan kuota manual langsung membuka generate", async () => {
-    const free = await f.plan("free");
-    const u = await f.user("naik", { creditsUsed: free.monthlyCredits });
+  it("kredit yang ditambahkan admin langsung membuka generate", async () => {
+    const u = await f.user("naik");
+    await f.drainedWelcome(u.id);
     const p = await f.project(u.id, "naik");
 
-    await adminUser.setQuota({
-      userId: u.id,
-      creditsOverride: free.monthlyCredits + 20,
-      maxProjectsOverride: null,
-    });
+    await expectAppError(
+      () =>
+        build.createJob({
+          projectId: p.id,
+          userId: u.id,
+          kind: "INITIAL_GENERATE",
+          prompt: "x",
+        }),
+      "QUOTA_EXCEEDED",
+    );
+
+    await f.credits(u.id, 20);
     const { jobId } = await build.createJob({
       projectId: p.id,
       userId: u.id,
@@ -219,12 +230,14 @@ describe("kredit AI", () => {
     await build.cancel({ jobId, userId: u.id });
   });
 
-  it("memberi peringatan kredit menipis sekali per periode", async () => {
-    const free = await f.plan("free");
-    const u = await f.user("menipis", {
-      creditsUsed: Math.floor(free.monthlyCredits * 0.8) - 1,
-      maxProjectsOverride: 5,
-    });
+  it("memberi peringatan kredit menipis sekali, bukan setiap generate", async () => {
+    const u = await f.user("menipis", { maxProjectsOverride: 5 });
+    await f.drainedWelcome(u.id);
+    // Ambang LOW_WALLET_CREDITS = 3: peringatan muncul saat sisa <= 3.
+    // Job TIDAK dibatalkan di tengah, karena membatalkan mengembalikan
+    // kreditnya dan saldo tidak akan pernah turun.
+    await f.credits(u.id, 4);
+    const jobIds: string[] = [];
     for (const n of ["m1", "m2"]) {
       const p = await f.project(u.id, n);
       const { jobId } = await build.createJob({
@@ -233,16 +246,14 @@ describe("kredit AI", () => {
         kind: "INITIAL_GENERATE",
         prompt: "x",
       });
-      await build.cancel({ jobId, userId: u.id });
-      await db.user.update({
-        where: { id: u.id },
-        data: { creditsUsed: { increment: 1 } },
-      });
+      jobIds.push(jobId);
     }
 
     expect(
       await db.notification.count({ where: { userId: u.id, type: "quota.low" } }),
     ).toBe(1);
+
+    for (const jobId of jobIds) await build.cancel({ jobId, userId: u.id });
   });
 
   it("getCreditSummary menampilkan pemakaian terhadap batas", async () => {

@@ -9,6 +9,12 @@
 /** Kredit sambutan sekali seumur akun, untuk mencoba Builder. */
 export const WELCOME_CREDITS = 5;
 
+/**
+ * Ambang peringatan sisa kredit dompet. Model lama memperingatkan pada 20%
+ * dari kuota bulanan; dompet tidak punya "kuota", jadi ambangnya angka tetap.
+ */
+export const LOW_WALLET_CREDITS = 3;
+
 /** Umur satu lot kredit sejak dibeli — selaras dengan kredit v0 (1 tahun). */
 export const CREDIT_LOT_MONTHS = 12;
 

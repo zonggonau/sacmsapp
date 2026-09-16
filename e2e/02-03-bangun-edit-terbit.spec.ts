@@ -52,6 +52,8 @@ test("buat project, pratinjau tampil, edit lewat chat, lalu terbitkan", async ({
     .toBe(2);
 
   // ---- alur 3: terbitkan ----
+  // ADR-012: website hanya boleh tayang bila Paket Project-nya aktif.
+  await dbTask("seedSubscription", { projectId, planSlug: "business" });
   await page.goto(`/projects/${projectId}/deployment`);
   await page.getByRole("button", { name: "Terbitkan" }).click();
 

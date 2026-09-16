@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import type { CreateProjectInput } from "@/schemas/project.schema";
 import type { ProjectStatus, WebsiteType } from "@/types/db";
 import * as buildService from "@/services/build.service";
+import * as creditService from "@/services/credit.service";
 import * as deployService from "@/services/deploy.service";
 import * as quotaService from "@/services/quota.service";
 
@@ -261,7 +262,8 @@ export async function createWithInitialBuild({
 }): Promise<{ project: ProjectListItem; job: { id: string } }> {
   // Tolak lebih dini bila kredit habis, supaya tidak tertinggal project kosong
   // tanpa build. Keputusan final tetap di reservasi berkunci saat createJob.
-  await quotaService.assertCreditsAvailable(userId, 1);
+  // ADR-012: kredit dibaca dari dompet akun.
+  await creditService.assertWalletHas(userId, 1);
 
   const project = await create({ userId, input });
 

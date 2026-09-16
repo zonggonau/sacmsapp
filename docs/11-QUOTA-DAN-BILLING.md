@@ -14,6 +14,15 @@
 
 Satu satuan saja: **kredit**.
 
+> **Terpasang ADR-012 tahap 1–2 (2026-09-16).** Kredit tidak lagi datang dari kuota bulanan
+> paket, melainkan dari **dompet akun**: setiap pembelian menjadi satu `CreditLot` dengan masa
+> berlaku 12 bulan, dan pemakaian mengambil lot yang paling dulu kedaluwarsa. Build gagal
+> mengembalikan kredit ke lot asalnya. Akun baru mendapat 5 kredit sambutan sekali.
+> Menerbitkan website dan memakai custom domain menuntut **Paket Project** aktif per website
+> (masa tenggang 30 hari masih dianggap aktif). Kolom `User.creditsUsed` dan `Plan.monthlyCredits`
+> masih ada tetapi tidak lagi menjadi penegak — dihapus di langkah terakhir migrasi
+> (docs/06 §6.6 aturan 4).
+
 | Tindakan                         | Biaya                                  |
 | -------------------------------- | -------------------------------------- |
 | Generate awal (buat website)     | 1 kredit                               |
@@ -44,12 +53,13 @@ Nilai ini tinggal di tabel `Plan` dan **dapat diubah Super Admin tanpa deploy**
 
 Sering tertukar. Keempatnya diperiksa dan berbeda satu sama lain:
 
-| Pemeriksaan      | Yang dibatasi          | Sumber                      | Pesan saat gagal                                 |
-| ---------------- | ---------------------- | --------------------------- | ------------------------------------------------ |
-| **Rate limit**   | Frekuensi mekanis      | Upstash Redis               | "Terlalu banyak permintaan. Coba lagi sebentar." |
-| **Kuota kredit** | Konsumsi bulanan       | `User.creditsUsed` vs plan  | "Kuota bulanan Anda habis." → Lihat Paket        |
-| **Batas jumlah** | Project & domain aktif | `COUNT` di database         | "Paket Anda maksimal 1 website." → Lihat Paket   |
-| **Batas harian** | Deploy per hari        | `COUNT UsageEvent` hari ini | "Batas penerbitan harian tercapai."              |
+| Pemeriksaan       | Yang dibatasi          | Sumber                            | Pesan saat gagal                                             |
+| ----------------- | ---------------------- | --------------------------------- | ------------------------------------------------------------ |
+| **Rate limit**    | Frekuensi mekanis      | Upstash Redis                     | "Terlalu banyak permintaan. Coba lagi sebentar."             |
+| **Kredit AI**     | Sisa dompet akun       | `CreditLot` (FIFO, ADR-012)       | "Kredit AI Anda tidak cukup." → Isi Kredit                   |
+| **Paket Project** | Terbit & custom domain | `WebsiteSubscription` per project | "Website ini belum punya Paket Project aktif." → Lihat Paket |
+| **Batas jumlah**  | Project & domain aktif | `COUNT` di database               | "Paket Anda maksimal 1 website." → Lihat Paket               |
+| **Batas harian**  | Deploy per hari        | `COUNT UsageEvent` hari ini       | "Batas penerbitan harian tercapai."                          |
 
 ## 11.4 Reservasi → Commit / Refund
 

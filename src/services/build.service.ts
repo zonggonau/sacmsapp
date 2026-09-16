@@ -7,6 +7,7 @@ import { sendWebsiteReadyEmail } from "@/lib/mail";
 import { v0Engine } from "@/lib/v0/client";
 import { V0Error, type GenerateResult } from "@/lib/v0/types";
 import * as planner from "@/services/planner.service";
+import * as creditService from "@/services/credit.service";
 import * as quotaService from "@/services/quota.service";
 import * as systemService from "@/services/system.service";
 import * as usageService from "@/services/usage.service";
@@ -84,6 +85,10 @@ export async function createJob(input: CreateJobInput): Promise<{ jobId: string 
     );
   }
 
+  // Kredit sambutan diberikan di sini juga, bukan hanya di action daftar:
+  // pendaftar lewat Google tidak melewati action itu (ADR-012). Idempoten.
+  if (input.kind !== "DEPLOY") await creditService.grantWelcome(input.userId);
+
   const correlationId = crypto.randomUUID();
   const steps = stepsForKind(input.kind);
 
@@ -117,7 +122,9 @@ export async function createJob(input: CreateJobInput): Promise<{ jobId: string 
     });
 
     if (input.kind !== "DEPLOY") {
-      await quotaService.reserveCreditsInTx(tx, {
+      // ADR-012: kredit diambil dari dompet akun (lot FIFO), bukan lagi dari
+      // kuota bulanan paket. Penguncian baris pengguna ada di dalamnya.
+      await creditService.reserveFromWalletInTx(tx, {
         userId: input.userId,
         kind: input.kind === "INITIAL_GENERATE" ? "AI_GENERATE" : "AI_EDIT",
         credits: 1,

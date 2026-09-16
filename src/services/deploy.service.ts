@@ -9,6 +9,7 @@ import {
   type VercelDeployment,
 } from "@/lib/vercel/client";
 import * as quotaService from "@/services/quota.service";
+import * as subscriptionService from "@/services/subscription.service";
 import * as usageService from "@/services/usage.service";
 import type { DeploymentStatus } from "@/types/db";
 
@@ -172,6 +173,10 @@ export async function request(input: {
     // Batas deploy harian — mengunci baris PENGGUNA lebih dulu. Urutan kunci
     // user -> project sama dengan pembuatan build; urutan terbalik bisa deadlock.
     await quotaService.assertCanDeploy(tx, input.userId);
+
+    // ADR-012: website hanya boleh tayang bila Paket Project-nya aktif.
+    // Masa tenggang masih dianggap aktif — lihat subscription.service.
+    await subscriptionService.assertActiveForProject(tx, project.id);
 
     // Kunci baris project: dua klik Terbitkan yang hampir bersamaan harus
     // antre di sini, sehingga pemeriksaan di bawah tidak bisa sama-sama lolos.

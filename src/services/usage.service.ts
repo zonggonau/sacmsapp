@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import * as creditService from "@/services/credit.service";
 import * as quotaService from "@/services/quota.service";
 import type { ReserveInput } from "@/services/quota.service";
 import type { UsageKind, UsageState } from "@/types/db";
@@ -79,7 +80,31 @@ export async function commit(usageEventId: string): Promise<void> {
  * `state: "RESERVED"` hanya cocok sekali. Itu penting: refund dipicu dari
  * beberapa jalur (kegagalan, pembatalan, cron penyapu) yang bisa bertabrakan.
  */
+/** true bila pemakaian ini mengambil kredit dari dompet (ADR-012). */
+function isWalletBacked(creditLotId: string | null, metadata: unknown): boolean {
+  if (creditLotId) return true;
+  return (
+    typeof metadata === "object" &&
+    metadata !== null &&
+    "lots" in metadata &&
+    Array.isArray((metadata as { lots?: unknown }).lots)
+  );
+}
+
 export async function refund(usageEventId: string): Promise<void> {
+  // ADR-012: pemakaian dari dompet dikembalikan ke lot asalnya. Jalur lama
+  // (kuota bulanan `User.creditsUsed`) masih dipakai catatan sebelum migrasi,
+  // jadi keduanya harus tetap bekerja sampai kolomnya dihapus (docs/06 §6.6).
+  const head = await db.usageEvent.findUnique({
+    where: { id: usageEventId },
+    select: { creditLotId: true, metadata: true },
+  });
+
+  if (head && isWalletBacked(head.creditLotId, head.metadata)) {
+    await creditService.refundToWallet(usageEventId);
+    return;
+  }
+
   await db.$transaction(async (tx) => {
     const event = await tx.usageEvent.findUnique({
       where: { id: usageEventId },

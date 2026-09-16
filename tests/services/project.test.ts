@@ -142,6 +142,8 @@ describe("project", () => {
 
   it("membuat project sekaligus build awal", async () => {
     const u = await f.user("langsung");
+    // ADR-012: kredit datang dari dompet akun.
+    await f.credits(u.id, 3);
     const result = await project.createWithInitialBuild({
       userId: u.id,
       input: input("Sekolah"),

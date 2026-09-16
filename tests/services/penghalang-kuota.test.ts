@@ -13,13 +13,12 @@ const f = fixtures(tag);
 afterAll(() => f.cleanup());
 
 describe("penghalang aksi untuk UI", () => {
-  it("tanpa penghalang saat kuota masih ada", async () => {
-    const free = await f.plan("free");
+  it("tanpa penghalang saat dompet masih berisi", async () => {
     const u = await f.user("longgar");
+    await f.credits(u.id, 8);
     const b = await quota.getActionBlockers(u.id);
     expect(b).toMatchObject({
-      creditsLeft: free.monthlyCredits,
-      creditLimit: free.monthlyCredits,
+      walletCredits: 8,
       credit: null,
       project: null,
       deploy: null,
@@ -28,7 +27,8 @@ describe("penghalang aksi untuk UI", () => {
 
   it("menjelaskan kredit, project, dan penerbitan yang habis", async () => {
     const free = await f.plan("free");
-    const u = await f.user("habis", { creditsUsed: free.monthlyCredits });
+    const u = await f.user("habis");
+    await f.drainedWelcome(u.id);
     const p = await f.project(u.id, "habis");
     await db.usageEvent.createMany({
       data: Array.from({ length: free.maxDeploysPerDay }, () => ({
@@ -41,8 +41,8 @@ describe("penghalang aksi untuk UI", () => {
     });
 
     const b = await quota.getActionBlockers(u.id);
-    expect(b?.creditsLeft).toBe(0);
-    expect(b?.credit).toMatch(/Kredit bulan ini sudah habis/);
+    expect(b?.walletCredits).toBe(0);
+    expect(b?.credit).toMatch(/Kredit AI Anda habis/);
     expect(b?.project).toMatch(/maksimal 1 website/);
     expect(b?.deploy).toMatch(/Batas penerbitan harian/);
     expect(await quota.getActionBlockers("tidak-ada")).toBeNull();

@@ -1,4 +1,5 @@
 import { LOW_CREDIT_RATIO, PLAN_PAGE, UPGRADE_HINT } from "@/config/quota";
+import * as creditService from "@/services/credit.service";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { tanggal } from "@/lib/format";
@@ -374,6 +375,10 @@ export async function resetExpiredPeriods(now: Date = new Date()): Promise<numbe
  * ============================================================ */
 
 export interface ActionBlockers {
+  /** Sisa kredit di dompet akun (ADR-012). */
+  walletCredits: number;
+  /** Kredit yang akan hangus dalam 30 hari. */
+  walletExpiringSoon: number;
   creditsLeft: number;
   creditLimit: number;
   /** Alasan generate/edit tidak bisa dijalankan; null bila bisa. */
@@ -394,17 +399,23 @@ export interface ActionBlockers {
 export async function getActionBlockers(
   userId: string,
 ): Promise<ActionBlockers | null> {
-  const q = await getQuota(userId);
+  const [q, wallet] = await Promise.all([
+    getQuota(userId),
+    creditService.getBalance(userId),
+  ]);
   if (!q) return null;
 
   const creditsLeft = Math.max(0, q.creditLimit - q.creditsUsed);
 
   return {
+    walletCredits: wallet.total,
+    walletExpiringSoon: wallet.expiringSoon,
     creditsLeft,
     creditLimit: q.creditLimit,
+    // ADR-012: kredit berasal dari dompet akun, bukan kuota bulanan paket.
     credit:
-      creditsLeft <= 0
-        ? `Kredit bulan ini sudah habis. Terisi kembali pada ${tanggal(q.periodEndsAt)} — lihat halaman Paket untuk menambah kuota.`
+      wallet.total <= 0
+        ? "Kredit AI Anda habis. Isi ulang kredit untuk membuat atau mengubah website."
         : null,
     project:
       q.projectCount >= q.projectLimit
