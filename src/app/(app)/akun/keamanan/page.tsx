@@ -42,11 +42,13 @@ export default async function KeamananPage() {
         </CardHeader>
         <CardContent>
           <dl className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
+            {/* min-w-0 wajib: tanpa itu `truncate` tidak pernah aktif di dalam
+                flex/grid, dan email panjang membuat halaman bergulir menyamping. */}
+            <div className="min-w-0 space-y-1">
               <dt className="text-muted-foreground text-xs tracking-wide uppercase">
                 Email
               </dt>
-              <dd className="flex items-center gap-2 text-sm">
+              <dd className="flex min-w-0 items-center gap-2 text-sm">
                 <span className="truncate">{user.email}</span>
                 {user.emailVerified ? (
                   <Badge variant="success">Terkonfirmasi</Badge>

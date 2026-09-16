@@ -41,7 +41,7 @@ export function NavItem({
       data-active={active}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-md px-3 py-2",
+        "group relative flex shrink-0 items-center gap-3 rounded-md px-3 py-2 whitespace-nowrap",
         "text-sm font-medium transition-colors",
         "text-muted-foreground hover:bg-accent hover:text-foreground",
         "data-[active=true]:bg-primary-subtle data-[active=true]:text-primary-text",

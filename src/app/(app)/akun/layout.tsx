@@ -19,8 +19,10 @@ export default function AkunLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <div className="flex flex-col gap-8 md:flex-row">
+        {/* Di ponsel sub-nav ini digulir di dalam wadahnya sendiri; tanpa itu
+            empat item memaksa SELURUH halaman bergulir menyamping (docs/04). */}
         <nav
-          className="flex gap-1 md:w-48 md:shrink-0 md:flex-col"
+          className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 md:mx-0 md:w-48 md:shrink-0 md:flex-col md:overflow-visible md:px-0 md:pb-0"
           aria-label="Navigasi pengaturan akun"
         >
           {ACCOUNT_NAV.map((item) => (
