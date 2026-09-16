@@ -14,9 +14,16 @@ import {
 } from "@/components/features/admin/admin-ui";
 import { AdminRollbackButton } from "@/components/features/admin/admin-rollback-button";
 import { CopyButton } from "@/components/features/admin/copy-button";
+import { SubscriptionForm } from "@/components/features/admin/subscription-form";
 import { ProjectStatusBadge } from "@/components/features/project/project-status-badge";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getWebsiteType } from "@/config/website-types";
 import { angka, tanggalWaktu, urlRingkas } from "@/lib/format";
 import * as adminProject from "@/services/admin-project.service";
@@ -64,6 +71,28 @@ export default async function AdminProjectDetailPage({
           </Link>
         }
       />
+
+      {/* ADR-012: aktivasi Paket Project setelah pembayaran manual diterima. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Paket Project</CardTitle>
+          <CardDescription>
+            Website hanya bisa diterbitkan bila paketnya aktif. Perpanjangan dihitung
+            dari sisa masa aktif yang ada.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SubscriptionForm
+            projectId={p.id}
+            plans={p.plans}
+            current={
+              p.subscription
+                ? { status: p.subscription.status, endsAt: p.subscription.endsAt }
+                : null
+            }
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

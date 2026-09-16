@@ -92,6 +92,12 @@ Aturan tindakan:
 | Masuk sebagai Pengguna | Dialog menyebut nama & email | Sesi impersonasi 60 menit; audit mulai & selesai                      |
 | Hapus Permanen         | **Ketik email persis**       | Hard delete; `AuditLog` & `UsageEvent` tetap tinggal; audit           |
 
+> **ADR-012 (2026-09-16): top-up kredit manual.** Kartu **Kredit AI** di halaman investigasi
+> menampilkan saldo dompet, kredit yang segera hangus, dan jumlah lot, beserta formulir
+> penambahan kredit (`adminGrantCredits`). Nomor bukti transfer disimpan di lot supaya
+> rekonsiliasi bisa ditelusuri. Kredit berlaku 12 bulan dan dipakai di semua website pengguna.
+> Midtrans menyusul di v1.1 ([ADR-010](./adr/ADR-010-pembayaran-midtrans.md)).
+
 ## 10.5 `/admin/project` dan `/admin/build`
 
 **Project** — semua project lintas pengguna. Filter status, tipe, pemilik.
@@ -118,6 +124,12 @@ b_7c81...          maria@...        Toko Kopi        RUNNING  9m 40s   1/3   [!]
 - Tombol **Batalkan** (job berjalan) dan **Ulangi** (job gagal).
 
 Halaman ini adalah alasan utama seseorang membuka panel admin. Buat halaman ini dengan baik.
+
+> **ADR-012 (2026-09-16): Paket Project per website.** Halaman detail project punya kartu
+> **Paket Project** untuk mengaktifkan dan memperpanjang langganan (`adminActivateSubscription`)
+> serta membatalkannya (`adminCancelSubscription`). Perpanjangan dihitung dari sisa masa aktif,
+> bukan dari hari ini. Tanpa paket aktif, website tidak bisa diterbitkan dan custom domain
+> ditolak; masa tenggang 30 hari masih dianggap aktif.
 
 ## 10.6 `/admin/paket` — Plan sebagai Data, Bukan Kode
 

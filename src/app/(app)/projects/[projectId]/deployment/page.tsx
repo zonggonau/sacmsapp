@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ExternalLink, Globe } from "lucide-react";
+import { CalendarClock, ExternalLink, Globe } from "lucide-react";
 
 import { DeployButton } from "@/components/features/deployment/deploy-button";
 import { DeploymentList } from "@/components/features/deployment/deployment-list";
@@ -14,10 +14,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth-guard";
-import { sejak, urlRingkas } from "@/lib/format";
+import { sejak, tanggal, urlRingkas } from "@/lib/format";
 import { loadProject } from "@/lib/project-loader";
 import * as deployService from "@/services/deploy.service";
 import * as quotaService from "@/services/quota.service";
+import * as subscriptionService from "@/services/subscription.service";
 
 import { DeploymentSkeleton } from "./skeleton";
 
@@ -54,11 +55,21 @@ async function DeploymentData({
   project: Project;
   userId: string;
 }) {
-  const [data, blockers] = await Promise.all([
+  const [data, blockers, subscription] = await Promise.all([
     deployService.getPageData(project.id, userId),
     quotaService.getActionBlockers(userId),
+    subscriptionService.getForProject(project.id, userId),
   ]);
   if (!data) notFound();
+
+  // ADR-012: tanpa Paket Project aktif, penerbitan ditolak di service. Tombol
+  // tetap terlihat tetapi nonaktif dengan alasannya (docs/11 §11.6).
+  const paketBlocker =
+    subscription === null
+      ? "Website ini belum punya Paket Project. Hubungi admin untuk mengaktifkannya."
+      : subscription.status === "EXPIRED" || subscription.status === "CANCELLED"
+        ? `Paket Project website ini berakhir pada ${tanggal(subscription.endsAt)}. Perpanjang untuk menerbitkan lagi.`
+        : null;
 
   return (
     <div className="space-y-6">
@@ -73,13 +84,31 @@ async function DeploymentData({
         <DeployButton
           projectId={project.id}
           versionNumber={data.nextVersionNumber}
-          blocker={data.blocker ?? blockers?.deploy ?? data.alreadyLive}
+          blocker={paketBlocker ?? data.blocker ?? blockers?.deploy ?? data.alreadyLive}
         />
       </div>
 
       {data.active ? (
         <DeploymentProgress key={data.active.id} initial={data.active} />
       ) : null}
+
+      <Card className={subscription?.inGrace ? "border-primary/40" : undefined}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <CalendarClock className="text-muted-foreground size-4" />
+            Paket Project
+          </CardTitle>
+          <CardDescription>
+            {subscription === null
+              ? "Belum aktif. Website bisa dibangun di Builder, tetapi belum bisa diterbitkan."
+              : subscription.inGrace
+                ? `Paket ${subscription.planName} berakhir ${tanggal(subscription.endsAt)} dan sedang dalam masa tenggang. Website diturunkan pada ${tanggal(subscription.takedownAt)} bila tidak diperpanjang.`
+                : subscription.status === "ACTIVE"
+                  ? `Paket ${subscription.planName} aktif sampai ${tanggal(subscription.endsAt)} (${subscription.daysLeft} hari lagi).`
+                  : `Paket ${subscription.planName} sudah tidak aktif sejak ${tanggal(subscription.endsAt)}.`}
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -3,6 +3,7 @@ import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { sendAccountSuspendedEmail } from "@/lib/mail";
 import * as auditService from "@/services/audit.service";
+import * as creditService from "@/services/credit.service";
 import type { AuditTrail } from "@/services/audit.service";
 import * as deployService from "@/services/deploy.service";
 import * as quotaService from "@/services/quota.service";
@@ -125,8 +126,11 @@ export async function getDetail(userId: string) {
   });
   if (!user) return null;
 
-  const [quota, projects, builds, audit, plans] = await Promise.all([
+  const [quota, wallet, lots, projects, builds, audit, plans] = await Promise.all([
     quotaService.getQuota(userId),
+    // ADR-012: saldo dompet, supaya admin tahu apa yang sedang di-top-up.
+    creditService.getBalance(userId),
+    creditService.listLots(userId, 10),
     db.project.findMany({
       where: { userId },
       orderBy: { updatedAt: "desc" },
@@ -176,6 +180,8 @@ export async function getDetail(userId: string) {
   return {
     user: { ...user, activeSessions: user._count.sessions },
     quota,
+    wallet,
+    lots,
     projects,
     builds,
     audit,

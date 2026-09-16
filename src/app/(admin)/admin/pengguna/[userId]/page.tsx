@@ -14,10 +14,17 @@ import {
   Th,
   UserStatusBadge,
 } from "@/components/features/admin/admin-ui";
+import { GrantCreditsForm } from "@/components/features/admin/grant-credits-form";
 import { UserAdminActions } from "@/components/features/admin/user-admin-actions";
 import { ProjectStatusBadge } from "@/components/features/project/project-status-badge";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { requireSuperAdmin } from "@/lib/auth-guard";
 import { angka, durasi, sejak, tanggal, tanggalWaktu } from "@/lib/format";
 import * as adminUser from "@/services/admin-user.service";
@@ -36,7 +43,7 @@ export default async function AdminUserDetailPage({
   ]);
   if (!detail) notFound();
 
-  const { user, quota, projects, builds, audit, plans } = detail;
+  const { user, quota, wallet, lots, projects, builds, audit, plans } = detail;
 
   return (
     <div className="space-y-6">
@@ -114,6 +121,31 @@ export default async function AdminUserDetailPage({
             <p className="text-muted-foreground mt-3 text-xs">
               Batas dihitung dari paket saat ini. Penegakan batas aktif di Fase 6.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* ADR-012: top-up kredit manual ke dompet akun pengguna ini. */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Kredit AI</CardTitle>
+            <CardDescription>
+              Tambahkan kredit setelah pembayaran diterima. Kredit berlaku 12 bulan dan
+              dipakai di semua website milik pengguna ini.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <dl>
+              <Field label="Sisa kredit">
+                <span className="font-mono tabular-nums">{angka(wallet.total)}</span>
+              </Field>
+              <Field label="Segera hangus">
+                {wallet.expiringSoon > 0 && wallet.nextExpiry
+                  ? `${angka(wallet.expiringSoon)} kredit pada ${tanggal(wallet.nextExpiry)}`
+                  : "—"}
+              </Field>
+              <Field label="Jumlah lot">{angka(lots.length)}</Field>
+            </dl>
+            <GrantCreditsForm userId={user.id} />
           </CardContent>
         </Card>
 

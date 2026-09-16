@@ -104,6 +104,16 @@ export async function getDetail(projectId: string) {
       deletedAt: true,
       createdAt: true,
       user: { select: { id: true, email: true, name: true } },
+      // ADR-012: Paket Project website ini, untuk formulir aktivasi admin.
+      subscription: {
+        select: {
+          status: true,
+          startsAt: true,
+          endsAt: true,
+          paymentRef: true,
+          plan: { select: { id: true, name: true } },
+        },
+      },
       versions: {
         orderBy: { number: "desc" },
         select: {
@@ -137,10 +147,17 @@ export async function getDetail(projectId: string) {
 
   if (!project) return null;
 
-  const credits = await db.usageEvent.aggregate({
-    _sum: { credits: true },
-    where: { projectId, state: "COMMITTED" },
-  });
+  const [credits, plans] = await Promise.all([
+    db.usageEvent.aggregate({
+      _sum: { credits: true },
+      where: { projectId, state: "COMMITTED" },
+    }),
+    // ADR-012: pilihan Paket Project untuk formulir aktivasi.
+    db.plan.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true, priceYearly: true },
+    }),
+  ]);
 
-  return { ...project, creditsSpent: credits._sum.credits ?? 0 };
+  return { ...project, creditsSpent: credits._sum.credits ?? 0, plans };
 }

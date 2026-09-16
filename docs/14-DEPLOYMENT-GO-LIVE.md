@@ -201,16 +201,17 @@ skema. Ini alasan sesungguhnya aturan tiga langkah di [06 §6.6](./06-DATABASE-S
 
 ## 14.8 Cron
 
-| Jadwal         | Endpoint                     | Tugas                                                                                                           |
-| -------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `*/5 * * * *`  | `/api/cron/sweep-stuck-jobs` | Job `RUNNING` melewati `timeoutAt` **dan** job `QUEUED` yang tak pernah dimulai (>15 menit) → `FAILED` + refund |
-| `* * * * *`    | `/api/cron/run-queued`       | Menjalankan job `QUEUED`: antrean ulang karena rate limit, atau yang `after()`-nya tidak berjalan               |
-| `*/10 * * * *` | `/api/cron/verify-domains`   | Periksa domain `PENDING_DNS` / `VERIFYING` yang ditambahkan dalam 24 jam terakhir                               |
-| `*/5 * * * *`  | `/api/cron/sync-deployments` | Mulai deployment `QUEUED` yang tertinggal; samakan `BUILDING` dengan Vercel (timeout 20 menit)                  |
-| `0 * * * *`    | `/api/cron/refund-stale`     | Refund `UsageEvent` `RESERVED` > 30 menit                                                                       |
-| `0 19 * * *`   | `/api/cron/reconcile-costs`  | Isi `vendorCostIdr` dari laporan v0 (02.00 WIB)                                                                 |
-| `0 20 * * *`   | `/api/cron/reset-periods`    | Reset kuota pengguna yang periodenya habis (03.00 WIB)                                                          |
-| `15 * * * *`   | `/api/cron/cleanup`          | Catat `user.impersonate.expired` untuk sesi impersonasi yang habis sendiri, lalu hapus sesinya                  |
+| Jadwal         | Endpoint                           | Tugas                                                                                                              |
+| -------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `*/5 * * * *`  | `/api/cron/sweep-stuck-jobs`       | Job `RUNNING` melewati `timeoutAt` **dan** job `QUEUED` yang tak pernah dimulai (>15 menit) → `FAILED` + refund    |
+| `* * * * *`    | `/api/cron/run-queued`             | Menjalankan job `QUEUED`: antrean ulang karena rate limit, atau yang `after()`-nya tidak berjalan                  |
+| `*/10 * * * *` | `/api/cron/verify-domains`         | Periksa domain `PENDING_DNS` / `VERIFYING` yang ditambahkan dalam 24 jam terakhir                                  |
+| `*/5 * * * *`  | `/api/cron/sync-deployments`       | Mulai deployment `QUEUED` yang tertinggal; samakan `BUILDING` dengan Vercel (timeout 20 menit)                     |
+| `0 * * * *`    | `/api/cron/refund-stale`           | Refund `UsageEvent` `RESERVED` > 30 menit                                                                          |
+| `0 19 * * *`   | `/api/cron/reconcile-costs`        | Isi `vendorCostIdr` dari laporan v0 (02.00 WIB)                                                                    |
+| `0 20 * * *`   | `/api/cron/reset-periods`          | Reset kuota pengguna yang periodenya habis (03.00 WIB)                                                             |
+| `15 * * * *`   | `/api/cron/cleanup`                | Catat `user.impersonate.expired` untuk sesi impersonasi yang habis sendiri, lalu hapus sesinya                     |
+| `30 20 * * *`  | `/api/cron/subscription-lifecycle` | ADR-012: pengingat H-30/H-7, masa tenggang, kedaluwarsa + turunkan situs, pengingat kredit akan hangus (03.30 WIB) |
 
 Webhook Vercel didaftarkan di dashboard tim Vercel: URL `/api/webhooks/vercel`, event
 `deployment.*`, secret yang sama dengan `VERCEL_WEBHOOK_SECRET`. Webhook mempercepat

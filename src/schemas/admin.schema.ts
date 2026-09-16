@@ -114,6 +114,47 @@ export const restoreRulesSchema = z.object({
   version: z.coerce.number().int().min(1),
 });
 
+/** ADR-012: aktivasi Paket Project setelah pembayaran manual. */
+export const activateSubscriptionSchema = z.object({
+  projectId: id("ID project"),
+  planId: id("Paket"),
+  months: z.coerce
+    .number({ message: "Isi jumlah bulan" })
+    .int("Harus bilangan bulat")
+    .min(1, "Minimal 1 bulan")
+    .max(60, "Maksimal 60 bulan"),
+  paymentRef: z
+    .string()
+    .trim()
+    .max(100, "Maksimal 100 karakter")
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+});
+
+export const projectIdSchema = z.object({ projectId: id("ID project") });
+
+/** ADR-012: top-up kredit manual ke dompet akun. */
+export const grantCreditsSchema = z.object({
+  userId: id("ID pengguna"),
+  amount: z.coerce
+    .number({ message: "Isi jumlah kredit" })
+    .int("Harus bilangan bulat")
+    .min(1, "Minimal 1 kredit")
+    .max(100_000, "Maksimal 100.000 kredit"),
+  paymentRef: z
+    .string()
+    .trim()
+    .max(100, "Maksimal 100 karakter")
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+  note: z
+    .string()
+    .trim()
+    .max(200, "Maksimal 200 karakter")
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+});
+
 export const dailyCostThresholdSchema = z.object({
   valueIdr: z.coerce
     .number({ message: "Isi angka rupiah" })

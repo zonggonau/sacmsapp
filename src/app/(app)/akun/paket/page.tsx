@@ -14,9 +14,11 @@ import {
 import { CreditHistory } from "@/components/features/quota/credit-history";
 import { Progress } from "@/components/ui/progress";
 import { requireUser } from "@/lib/auth-guard";
+import { TOPUP_PACKS } from "@/config/billing";
 import { angka, rupiah, tanggal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import * as planService from "@/services/plan.service";
+import * as creditService from "@/services/credit.service";
 import * as quotaService from "@/services/quota.service";
 import * as usageService from "@/services/usage.service";
 
@@ -61,10 +63,12 @@ function Meter({
 /** Kuota terlihat sebelum dibutuhkan — docs/11 §11.6. */
 export default async function PlanPage() {
   const user = await requireUser();
-  const [quota, plans, history] = await Promise.all([
+  const [quota, plans, history, wallet, lots] = await Promise.all([
     quotaService.getQuota(user.id),
     planService.list(),
     usageService.listHistory(user.id),
+    creditService.getBalance(user.id),
+    creditService.listLots(user.id),
   ]);
   if (!quota) notFound();
 
@@ -84,12 +88,22 @@ export default async function PlanPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Meter
-            label="Kredit bulan ini"
-            used={quota.creditsUsed}
-            limit={quota.creditLimit}
-            hint={`1 kredit = 1 pembuatan atau edit website. Terisi kembali pada ${tanggal(quota.periodEndsAt)}; sisa kredit tidak menumpuk.${quota.creditsOverridden ? " Kuota ini diatur khusus oleh admin." : ""}`}
-          />
+          {/* ADR-012: kredit dari dompet akun, bukan kuota bulanan paket. */}
+          <div className="space-y-1">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm font-medium">Sisa kredit AI</span>
+              <span className="font-mono text-2xl tabular-nums">
+                {angka(wallet.total)}
+              </span>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              1 kredit = 1 pembuatan atau perubahan website, dipakai di semua website
+              Anda. Kredit tidak hangus setiap bulan.
+              {wallet.expiringSoon > 0 && wallet.nextExpiry
+                ? ` ${angka(wallet.expiringSoon)} kredit kedaluwarsa pada ${tanggal(wallet.nextExpiry)}.`
+                : ""}
+            </p>
+          </div>
           <Meter
             label="Website"
             used={quota.projectCount}
@@ -211,6 +225,114 @@ Paket yang diinginkan: `)}`}
           </div>
         </CardContent>
       </Card>
+
+      {/* Top-up kredit — ADR-012. Pembayaran manual sampai Midtrans (v1.1). */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Isi kredit AI</CardTitle>
+          <CardDescription>
+            Kredit dipakai untuk membuat dan mengubah website, dan berlaku 12 bulan
+            sejak dibeli. Pilih paket, lalu hubungi admin untuk pembayaran; kredit masuk
+            setelah transfer diterima.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ul className="grid gap-3 sm:grid-cols-3">
+            {TOPUP_PACKS.map((pack) => (
+              <li
+                key={pack.credits}
+                className="border-border flex flex-col gap-1 rounded-lg border p-4"
+              >
+                <span className="font-mono text-xl tabular-nums">
+                  {angka(pack.credits)}
+                </span>
+                <span className="text-muted-foreground text-xs">kredit</span>
+                <span className="mt-1 text-sm font-medium">
+                  {rupiah(pack.priceIdr)}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {rupiah(Math.round(pack.priceIdr / pack.credits))} per kredit
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {SUPPORT.available ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {SUPPORT.whatsapp ? (
+                <Button size="sm" asChild>
+                  <a
+                    href={
+                      whatsappWithText(
+                        `Halo admin SaCMS, saya ingin isi kredit AI. Email akun: ${user.email}.`,
+                      ) ?? "#"
+                    }
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    Pesan kredit via WhatsApp
+                  </a>
+                </Button>
+              ) : null}
+              {SUPPORT.emailHref ? (
+                <Button size="sm" variant="outline" asChild>
+                  <a
+                    href={`${SUPPORT.emailHref}?subject=${encodeURIComponent("Isi kredit AI SaCMS")}`}
+                  >
+                    Kirim email ke admin
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      {lots.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Kredit yang Anda miliki</CardTitle>
+            <CardDescription>
+              Setiap pembelian punya masa berlaku sendiri. Kredit yang paling dulu
+              kedaluwarsa dipakai lebih dulu.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-border divide-y">
+              {lots.map((lot) => (
+                <li key={lot.id} className="flex flex-wrap items-baseline gap-x-3 py-3">
+                  <span className="flex-1 text-sm">
+                    {lot.source === "WELCOME"
+                      ? "Kredit sambutan"
+                      : lot.source === "ADMIN"
+                        ? "Ditambahkan admin"
+                        : "Pembelian"}
+                    {lot.paymentRef ? (
+                      <span className="text-muted-foreground font-mono text-xs">
+                        {" "}
+                        · {lot.paymentRef}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="font-mono text-sm tabular-nums">
+                    {angka(lot.remaining)} / {angka(lot.amount)}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs",
+                      lot.expired ? "text-destructive-text" : "text-muted-foreground",
+                    )}
+                  >
+                    {lot.expired
+                      ? "kedaluwarsa"
+                      : `berlaku sampai ${tanggal(lot.expiresAt)}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Menjawab "kredit saya habis untuk apa?" — docs/11 §11.6. */}
       <Card>

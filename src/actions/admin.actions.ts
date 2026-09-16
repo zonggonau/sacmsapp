@@ -9,9 +9,12 @@ import { AppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { authActionClient } from "@/lib/safe-action";
 import {
+  activateSubscriptionSchema,
   adminJobIdSchema,
   adminRollbackSchema,
   dailyCostThresholdSchema,
+  grantCreditsSchema,
+  projectIdSchema,
   changePlanSchema,
   changeRoleSchema,
   defaultModelSchema,
@@ -27,6 +30,8 @@ import {
 import * as adminBuild from "@/services/admin-build.service";
 import * as adminProject from "@/services/admin-project.service";
 import * as adminUser from "@/services/admin-user.service";
+import * as creditService from "@/services/credit.service";
+import * as subscriptionService from "@/services/subscription.service";
 import * as auditService from "@/services/audit.service";
 import * as buildService from "@/services/build.service";
 import * as deployService from "@/services/deploy.service";
@@ -250,6 +255,57 @@ export const adminUpsertPlan = authActionClient
     const { planId, ...audit } = await planService.upsert(parsedInput);
     revalidateAdmin();
     return { ok: true, planId, audit };
+  });
+
+/* ============================================================
+ *  PAKET PROJECT & KREDIT — ADR-012, pembayaran manual
+ * ============================================================ */
+
+export const adminActivateSubscription = authActionClient
+  .metadata({ actionName: "admin.subscription.activate", ...SUPER_ADMIN })
+  .inputSchema(activateSubscriptionSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { endsAt, ...audit } = await subscriptionService.activate({
+      projectId: parsedInput.projectId,
+      planId: parsedInput.planId,
+      months: parsedInput.months,
+      paymentRef: parsedInput.paymentRef,
+      actorId: ctx.user.id,
+    });
+
+    revalidateAdmin();
+    revalidatePath(`/projects/${parsedInput.projectId}`, "layout");
+    return { ok: true, endsAt, audit };
+  });
+
+export const adminCancelSubscription = authActionClient
+  .metadata({ actionName: "admin.subscription.cancel", ...SUPER_ADMIN })
+  .inputSchema(projectIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const audit = await subscriptionService.cancel({
+      projectId: parsedInput.projectId,
+      actorId: ctx.user.id,
+    });
+
+    revalidateAdmin();
+    revalidatePath(`/projects/${parsedInput.projectId}`, "layout");
+    return { ok: true, audit };
+  });
+
+export const adminGrantCredits = authActionClient
+  .metadata({ actionName: "admin.credit.grant", ...SUPER_ADMIN })
+  .inputSchema(grantCreditsSchema)
+  .action(async ({ parsedInput }) => {
+    const { lotId, expiresAt, ...audit } = await creditService.grant({
+      userId: parsedInput.userId,
+      amount: parsedInput.amount,
+      source: "ADMIN",
+      paymentRef: parsedInput.paymentRef,
+      note: parsedInput.note,
+    });
+
+    revalidateAdmin();
+    return { ok: true, lotId, expiresAt, audit };
   });
 
 /* ============================================================
