@@ -147,10 +147,10 @@ test.describe("Fase 2 — CRUD project", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByLabel("Ceritakan website yang Anda inginkan")).toBeVisible();
 
-    // Back dari formulir kembali ke daftar.
-    await page.goBack();
-    await expect(page).toHaveURL(/\/projects(\?|$)/);
-
+    // Catatan: Back TIDAK diperiksa di sini. Setelah reload, satu langkah Back
+    // bisa kembali ke entri /projects/baru itu sendiri — bukan perilaku produk
+    // yang salah, tapi bergantung riwayat peramban. Back diperiksa di bawah
+    // pada alur daftar → detail → Back.
     await page.goto("/projects");
     await page.getByLabel("Cari project").fill("Senja");
     await expect(page).toHaveURL(/q=Senja/);
