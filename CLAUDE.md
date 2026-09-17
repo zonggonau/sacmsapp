@@ -64,7 +64,8 @@ Setiap lapisan **hanya** memanggil lapisan di bawahnya. Tidak ada lompatan.
 
 ## Design System — Ringkas
 
-- Dark adalah **default** dan identitas. Latar dark = `#000000` **murni**, bukan abu-abu.
+- Dark adalah **default** dan identitas. Latar dark = `#212121` (keputusan pemilik 2026-09-16);
+  kedalaman dari surface yang lebih terang + border.
 - Aksen tunggal: oranye `#FF6B00`. Satu elemen oranye per layar.
 - **Teks di atas oranye WAJIB hitam.** Putih di atas oranye gagal kontras (2.9:1).
 - Teks oranye: pakai `text-primary-text` (otomatis `#FFA274` di dark, `#C24A00` di light).

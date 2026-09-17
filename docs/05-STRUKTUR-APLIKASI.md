@@ -14,6 +14,7 @@ src/app/
 │   ├── layout.tsx                  # header publik + footer
 │   ├── page.tsx                    # landing: hero + input prompt besar
 │   ├── harga/page.tsx
+│   ├── enterprise/page.tsx         # menaut keluar ke SaCMS Developer (RENCANA-FRONTEND §7)
 │   ├── fitur/page.tsx
 │   └── legal/[slug]/page.tsx       # syarat, privasi
 │
@@ -95,7 +96,7 @@ aturan aksesnya sendiri.
 
 | Grup          | URL                           | Layout                       | Guard                      | Rendering            |
 | ------------- | ----------------------------- | ---------------------------- | -------------------------- | -------------------- |
-| `(marketing)` | `/`, `/harga`                 | Header publik + footer       | Tidak ada                  | Dynamic (ADR-009)    |
+| `(marketing)` | `/`, `/harga`, `/enterprise`  | Header publik + footer       | Tidak ada                  | Dynamic (ADR-009)    |
 | `(auth)`      | `/masuk`, `/daftar`           | Kartu terpusat, tanpa nav    | Tolak jika **sudah** login | Dynamic              |
 | `(app)`       | `/dashboard`, `/projects/...` | Sidebar + topbar             | `requireUser()`            | Dynamic              |
 | `(admin)`     | `/admin/...`                  | Shell admin (visual berbeda) | `requireSuperAdmin()`      | Dynamic, tanpa cache |

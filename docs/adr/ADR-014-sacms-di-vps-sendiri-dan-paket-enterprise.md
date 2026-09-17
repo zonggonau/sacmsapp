@@ -1,4 +1,4 @@
-# ADR-014 — SaCMS di VPS Sendiri, Website Pengguna Tetap di Vercel, Enterprise ke Contabo
+# ADR-014 — SaCMS di VPS Sendiri, Website Pengguna Tetap di Vercel
 
 **Status:** Diusulkan — menunggu persetujuan pemilik sistem
 **Tanggal:** 2026-09-16
@@ -7,6 +7,9 @@
 **Tidak mengubah:** [ADR-008](./ADR-008-terbit-lewat-v0-deployments.md) untuk website yang tetap di
 Vercel, [ADR-001](./ADR-001-v0-sebagai-ai-engine.md), [ADR-007](./ADR-007-prisma-driver-adapter.md)
 **Terkait:** [ADR-012](./ADR-012-langganan-per-website-dan-dompet-kredit.md) (harga per website)
+
+> **Jalur Enterprise dihapus dari ADR ini** (2026-09-17, [ADR-018](./ADR-018-enterprise-di-infrastruktur-bersama.md)):
+> tidak ada VPS atau repositori GitHub terpisah per pelanggan.
 
 ## Konteks
 
@@ -18,8 +21,6 @@ hasil pengguna. Pemilik sistem ingin:
 3. **Storage** memakai penyimpanan VPS, bukan Vercel Blob;
 4. **Website hasil pengguna tetap di Vercel** untuk paket Standar, Profesional, dan Bisnis,
    tetapi **storage asetnya di VPS SaCMS**;
-5. **Paket Enterprise**: website yang ingin berdiri sendiri diambil kodenya dari v0, didorong ke
-   GitHub milik SaCMS, lalu di-`git clone` dan dijalankan di VPS Contabo.
 
 Pemeriksaan kode hari ini (bukan dugaan):
 
@@ -31,7 +32,6 @@ Pemeriksaan kode hari ini (bukan dugaan):
 | `lib/ratelimit` memakai Upstash **REST**                                                                        | VPS perlu Redis + shim REST, atau ganti klien |
 | `next.config.ts` belum memakai `output: "standalone"`                                                           | Perlu ditambah untuk dijalankan sendiri       |
 | `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_WEBHOOK_SECRET` dipakai mengelola website **pengguna**                | Tetap dibutuhkan, tidak ikut pindah           |
-| **Belum ada integrasi GitHub sama sekali** (tanpa klien, tanpa token, tanpa env)                                | Jalur Enterprise butuh `lib/github` baru      |
 
 ## Keputusan (diusulkan)
 
@@ -60,7 +60,6 @@ Pemeriksaan kode hari ini (bukan dugaan):
 | Paket                            | Website di-hosting | Storage aset website | Jalur penerbitan                                                              |
 | -------------------------------- | ------------------ | -------------------- | ----------------------------------------------------------------------------- |
 | **Standar, Profesional, Bisnis** | Vercel (tetap)     | **VPS SaCMS**        | `v0.deployments.create` ([ADR-008](./ADR-008-terbit-lewat-v0-deployments.md)) |
-| **Enterprise**                   | VPS Contabo        | VPS Contabo          | v0 → GitHub → `git clone` di Contabo                                          |
 
 Untuk tiga paket pertama tidak ada perubahan jalur terbit: beban trafik pengunjung tetap di Vercel,
 bukan di VPS SaCMS. Yang berpindah hanya **storage aset** (gambar dan dokumen yang diunggah): berkas
@@ -74,35 +73,10 @@ Konsekuensi yang harus diterima untuk pilihan storage ini:
   meski situsnya sendiri tetap tayang di Vercel.
 - CSP `img-src` pada website hasil harus mengizinkan alamat storage tersebut.
 
-> **Nama paket.** Empat nama di atas (Standar, Profesional, Bisnis, Enterprise) **menggantikan**
+> **Nama paket.** Standar, Profesional, Bisnis, dan Enterprise **menggantikan**
 > segmen UMKM dan Instansi & Pemda di [ADR-012](./ADR-012-langganan-per-website-dan-dompet-kredit.md).
 > Harga tiap paket belum diputuskan dan tidak diputuskan di ADR ini — lihat "Keputusan yang
 > Dibutuhkan dari Pemilik".
-
-### 4. Paket Enterprise: v0 → GitHub → Contabo
-
-```
-Builder selesai
-  → ambil kode versi dari v0
-  → push ke repositori GitHub milik SaCMS (satu repo per project)
-  → VPS Contabo: git clone / git pull
-  → build & jalankan (Docker + Postgres + reverse proxy)
-  → SaCMS mencatat status dan alamatnya
-```
-
-- Repo per project, privat, nama `sacms-<slug>-<id pendek>`.
-- Integrasi GitHub dibungkus di **`lib/github`** (aturan ACL docs 02 §2.2), env baru
-  `GITHUB_TOKEN` dan `GITHUB_OWNER`.
-- Deploy ke Contabo lewat lapisan `lib/vps` yang memanggil agen di VPS itu (atau Coolify/Dokploy
-  bila ingin tanpa menulis agen sendiri).
-- **Hanya untuk paket Enterprise**, karena setiap website menuntut sumber daya dan perawatan
-  sendiri. Harganya dihitung ulang di ADR-012 (perkiraan awal: VPS Rp 150–400 rb/bulan per
-  pelanggan, harga jual Rp 25–50 juta/tahun — belum dihitung rinci).
-
-**Yang masih harus diverifikasi sebelum dibangun:** cara mengambil berkas sumber satu versi dari
-v0. Tipe SDK menunjukkan bentuk `files` dan `zip`, tetapi metode pastinya belum saya konfirmasi.
-Bila v0 tidak menyediakannya, jalur pengganti adalah integrasi v0 → GitHub milik v0 sendiri, lalu
-SaCMS mengambil dari repo itu.
 
 ## Yang Berubah di Kode & Operasi
 
@@ -110,10 +84,6 @@ SaCMS mengambil dari repo itu.
 | ------------------ | --------------------------------------------------------------------------------------------------- |
 | `next.config.ts`   | `output: "standalone"`                                                                              |
 | Baru `lib/storage` | Aset platform DAN aset website pengguna (disk VPS / MinIO) + satu alamat publik untuk menyajikannya |
-| Baru `lib/github`  | Buat repo, push kode versi, baca status                                                             |
-| Baru `lib/vps`     | Perintah deploy ke VPS Contabo (clone/pull, build, restart)                                         |
-| `deploy.service`   | Bercabang menurut target: `VERCEL` (sekarang) atau `VPS` (Enterprise)                               |
-| `Project`          | Kolom target hosting + pengenal repo & host                                                         |
 | Cron               | `vercel.json` tidak lagi dipakai; sembilan endpoint dipanggil systemd timer                         |
 | `docs/14`          | Tabel lingkungan & cron ditulis ulang untuk VPS                                                     |
 | Ops baru           | Pencadangan Postgres + uji pemulihan, pemantauan VPS, pembaruan keamanan OS, sertifikat             |
@@ -125,9 +95,6 @@ SaCMS mengambil dari repo itu.
 - **Kehilangan PITR Neon.** Tanpa pencadangan terjadwal yang **sudah diuji**, satu kesalahan
   migrasi bisa berarti kehilangan data permanen.
 - **Perawatan berkelanjutan**: patch OS, sertifikat, disk penuh, log rotation.
-- **Jalur Enterprise menambah vendor dan tanggung jawab** (GitHub + Contabo), dan mengeluarkan
-  website itu dari perlindungan [ADR-008](./ADR-008-terbit-lewat-v0-deployments.md).
-- **Trafik pengunjung** website Enterprise jatuh ke VPS Contabo, bukan CDN Vercel.
 
 ## Alternatif yang Dipertimbangkan
 
@@ -136,38 +103,33 @@ SaCMS mengambil dari repo itu.
 | Tetap sepenuhnya di Vercel + Neon            | Tanpa kerja ops; cadangan & skala terurus                               | Biaya tetap vendor; kendali terbatas                       | Pemilik ingin kendali & biaya VPS |
 | **SaCMS di VPS, website pengguna di Vercel** | Kendali penuh, biaya tetap rendah, trafik pelanggan tidak membebani VPS | Ops menjadi tanggung jawab sendiri                         | **Diusulkan**                     |
 | Semua (termasuk website pengguna) di VPS     | Satu tempat                                                             | Trafik pengunjung membebani VPS; kehilangan CDN & jalur v0 | Ditolak                           |
-| Enterprise tanpa GitHub (rsync langsung)     | Lebih sedikit vendor                                                    | Tanpa riwayat versi, tanpa rollback, sulit diaudit         | Ditolak                           |
 
 ## Konsekuensi
 
-**Positif:** biaya vendor turun dan bisa diperkirakan; kendali penuh atas data; paket Enterprise
-menjadi mungkin dijual; pelanggan memegang kodenya sendiri di GitHub.
+**Positif:** biaya vendor turun dan bisa diperkirakan; kendali penuh atas data.
 
 **Negatif:** SaCMS berubah menjadi pekerjaan operasional, bukan hanya pekerjaan produk; sebelum
 pindah, pencadangan dan pemantauan harus benar-benar jalan, bukan sekadar direncanakan.
 
 ## Tahap Pengerjaan (setelah disetujui)
 
-| Tahap | Isi                                                                                | Perkiraan    |
-| ----- | ---------------------------------------------------------------------------------- | ------------ |
-| 1     | `output: standalone`, systemd + reverse proxy, CI deploy lewat SSH, staging di VPS | 1,5 hari     |
-| 2     | Postgres VPS + Redis + shim REST, migrasi data, **cadangan & uji pemulihan**       | 1,5 hari     |
-| 3     | `lib/storage` dan pemindahan aset platform                                         | 0,5 hari     |
-| 4     | Sembilan cron menjadi systemd timer + pemantauan kegagalannya                      | 0,5 hari     |
-| 5     | Enterprise: `lib/github`, repo per project, ambil kode dari v0                     | 2 hari       |
-| 6     | Enterprise: `lib/vps` + target hosting di `deploy.service` + UI admin              | 2 hari       |
-| 7     | Revisi docs 02, 03, 14; E2E jalur Enterprise                                       | 1 hari       |
-|       | **Total**                                                                          | **± 9 hari** |
+| Tahap | Isi                                                                                | Perkiraan      |
+| ----- | ---------------------------------------------------------------------------------- | -------------- |
+| 1     | `output: standalone`, systemd + reverse proxy, CI deploy lewat SSH, staging di VPS | 1,5 hari       |
+| 2     | Postgres VPS + Redis + shim REST, migrasi data, **cadangan & uji pemulihan**       | 1,5 hari       |
+| 3     | `lib/storage` dan pemindahan aset platform                                         | 0,5 hari       |
+| 4     | Sembilan cron menjadi systemd timer + pemantauan kegagalannya                      | 0,5 hari       |
+| 5     | Revisi docs 02, 03, 14                                                             | 0,5 hari       |
+|       | **Total**                                                                          | **± 4,5 hari** |
 
 ## Keputusan yang Dibutuhkan dari Pemilik
 
 1. Setuju memindahkan aplikasi, database, dan storage ke VPS, dengan konsekuensi ops di atas?
 2. Spesifikasi dan lokasi VPS SaCMS (RAM, disk, wilayah) — dan apakah staging ikut di VPS yang sama?
 3. Rencana cadangan: ke mana salinan `pg_dump` disimpan di luar VPS?
-4. Akun GitHub (organisasi) untuk repo pelanggan, dan apakah pelanggan diberi akses ke repo-nya.
-5. Nama dan harga keempat paket (Standar, Profesional, Bisnis, Enterprise) — menggantikan segmen
+4. Nama dan harga keempat paket (Standar, Profesional, Bisnis, Enterprise) — menggantikan segmen
    UMKM dan Instansi & Pemda di ADR-012, termasuk berapa harga Enterprise.
-6. Apakah storage aset website cukup di VPS SaCMS tanpa CDN di depannya untuk saat ini.
+5. Apakah storage aset website cukup di VPS SaCMS tanpa CDN di depannya untuk saat ini.
 
 ## Kapan Keputusan Ini Perlu Ditinjau Ulang
 

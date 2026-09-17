@@ -1,13 +1,18 @@
 # 14 — Deployment & Go-Live
 
+> **⚠️ Belum diperbarui untuk [ADR-017](./adr/ADR-017-nocode-di-vps-sacms.md).** Dokumen ini masih
+> menggambarkan deployment ke Vercel + Neon. Aplikasi kini dideploy ke **VPS SaCMS**; Vercel hanya
+> untuk website hasil generate. Lingkungan, env, cron, dan langkah go-live di ADR-017 yang berlaku
+> sampai dokumen ini ditulis ulang (bagian dari urutan kerja ADR-017).
+
 ## 14.1 Lingkungan
 
-| Lingkungan     | URL                | Database              | v0                        | Tujuan                   |
-| -------------- | ------------------ | --------------------- | ------------------------- | ------------------------ |
-| **Local**      | `localhost:3000`   | Neon branch `dev`     | `V0_MOCK=true`            | Pengembangan sehari-hari |
-| **Preview**    | otomatis per PR    | Neon branch per PR    | `V0_MOCK=true`            | Tinjauan kode & UI       |
-| **Staging**    | `staging.sacms.id` | Neon branch `staging` | v0 nyata (kunci terpisah) | Uji akhir sebelum rilis  |
-| **Production** | `sacms.id`         | Neon `main`           | v0 nyata                  | Pengguna sungguhan       |
+| Lingkungan     | URL                   | Database              | v0                        | Tujuan                   |
+| -------------- | --------------------- | --------------------- | ------------------------- | ------------------------ |
+| **Local**      | `localhost:3000`      | Neon branch `dev`     | `V0_MOCK=true`            | Pengembangan sehari-hari |
+| **Preview**    | otomatis per PR       | Neon branch per PR    | `V0_MOCK=true`            | Tinjauan kode & UI       |
+| **Staging**    | `staging.sacms.cloud` | Neon branch `staging` | v0 nyata (kunci terpisah) | Uji akhir sebelum rilis  |
+| **Production** | `sacms.cloud`         | Neon `main`           | v0 nyata                  | Pengguna sungguhan       |
 
 Aturan:
 
@@ -38,7 +43,7 @@ Aturan:
 ```bash
 # --- Inti ---
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://sacms.id
+NEXT_PUBLIC_APP_URL=https://sacms.cloud
 
 # --- Database ---
 DATABASE_URL=postgresql://...        # Neon, pooled
@@ -46,7 +51,7 @@ DIRECT_URL=postgresql://...          # Neon, direct (untuk migrasi)
 
 # --- Auth ---
 BETTER_AUTH_SECRET=                  # openssl rand -base64 32
-BETTER_AUTH_URL=https://sacms.id
+BETTER_AUTH_URL=https://sacms.cloud
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
@@ -239,7 +244,9 @@ tanpa `Authorization: Bearer $CRON_SECRET`, jadi `CRON_SECRET` wajib terisi di V
 
 - [ ] Seluruh checklist [12 §12.8](./12-KEAMANAN.md) lulus
 - [ ] Semua variabel lingkungan production terisi dan tervalidasi
-- [ ] Domain `sacms.id` aktif dengan HTTPS; `www` diarahkan ke apex
+- [ ] Domain `sacms.cloud` aktif dengan HTTPS di Vercel; `www` diarahkan ke apex. Subdomain
+      lain (`developer.`, `cms.`, `admin.`, `api.`, `cname.`, `*.`) **tetap** mengarah ke VPS
+      SaCMS — hanya record apex dan `www` yang pindah
 - [ ] Neon PITR aktif; **pemulihan sudah diuji nyata sekali**
 - [ ] Semua cron terdaftar dan pernah berhasil dijalankan — _terdaftar di `vercel.json`; bukti jalan menunggu deploy production_
 - [ ] Sentry, log drain, dan uptime monitor aktif

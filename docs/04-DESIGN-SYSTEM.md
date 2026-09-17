@@ -8,7 +8,8 @@
 
 Prinsip:
 
-1. **Hitam bold, bukan abu-abu.** Latar dark mode adalah `#000000` murni. Kedalaman
+1. **Gelap pekat, bukan abu-abu muda.** Latar dark mode adalah `#212121` (diputuskan pemilik
+   sistem 16 September 2026, menyamakan dokumen dengan `globals.css`). Kedalaman
    dibentuk oleh _surface_ yang sedikit lebih terang dan border, **bukan** oleh bayangan.
 2. **Oranye itu langka.** Oranye menandai satu hal per layar: aksi utama, nav aktif,
    badge status. Kalau semua oranye, tidak ada yang menonjol.
@@ -40,19 +41,21 @@ Diuji dengan rasio kontras WCAG 2.1:
 
 | Kombinasi                                                        | Rasio       | Status                              | Konsekuensi                                                   |
 | ---------------------------------------------------------------- | ----------- | ----------------------------------- | ------------------------------------------------------------- |
-| `#FF6B00` di atas `#000000`                                      | **7.3:1**   | Lulus AAA (teks besar), AA (normal) | Aman untuk teks & ikon oranye di dark mode                    |
+| `#FF6B00` di atas `#212121`                                      | **5.6:1**   | Lulus AA (normal), AAA (teks besar) | Aman untuk teks & ikon oranye di dark mode                    |
 | `#FF6B00` di atas `#FFFFFF`                                      | **2.9:1**   | **GAGAL**                           | **Jangan pernah** pakai oranye-500 sebagai teks di light mode |
 | `#FFFFFF` di atas `#FF6B00`                                      | **2.9:1**   | **GAGAL**                           | **Jangan pernah** pakai teks putih di atas tombol oranye      |
-| `#000000` di atas `#FF6B00`                                      | **7.3:1**   | Lulus AAA                           | **Teks tombol oranye WAJIB hitam**                            |
+| `#000000` di atas `#FF6B00`                                      | **7.4:1**   | Lulus AAA                           | **Teks tombol oranye WAJIB hitam** (light)                    |
+| `#212121` di atas `#FF6B00`                                      | **5.6:1**   | Lulus AA                            | Teks tombol oranye di dark mode                               |
 | `#C24A00` di atas `#FFFFFF`                                      | **4.9:1**   | Lulus AA                            | Pakai `brand-700` untuk teks oranye di light mode             |
-| `#FFFFFF` di atas `#000000`                                      | **21:1**    | Lulus AAA                           | —                                                             |
-| `#A1A1A1` di atas `#000000`                                      | **8.0:1**   | Lulus AAA                           | Teks sekunder dark mode                                       |
+| `#FFFFFF` di atas `#212121`                                      | **16.1:1**  | Lulus AAA                           | —                                                             |
+| `#A8A8A8` di atas `#212121`                                      | **6.8:1**   | Lulus AA                            | Teks sekunder dark mode (`--muted-foreground`)                |
 | `#737373` di atas `#FFFFFF`                                      | **4.7:1**   | Lulus AA                            | Teks sekunder light mode                                      |
 | `destructive` di atas badge gelap                                | **< 4.5:1** | **GAGAL** (Lighthouse, Fase 7)      | Jangan pakai `text-destructive` untuk teks kecil di dark mode |
 | `destructive-text` (`oklch(0.808 0.114 19.6)`) di atas `#212121` | **≥ 7:1**   | Lulus AA                            | Teks merah di dark mode — badge `danger`, pesan galat         |
 | `destructive-text` (`oklch(0.505 0.213 27.5)`) di atas `#FFFFFF` | **≥ 6:1**   | Lulus AA                            | Teks merah di light mode                                      |
 
-> **Aturan tegas: `--primary-foreground` adalah HITAM di kedua tema.**
+> **Aturan tegas: `--primary-foreground` adalah hitam di kedua tema** — `#000000` di light,
+> `#212121` di dark.
 > Ini bukan selera — teks putih di atas oranye gagal aksesibilitas. Hitam di atas oranye
 > juga kebetulan terlihat lebih tegas dan modern.
 
@@ -129,44 +132,46 @@ Tailwind v4: seluruh token didefinisikan di CSS. **Tidak ada `tailwind.config.js
   --sidebar-border: oklch(0.922 0 0);
 }
 
-/* ---------- DARK (identitas utama: hitam bold) ---------- */
+/* ---------- DARK (identitas utama: hitam #212121) ---------- */
 .dark {
-  --background: oklch(0 0 0); /* #000000 murni */
+  --background: oklch(0.242 0 0); /* #212121 */
   --foreground: oklch(1 0 0); /* #FFFFFF */
 
-  --card: oklch(0.145 0 0); /* #0A0A0A */
+  --card: oklch(0.28 0 0); /* #2A2A2A */
   --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.145 0 0);
+  --popover: oklch(0.28 0 0); /* #2A2A2A */
   --popover-foreground: oklch(1 0 0);
 
-  --primary: oklch(0.705 0.205 45); /* #FF6B00 - sama */
-  --primary-foreground: oklch(0 0 0); /* HITAM di atas oranye */
-  --primary-hover: oklch(0.745 0.175 45); /* #FF7A3D - lebih terang */
+  --primary: oklch(0.705 0.205 45); /* #FF6B00 — sama */
+  --primary-foreground: oklch(0.242 0 0); /* #212121 di atas oranye */
+  --primary-hover: oklch(0.745 0.175 45); /* #FF7A3D */
   --primary-subtle: oklch(0.705 0.205 45 / 0.14);
   --primary-text: oklch(0.79 0.14 48); /* #FFA274 */
 
-  --secondary: oklch(0.194 0 0); /* #141414 */
+  --secondary: oklch(0.31 0 0); /* #303030 */
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.194 0 0);
-  --muted-foreground: oklch(0.708 0 0); /* #A1A1A1 */
-  --accent: oklch(0.242 0 0); /* #1F1F1F */
+  --muted: oklch(0.31 0 0); /* #303030 */
+  --muted-foreground: oklch(0.72 0 0); /* #A8A8A8 */
+  --accent: oklch(0.35 0 0); /* #383838 */
   --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.637 0.208 25.3);
+  /* Teks merah di atas permukaan gelap: merah terang agar lulus AA 4.5:1. */
+  --destructive-text: oklch(0.808 0.114 19.6);
   --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.723 0.181 148);
   --warning: oklch(0.769 0.165 70);
   --info: oklch(0.646 0.183 262);
 
-  --border: oklch(0.269 0 0); /* #262626 */
-  --border-strong: oklch(0.325 0 0); /* #333333 */
-  --input: oklch(0.269 0 0);
+  --border: oklch(0.35 0 0); /* #383838 */
+  --border-strong: oklch(0.42 0 0); /* #484848 */
+  --input: oklch(0.31 0 0); /* #303030 */
   --ring: oklch(0.705 0.205 45);
 
-  --sidebar: oklch(0.145 0 0); /* #0A0A0A */
+  --sidebar: oklch(0.215 0 0); /* #1B1B1B */
   --sidebar-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.242 0 0);
-  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.28 0 0); /* #2A2A2A */
+  --sidebar-border: oklch(0.35 0 0); /* #383838 */
 }
 
 /* ---------- Pemetaan ke utility Tailwind ---------- */

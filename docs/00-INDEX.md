@@ -25,42 +25,47 @@
 
 ## Daftar Dokumen
 
-| #   | Dokumen                                            | Isi                                                       | Wajib dibaca oleh |
-| --- | -------------------------------------------------- | --------------------------------------------------------- | ----------------- |
-| 01  | [Visi & Scope](./01-VISI-DAN-SCOPE.md)             | Masalah, persona, scope MVP, **out of scope**             | Semua             |
-| 02  | [Arsitektur Sistem](./02-ARSITEKTUR-SISTEM.md)     | Layer, boundary, integrasi v0 + Vercel, data flow         | Semua             |
-| 03  | [Stack & Versi](./03-STACK-DAN-VERSI.md)           | Versi terkunci, alasan pemilihan, larangan                | Semua             |
-| 04  | [Design System](./04-DESIGN-SYSTEM.md)             | Token warna, dark bold black + orange, komponen, a11y     | Frontend          |
-| 05  | [Struktur Aplikasi](./05-STRUKTUR-APLIKASI.md)     | Route groups, nested layout, parallel/intercepting routes | Frontend          |
-| 06  | [Database Schema](./06-DATABASE-SCHEMA.md)         | Prisma schema lengkap + indeks + aturan migrasi           | Backend           |
-| 07  | [Auth & RBAC](./07-AUTH-DAN-RBAC.md)               | Better Auth, role, guard berlapis, super admin            | Semua             |
-| 08  | [Server Actions](./08-SERVER-ACTIONS.md)           | Kontrak action, validasi, error, revalidate, audit        | Semua             |
-| 09  | [AI Builder Pipeline](./09-AI-BUILDER-PIPELINE.md) | State machine build, orkestrasi v0, system prompt         | Backend           |
-| 10  | [Super Admin](./10-SUPER-ADMIN.md)                 | Panel pemilik sistem, kontrol global                      | Semua             |
-| 11  | [Quota & Billing](./11-QUOTA-DAN-BILLING.md)       | Plan, kredit, penghitungan usage, enforcement             | Backend           |
-| 12  | [Keamanan](./12-KEAMANAN.md)                       | Ancaman, mitigasi, secret handling, checklist             | Semua             |
-| 13  | [Roadmap & Fase](./13-ROADMAP-DAN-FASE.md)         | Fase 0–7, Definition of Done, acceptance criteria         | Semua             |
-| 14  | [Deployment & Go-Live](./14-DEPLOYMENT-GO-LIVE.md) | Env, CI/CD, staging, checklist go-live, rollback          | DevOps            |
+| #   | Dokumen                                                        | Isi                                                            | Wajib dibaca oleh              |
+| --- | -------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------ |
+| 01  | [Visi & Scope](./01-VISI-DAN-SCOPE.md)                         | Masalah, persona, scope MVP, **out of scope**                  | Semua                          |
+| 02  | [Arsitektur Sistem](./02-ARSITEKTUR-SISTEM.md)                 | Layer, boundary, integrasi v0 + Vercel, data flow              | Semua                          |
+| 03  | [Stack & Versi](./03-STACK-DAN-VERSI.md)                       | Versi terkunci, alasan pemilihan, larangan                     | Semua                          |
+| 04  | [Design System](./04-DESIGN-SYSTEM.md)                         | Token warna, dark bold black + orange, komponen, a11y          | Frontend                       |
+| 05  | [Struktur Aplikasi](./05-STRUKTUR-APLIKASI.md)                 | Route groups, nested layout, parallel/intercepting routes      | Frontend                       |
+| 06  | [Database Schema](./06-DATABASE-SCHEMA.md)                     | Prisma schema lengkap + indeks + aturan migrasi                | Backend                        |
+| 07  | [Auth & RBAC](./07-AUTH-DAN-RBAC.md)                           | Better Auth, role, guard berlapis, super admin                 | Semua                          |
+| 08  | [Server Actions](./08-SERVER-ACTIONS.md)                       | Kontrak action, validasi, error, revalidate, audit             | Semua                          |
+| 09  | [AI Builder Pipeline](./09-AI-BUILDER-PIPELINE.md)             | State machine build, orkestrasi v0, system prompt              | Backend                        |
+| 10  | [Super Admin](./10-SUPER-ADMIN.md)                             | Panel pemilik sistem, kontrol global                           | Semua                          |
+| 11  | [Quota & Billing](./11-QUOTA-DAN-BILLING.md)                   | Plan, kredit, penghitungan usage, enforcement                  | Backend                        |
+| 12  | [Keamanan](./12-KEAMANAN.md)                                   | Ancaman, mitigasi, secret handling, checklist                  | Semua                          |
+| 13  | [Roadmap & Fase](./13-ROADMAP-DAN-FASE.md)                     | Fase 0–7, Definition of Done, acceptance criteria              | Semua                          |
+| 14  | [Deployment & Go-Live](./14-DEPLOYMENT-GO-LIVE.md)             | Env, CI/CD, staging, checklist go-live, rollback               | DevOps                         |
+| 15  | [Integrasi SaCMS Developer](./15-INTEGRASI-SACMS-DEVELOPER.md) | Data plane lewat MCP, provisioning tenant, storage, mode gagal | Semua (draf, menunggu ADR-015) |
 
 ## Architecture Decision Records
 
-| ADR                                                               | Keputusan                                                                                                          | Status    |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------- |
-| [000](./adr/ADR-000-template.md)                                  | Template ADR                                                                                                       | —         |
-| [001](./adr/ADR-001-v0-sebagai-ai-engine.md)                      | v0 Platform API sebagai AI engine (bukan bangun sendiri)                                                           | Accepted  |
-| [002](./adr/ADR-002-better-auth.md)                               | Better Auth untuk autentikasi                                                                                      | Accepted  |
-| [003](./adr/ADR-003-postgres-prisma.md)                           | PostgreSQL + Prisma ORM                                                                                            | Accepted  |
-| [004](./adr/ADR-004-server-actions-first.md)                      | Server Actions sebagai mutasi utama, bukan REST                                                                    | Accepted  |
-| [005](./adr/ADR-005-build-job-polling.md)                         | Build job table + polling (bukan queue eksternal) di MVP                                                           | Accepted  |
-| [006](./adr/ADR-006-mvp-tanpa-workspace.md)                       | MVP tanpa Workspace/Organization                                                                                   | Accepted  |
-| [007](./adr/ADR-007-prisma-driver-adapter.md)                     | Driver adapter Prisma 7 (`@prisma/adapter-pg`)                                                                     | Accepted  |
-| [008](./adr/ADR-008-terbit-lewat-v0-deployments.md)               | Menerbitkan website lewat v0 deployments                                                                           | Accepted  |
-| [009](./adr/ADR-009-csp-nonce-render-dinamis.md)                  | CSP nonce membuat seluruh halaman dirender dinamis                                                                 | Diusulkan |
-| [010](./adr/ADR-010-pembayaran-midtrans.md)                       | Pembayaran otomatis lewat Midtrans (v1.1)                                                                          | Accepted  |
-| [011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md)                  | Ikuti perilaku bawaan v0 — hasil sama dengan v0.app                                                                | Accepted  |
-| [012](./adr/ADR-012-langganan-per-website-dan-dompet-kredit.md)   | Paket per project tahunan + kredit AI per akun                                                                     | Accepted  |
-| [013](./adr/ADR-013-formulir-project-baru-tanpa-dialog.md)        | Formulir project baru tanpa dialog (halaman penuh)                                                                 | Accepted  |
-| [014](./adr/ADR-014-sacms-di-vps-sendiri-dan-paket-enterprise.md) | SaCMS di VPS sendiri; website Standar/Profesional/Bisnis tetap di Vercel dengan storage VPS; Enterprise ke Contabo | Diusulkan |
+| ADR                                                               | Keputusan                                                                                                                | Status    |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- |
+| [000](./adr/ADR-000-template.md)                                  | Template ADR                                                                                                             | —         |
+| [001](./adr/ADR-001-v0-sebagai-ai-engine.md)                      | v0 Platform API sebagai AI engine (bukan bangun sendiri)                                                                 | Accepted  |
+| [002](./adr/ADR-002-better-auth.md)                               | Better Auth untuk autentikasi                                                                                            | Accepted  |
+| [003](./adr/ADR-003-postgres-prisma.md)                           | PostgreSQL + Prisma ORM                                                                                                  | Accepted  |
+| [004](./adr/ADR-004-server-actions-first.md)                      | Server Actions sebagai mutasi utama, bukan REST                                                                          | Accepted  |
+| [005](./adr/ADR-005-build-job-polling.md)                         | Build job table + polling (bukan queue eksternal) di MVP                                                                 | Accepted  |
+| [006](./adr/ADR-006-mvp-tanpa-workspace.md)                       | MVP tanpa Workspace/Organization                                                                                         | Accepted  |
+| [007](./adr/ADR-007-prisma-driver-adapter.md)                     | Driver adapter Prisma 7 (`@prisma/adapter-pg`)                                                                           | Accepted  |
+| [008](./adr/ADR-008-terbit-lewat-v0-deployments.md)               | Menerbitkan website lewat v0 deployments                                                                                 | Accepted  |
+| [009](./adr/ADR-009-csp-nonce-render-dinamis.md)                  | CSP nonce membuat seluruh halaman dirender dinamis                                                                       | Diusulkan |
+| [010](./adr/ADR-010-pembayaran-midtrans.md)                       | Pembayaran otomatis lewat Midtrans (v1.1)                                                                                | Accepted  |
+| [011](./adr/ADR-011-ikuti-perilaku-bawaan-v0.md)                  | Ikuti perilaku bawaan v0 — hasil sama dengan v0.app                                                                      | Accepted  |
+| [012](./adr/ADR-012-langganan-per-website-dan-dompet-kredit.md)   | Paket per project tahunan + kredit AI per akun                                                                           | Accepted  |
+| [013](./adr/ADR-013-formulir-project-baru-tanpa-dialog.md)        | Formulir project baru tanpa dialog (halaman penuh)                                                                       | Accepted  |
+| [014](./adr/ADR-014-sacms-di-vps-sendiri-dan-paket-enterprise.md) | SaCMS di VPS sendiri; website Standar/Profesional/Bisnis tetap di Vercel dengan storage VPS                              | Diusulkan |
+| [015](./adr/ADR-015-backend-data-dari-sacms-developer.md)         | SaCMS Developer jadi backend data (DB + storage + MCP); aplikasi nocode tetap di Vercel — menggantikan sebagian ADR-014  | Diusulkan |
+| [016](./adr/ADR-016-satu-pintu-admin-di-sacms.md)                 | Satu pintu admin di SaCMS (ringkasan hanya-baca); seluruh aksi tetap di `/admin` nocode                                  | Accepted  |
+| [017](./adr/ADR-017-nocode-di-vps-sacms.md)                       | Aplikasi nocode di VPS SaCMS, bukan Vercel; Vercel hanya untuk website hasil generate — menggantikan ADR-015 keputusan 1 | Accepted  |
+| [018](./adr/ADR-018-enterprise-di-infrastruktur-bersama.md)       | Enterprise tanpa VPS per workspace: database, object storage, dan Vercel bersama; storage dihitung per pelanggan         | Accepted  |
 
 ---
 

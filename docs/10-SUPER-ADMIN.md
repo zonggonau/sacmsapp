@@ -245,3 +245,26 @@ menyisir ulang seluruh basis kode.
 Batas `ADMIN` saat diaktifkan: baca semuanya, boleh tangguhkan pengguna dan
 batalkan/ulangi build. **Tidak** boleh: ubah paket, ubah peran, impersonasi, kill switch,
 system prompt, hard delete.
+
+## 10.12 Satu Pintu Admin di SaCMS — ADR-016
+
+Pemilik sistem memakai **`admin.sacms.cloud`** sebagai beranda. Di sana ada halaman
+`/admin/nocode` yang menampilkan ringkasan **hanya-baca** dari panel ini: pengguna, project,
+build hari ini, kredit bulan ini, keuangan 30 hari, status kill switch/pemeliharaan/pendaftaran,
+dan daftar "Perlu Perhatian".
+
+**Seluruh aksi tetap di sini.** SaCMS hanya menaut ke halaman kita. Alasannya ada di
+[ADR-016](./adr/ADR-016-satu-pintu-admin-di-sacms.md): impersonasi, cabut sesi, batal/ulang
+build, rollback, dan kredit bergantung pada Better Auth, v0, Vercel, dan ledger yang hanya ada
+di aplikasi ini.
+
+| Bagian     | Letak                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------- |
+| Service    | `src/services/platform-summary.service.ts` (memakai ulang `getOverview()` + `getCostMetrics(30)`) |
+| Endpoint   | `GET /api/platform/ringkasan`, `Authorization: Bearer $PLATFORM_SUMMARY_KEY`                      |
+| Uji        | `tests/services/ringkasan-platform.test.ts` — kunci benar/salah/kosong, tanpa email               |
+| Sisi SaCMS | `sacms-for-developer`: `/admin/nocode`, konsolidasi di laba-rugi & margin                         |
+
+Aturan yang mengikat: ringkasan **tidak boleh** memuat data pribadi (email, nama, id pengguna).
+Mengubah bentuk ringkasan = memperbarui skema Zod di `sacms-for-developer/src/lib/nocode-summary.ts`
+di waktu yang sama.
