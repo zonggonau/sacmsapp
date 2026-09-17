@@ -53,6 +53,9 @@ const serverSchema = z.object({
   EMAIL_FROM: z.string().default("SaCMS <noreply@sacms.id>"),
 
   CRON_SECRET: optionalString(32),
+  // Kunci baca ringkasan untuk panel admin SaCMS — ADR-016. Kosong = endpoint
+  // /api/platform/ringkasan menolak semua permintaan (gagal tertutup).
+  PLATFORM_SUMMARY_KEY: optionalString(32),
   SENTRY_DSN: optionalUrl(),
 });
 
@@ -69,9 +72,11 @@ const clientSchema = z.object({
     emptyToUndefined,
     z
       .string()
-      .regex(/^d{8,15}$/, "Tulis angka saja dengan kode negara, mis. 6281234567890")
+      .regex(/^\d{8,15}$/, "Tulis angka saja dengan kode negara, mis. 6281234567890")
       .optional(),
   ),
+  /** Alamat SaCMS Developer untuk tautan Enterprise — RENCANA-FRONTEND.md §7. */
+  NEXT_PUBLIC_SACMS_DEVELOPER_URL: optionalUrl(),
 });
 
 /**
@@ -91,8 +96,9 @@ const schema = serverSchema.merge(clientSchema).superRefine((v, ctx) => {
     });
 
   if (!v.CRON_SECRET) missing("CRON_SECRET", "melindungi seluruh endpoint cron");
-  if (!v.UPSTASH_REDIS_REST_URL) missing("UPSTASH_REDIS_REST_URL", "rate limit");
-  if (!v.UPSTASH_REDIS_REST_TOKEN) missing("UPSTASH_REDIS_REST_TOKEN", "rate limit");
+  if (v.UPSTASH_REDIS_REST_URL && !v.UPSTASH_REDIS_REST_TOKEN) {
+    missing("UPSTASH_REDIS_REST_TOKEN", "rate limit Upstash");
+  }
   if (!v.RESEND_API_KEY && !process.env.MAIL_OUTBOX_DIR) {
     missing("RESEND_API_KEY", "email verifikasi & reset sandi");
   }

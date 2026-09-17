@@ -1,7 +1,7 @@
 /**
  * Uji smoke production — docs/14 §14.6.
  *
- *   pnpm smoke https://sacms.id
+ *   pnpm smoke https://sacms.cloud
  *
  * Keluar dengan kode 1 bila ada pemeriksaan gagal. Dipanggil otomatis oleh
  * .github/workflows/smoke.yml setelah Vercel melaporkan deployment production.
@@ -10,7 +10,9 @@ export {};
 
 const base = (process.argv[2] ?? process.env.SMOKE_URL ?? "").replace(/\/$/, "");
 if (!/^https?:\/\//.test(base)) {
-  console.error("Pakai: pnpm smoke <URL production>, mis. pnpm smoke https://sacms.id");
+  console.error(
+    "Pakai: pnpm smoke <URL production>, mis. pnpm smoke https://sacms.cloud",
+  );
   process.exit(2);
 }
 

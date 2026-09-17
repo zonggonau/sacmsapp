@@ -28,6 +28,7 @@ export async function GET() {
   const redis = await pingRedis();
   const redisHealthy =
     redis === "ok" ||
+    redis === "in-memory" ||
     (redis === "tidak-dikonfigurasi" && process.env.NODE_ENV !== "production");
   const healthy = database === "ok" && redisHealthy;
 

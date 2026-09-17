@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sacms-nocode-app
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3005:3000"
+    volumes:
+      - ./src:/app/src:ro
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    env_file:
+      - .env.production
+    networks:
+      - sacms_default
+
+networks:
+  sacms_default:
+    external: true

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       url:
-        description: "URL production, mis. https://sacms.id"
+        description: "URL production, mis. https://sacms.cloud"
         required: true
 
 jobs:

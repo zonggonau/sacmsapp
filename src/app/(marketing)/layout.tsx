@@ -56,6 +56,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <Link href="/harga" className="hover:text-foreground rounded-md px-2 py-1">
               Harga
             </Link>
+            <Link
+              href="/enterprise"
+              className="hover:text-foreground rounded-md px-2 py-1"
+            >
+              Enterprise
+            </Link>
           </nav>
 
           <div className="flex-1" />
@@ -79,6 +85,9 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <nav className="flex flex-wrap gap-4" aria-label="Tautan legal">
             <Link href="/harga" className="hover:text-foreground">
               Harga
+            </Link>
+            <Link href="/enterprise" className="hover:text-foreground">
+              Untuk developer &amp; instansi
             </Link>
             <Link href="/legal/syarat" className="hover:text-foreground">
               Syarat Layanan

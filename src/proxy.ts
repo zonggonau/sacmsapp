@@ -20,7 +20,14 @@ import { getSessionCookie } from "better-auth/cookies";
 
 // robots.txt & sitemap.xml tidak tertangkap pengecualian ekstensi di matcher —
 // tanpa daftar ini keduanya dialihkan ke /masuk dan tidak terbaca mesin pencari.
-const PUBLIC_PATHS = ["/", "/harga", "/fitur", "/robots.txt", "/sitemap.xml"];
+const PUBLIC_PATHS = [
+  "/",
+  "/harga",
+  "/enterprise",
+  "/fitur",
+  "/robots.txt",
+  "/sitemap.xml",
+];
 const PUBLIC_PREFIXES = [
   "/legal",
   // Wajib publik: setelah mendaftar, pengguna BELUM punya sesi (email belum

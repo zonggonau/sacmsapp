@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TOPUP_PACKS, WELCOME_CREDITS } from "@/config/billing";
+import { SACMS_DEVELOPER } from "@/config/enterprise";
 import { angka, rupiah } from "@/lib/format";
 import { logger } from "@/lib/logger";
 import * as planService from "@/services/plan.service";
@@ -133,6 +134,21 @@ export default async function PricingPage() {
           })}
         </div>
       )}
+
+      {/* Enterprise tidak dijual di sini — RENCANA-FRONTEND.md §7. Tombol outline supaya
+          oranye tetap milik aksi utama halaman (docs/04 §4.1). */}
+      <div className="border-border bg-card mx-auto mt-6 flex max-w-3xl flex-col gap-4 rounded-xl border p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Enterprise</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Untuk developer, agensi, dan instansi yang membangun sistemnya sendiri di
+            server khusus. Berlangganan di {SACMS_DEVELOPER.name}.
+          </p>
+        </div>
+        <Button variant="outline" asChild className="shrink-0">
+          <Link href="/enterprise">Pelajari Enterprise</Link>
+        </Button>
+      </div>
 
       <div className="mx-auto mt-16 max-w-3xl">
         <h2 className="text-center text-xl font-semibold tracking-tight">

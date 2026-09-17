@@ -5,6 +5,7 @@ import { admin } from "better-auth/plugins/admin";
 import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/admin/access";
 
+import { CREDIT_LOT_MONTHS, WELCOME_CREDITS } from "@/config/billing";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { sendResetPasswordEmail, sendVerificationEmail } from "@/lib/mail";
@@ -52,6 +53,13 @@ export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? appUrl,
+  trustedOrigins: [
+    "https://sacms.cloud",
+    "https://www.sacms.cloud",
+    // Domain lama — hapus setelah sacms.cloud aktif di Vercel dan sacms.app dialihkan.
+    "https://sacms.app",
+    "https://www.sacms.app",
+  ],
 
   emailAndPassword: {
     enabled: true,
@@ -154,6 +162,43 @@ export const auth = betterAuth({
           return {
             data: { ...user, planId: free.id, role: "USER", status: "ACTIVE" },
           };
+        },
+
+        /**
+         * Kredit sambutan diberikan DI SINI, saat penggunanya dibuat — bukan di
+         * action daftar saja (ADR-012).
+         *
+         * Alasannya: masuk pertama kali lewat Google tidak melewati action itu,
+         * sehingga penggunanya punya dompet kosong. Tombol "Buat Project" membaca
+         * saldo dompet, jadi pengguna seperti itu menemukan tombolnya mati dan
+         * tidak bisa memulai build yang justru akan memberi kreditnya.
+         *
+         * Ditulis langsung dengan `db` (bukan memanggil service) karena `lib/`
+         * tidak boleh mengimpor service — aturan lapisan docs/02 §2.2.
+         */
+        after: async (user) => {
+          const expiresAt = new Date();
+          expiresAt.setMonth(expiresAt.getMonth() + CREDIT_LOT_MONTHS);
+
+          try {
+            await db.creditLot.create({
+              data: {
+                userId: user.id,
+                amount: WELCOME_CREDITS,
+                remaining: WELCOME_CREDITS,
+                source: "WELCOME",
+                expiresAt,
+                note: "Kredit sambutan akun baru",
+              },
+            });
+          } catch (error) {
+            // Pendaftaran tidak boleh gagal hanya karena kredit sambutan gagal
+            // dicatat; jalur build tetap memberikannya (idempoten).
+            logger.error("auth.signup.welcome_credits_failed", {
+              userId: user.id,
+              reason: error instanceof Error ? error.message : "tidak diketahui",
+            });
+          }
         },
       },
     },

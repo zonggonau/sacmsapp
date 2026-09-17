@@ -10,6 +10,9 @@ test("jenis website mengisi contoh prompt, nama wajib, website referensi divalid
   page,
 }) => {
   const user = await createUser({ label: "form-baru", planSlug: "pro" });
+  // Pengguna uji dibuat langsung di database (tanpa alur daftar), jadi dompetnya
+  // masih kosong dan tombol Buat Project akan nonaktif — ADR-012.
+  await dbTask("seedCredits", { userId: user.id, amount: 5 });
   await signInViaForm(page, user.email);
   await expect(page).toHaveURL(/\/dashboard/);
   await page.goto("/projects/baru");

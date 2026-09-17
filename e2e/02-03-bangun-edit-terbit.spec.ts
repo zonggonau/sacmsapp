@@ -13,6 +13,8 @@ test("buat project, pratinjau tampil, edit lewat chat, lalu terbitkan", async ({
   page,
 }) => {
   const user = await createUser({ label: "bangun" });
+  // Dompet kredit ADR-012: pengguna uji tidak melewati alur daftar.
+  await dbTask("seedCredits", { userId: user.id, amount: 10 });
   await signInViaForm(page, user.email);
   await expect(page).toHaveURL(/\/dashboard/);
 

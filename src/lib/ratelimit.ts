@@ -20,10 +20,9 @@ const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 const isProduction = process.env.NODE_ENV === "production";
 
 if (isProduction && (!url || !token)) {
-  throw new Error(
-    "UPSTASH_REDIS_REST_URL dan UPSTASH_REDIS_REST_TOKEN wajib diisi di production. " +
-      "Penghitung dalam memori tidak berlaku di lingkungan serverless.",
-  );
+  logger.warn("ratelimit.in_memory", {
+    hint: "UPSTASH_REDIS_REST_URL tidak disetel — memakai penghitung dalam memori pada instance VPS.",
+  });
 }
 
 const redis = url && token ? new Redis({ url, token }) : null;
@@ -142,9 +141,10 @@ export async function checkRateLimit(
 
 /* ---------- Pemeriksaan kesehatan — docs/14 §14.6 ---------- */
 
-/** "ok" bila Redis menjawab, "tidak-dikonfigurasi" di development tanpa Upstash. */
-export async function pingRedis(): Promise<"ok" | "tidak-dikonfigurasi" | "gagal"> {
-  if (!redis) return "tidak-dikonfigurasi";
+export async function pingRedis(): Promise<
+  "ok" | "tidak-dikonfigurasi" | "gagal" | "in-memory"
+> {
+  if (!redis) return "in-memory";
   try {
     await redis.ping();
     return "ok";
