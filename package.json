@@ -54,7 +54,7 @@
     "sonner": "2.0.8",
     "tailwind-merge": "^3.3.0",
     "v0-sdk": "0.16.7",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
